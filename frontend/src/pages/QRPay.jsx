@@ -1,0 +1,238 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { ShieldCheck, Loader2, Sun, Moon, AlertCircle } from 'lucide-react';
+
+const QRPay = () => {
+  const { machineId } = useParams();
+  const navigate = useNavigate();
+  const [machine, setMachine] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [processing, setProcessing] = useState(false);
+
+  // Local theme state synchronized with document and localStorage
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+  
+  // Razorpay requires loading a script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Fetch machine details to show rate
+    const fetchMachineDetails = async () => {
+      try {
+        // Since we might not be authenticated here, we might need a public endpoint or use a dummy fetch for now.
+        // Assuming there's an endpoint to get machine rate:
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/machines/${machineId}`);
+        setMachine(response.data.data);
+      } catch (err) {
+        console.error(err);
+        // Fallback for demonstration if API fails or requires auth
+        setMachine({
+          machine_id: machineId,
+          uses_amt: 10,
+          flush_time: 1
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (machineId) {
+      fetchMachineDetails();
+    } else {
+      setError("Invalid machine QR code.");
+      setLoading(false);
+    }
+  }, [machineId]);
+
+  const handlePayment = async () => {
+    setProcessing(true);
+    setError('');
+    
+    try {
+      // 1. Create order on our server
+      const orderRes = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/transaction/payorder`, {
+        machine_id: machineId,
+        amount: machine.uses_amt // Typically from user selection, but using fixed rate for demo
+      });
+      
+      const { order_id, amount, currency } = orderRes.data;
+      
+      // 2. Open Razorpay Checkout
+      const options = {
+        key: 'rzp_test_xxxxxx', // Replace with actual Razorpay Key ID
+        amount: amount, // amount in the smallest currency unit
+        currency: currency,
+        name: "SmartBuddy",
+        description: `Machine activation for ${machineId}`,
+        order_id: order_id,
+        handler: async function (response) {
+          try {
+            // 3. Verify and save transaction
+            const verifyRes = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/transaction/save`, {
+              order_id: response.razorpay_order_id,
+              pay_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              machine_id: machineId,
+              amount: machine.uses_amt,
+              status: 'success'
+            });
+            
+            if (verifyRes.data.success) {
+              alert("Payment successful! Machine is activating...");
+              // Optional: Redirect to a success page
+            } else {
+              setError("Payment verification failed on server.");
+            }
+          } catch (err) {
+            console.error("Verification error", err);
+            setError("Failed to verify payment with server.");
+          }
+        },
+        prefill: {
+          name: "Guest User",
+          email: "guest@example.com",
+          contact: "9999999999"
+        },
+        theme: {
+          color: "#3b82f6"
+        }
+      };
+      
+      const rzp1 = new window.Razorpay(options);
+      rzp1.on('payment.failed', function (response){
+        setError("Payment was failed or cancelled. Please try again.");
+      });
+      rzp1.open();
+      
+    } catch (err) {
+      console.error(err);
+      setError("Failed to initiate payment. Please check your connection.");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="loading-screen">Loading machine details...</div>;
+  }
+
+  if (error && !machine) {
+    return (
+      <div className="auth-container">
+        <div className="auth-bg-shape-1"></div>
+        <div className="auth-bg-shape-2"></div>
+        <button 
+          type="button"
+          className="auth-theme-toggle"
+          onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+          title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
+        >
+          {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+        </button>
+        <div className="glass-panel auth-card animate-entrance" style={{ textAlign: 'center' }}>
+          <div style={{ color: '#ef4444', marginBottom: '1.5rem' }}>
+            <AlertCircle size={48} style={{ margin: '0 auto' }} />
+          </div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Error</h2>
+          <p style={{ color: 'var(--text-secondary)' }}>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="auth-container">
+      {/* Decorative Animated Mesh Blobs */}
+      <div className="auth-bg-shape-1"></div>
+      <div className="auth-bg-shape-2"></div>
+      
+      {/* Glassmorphic Theme Switcher */}
+      <button 
+        type="button"
+        className="auth-theme-toggle"
+        onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+        title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
+      >
+        {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+      </button>
+
+      {/* Main Payment Card */}
+      <div className="glass-panel auth-card animate-entrance">
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div style={{ 
+            height: '64px', width: '64px', 
+            backgroundColor: 'var(--primary-light)', 
+            color: 'var(--primary-color)', 
+            borderRadius: '50%', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 1.25rem auto',
+            boxShadow: '0 8px 16px -4px var(--primary-light)'
+          }}>
+            <ShieldCheck size={32} />
+          </div>
+          <h1 className="auth-title" style={{ fontSize: '1.875rem', marginBottom: '0.5rem' }}>Pay to Activate</h1>
+          <p className="auth-subtitle">Machine ID: <span style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{machineId}</span></p>
+        </div>
+
+        {error && (
+          <div className="auth-error">
+            <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div style={{ 
+          backgroundColor: 'var(--surface-bg)', 
+          padding: '1.5rem', 
+          borderRadius: '1rem', 
+          marginBottom: '2rem',
+          border: '1px solid var(--border-color)',
+          textAlign: 'center',
+          boxShadow: '0 8px 20px -8px var(--shadow-color)'
+        }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Amount to Pay</p>
+          <div style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+            ₹{machine?.uses_amt || '0.00'}
+          </div>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>for {machine?.flush_time || '1'} minutes</p>
+        </div>
+
+        <button 
+          onClick={handlePayment}
+          disabled={processing}
+          className="btn btn-primary btn-block"
+          style={{ padding: '1rem', fontSize: '1.125rem', display: 'flex', gap: '8px', height: '3.5rem' }}
+        >
+          {processing ? (
+            <>
+              <Loader2 className="animate-spin" size={20} />
+              Processing...
+            </>
+          ) : 'Pay Now'}
+        </button>
+
+        <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '1.5rem' }}>
+          Secured by Razorpay
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default QRPay;

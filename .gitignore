@@ -1,0 +1,28 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+.env
+
+# Legacy PHP folders/Trash
+PHP_TRASH/
+Admin/
+assets/
+client/
+include/
+layouts/
+legacy-php/
+operation/
+
+# Uploads / Dynamic Data
+uploads/
+server/uploads/
+
+# OS/IDE files
+.DS_Store
+.vscode/
+.idea/
+
+# React Build Output
+frontend/dist/
+frontend/build/

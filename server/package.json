@@ -1,0 +1,31 @@
+{
+  "name": "smartbuddy-server",
+  "version": "1.0.0",
+  "description": "Backend API server for SmartBuddy IoT Platform",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "seed": "node src/config/seed.js",
+    "alter_db": "node alter_db.js",
+    "dump": "node dump_schema.js",
+    "index-db": "node add_indexes.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "mqtt": "^5.5.5",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.9.7",
+    "razorpay": "^2.9.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
