@@ -7,7 +7,7 @@ import SkeletonTable from '../components/SkeletonTable';
 import PrintTemplate from '../components/PrintTemplate';
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-import logoImage from "../assets/smartbuddy-qPlBdhXG.png";
+const logoImage = "/smartbuddy.png";
 
 const Reports = () => {
   const { user } = useAuth();
