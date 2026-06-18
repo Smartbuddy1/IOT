@@ -256,7 +256,7 @@ const Reports = () => {
       // Determine Client and Machine details for Header
       const selectedClient = clientsOptions.find(c => c.client_name === clientName);
       const clientLogoUrl = selectedClient && selectedClient.client_logo 
-        ? (selectedClient.client_logo.startsWith('http') ? selectedClient.client_logo : `${import.meta.env.VITE_SERVER_URL}/uploads/${selectedClient.client_logo}?t=${new Date().getTime()}`)
+        ? (selectedClient.client_logo.startsWith('http') ? selectedClient.client_logo : `${import.meta.env.VITE_SERVER_URL}${selectedClient.client_logo}?t=${new Date().getTime()}`)
         : null;
 
       let toiletIdStr = machineId ? machineId : "All Machines";
