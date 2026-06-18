@@ -5,9 +5,9 @@ import { Printer, FileSpreadsheet, FileText, Filter, IndianRupee, Activity, Aler
 import toast from 'react-hot-toast';
 import SkeletonTable from '../components/SkeletonTable';
 import PrintTemplate from '../components/PrintTemplate';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import logoImage from '../assets/smartbuddy.png';
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import logoImage from "../assets/smartbuddy-qPlBdhXG.png";
 
 const Reports = () => {
   const { user } = useAuth();
