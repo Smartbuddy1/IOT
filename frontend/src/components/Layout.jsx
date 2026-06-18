@@ -95,7 +95,7 @@ const Layout = () => {
           <div className="user-info">
             <div className="user-avatar" style={{ overflow: 'hidden', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {user?.logo ? (
-                <img src={`${import.meta.env.VITE_SERVER_URL}${user.logo}`} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover', backgroundColor: 'white' }} />
+                <img src={user?.logo?.startsWith('http') ? user.logo : `${import.meta.env.VITE_SERVER_URL}/uploads/${user.logo}`} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover', backgroundColor: 'white' }} />
               ) : (
                 (user?.name || user?.username || user?.mobile || 'U').charAt(0).toUpperCase()
               )}
@@ -160,7 +160,7 @@ const Layout = () => {
                 alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '2px solid var(--primary-color)'
               }}>
                 {user?.logo ? (
-                  <img src={`${import.meta.env.VITE_SERVER_URL}${user.logo}`} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover', backgroundColor: 'white' }} />
+                  <img src={user?.logo?.startsWith('http') ? user.logo : `${import.meta.env.VITE_SERVER_URL}/uploads/${user.logo}`} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover', backgroundColor: 'white' }} />
                 ) : (
                   <User size={24} color="var(--slate-600)" />
                 )}
@@ -182,7 +182,7 @@ const Layout = () => {
                       border: '3px solid rgba(255,255,255,0.4)', overflow: 'hidden'
                     }}>
                       {user?.logo ? (
-                        <img src={`${import.meta.env.VITE_SERVER_URL}${user.logo}`} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover', backgroundColor: 'white' }} />
+                        <img src={user?.logo?.startsWith('http') ? user.logo : `${import.meta.env.VITE_SERVER_URL}/uploads/${user.logo}`} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover', backgroundColor: 'white' }} />
                       ) : (
                         <User size={40} color="#475569" />
                       )}

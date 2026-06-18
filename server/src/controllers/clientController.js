@@ -29,7 +29,7 @@ export const createClient = async (req, res) => {
 
   let client_logo = req.body.client_logo || '';
   if (req.file) {
-    client_logo = '/uploads/logos/' + req.file.filename;
+    client_logo = req.file.location; // S3 full URL provided by multer-s3
   }
 
   if (!client_name || !client_phone || !password) {
@@ -69,7 +69,7 @@ export const updateClient = async (req, res) => {
 
   let client_logo = req.body.client_logo || '';
   if (req.file) {
-    client_logo = '/uploads/logos/' + req.file.filename;
+    client_logo = req.file.location; // S3 full URL provided by multer-s3
   }
 
   try {
