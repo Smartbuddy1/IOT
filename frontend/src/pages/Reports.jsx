@@ -479,7 +479,7 @@ const Reports = () => {
         }
 
         // Load SmartBuddy Logo using the robust HD fetcher
-        const sbLogoUrl = `/uploads/logos/IMG-20260614-WA0003(1).jpg`;
+        const sbLogoUrl = window.location.origin + `/smartbuddy.png`;
         const sbImgObj = await getBase64FromUrl(sbLogoUrl);
         if (!sbImgObj) {
           toast.error("Failed to load HD SmartBuddy Logo");
