@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:match*",
+      "destination": "http://back.theaaryatechnologies.com/api/:match*"
+    },
+    {
+      "source": "/uploads/:match*",
+      "destination": "http://back.theaaryatechnologies.com/uploads/:match*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
