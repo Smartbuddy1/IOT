@@ -256,7 +256,7 @@ const Reports = () => {
       // Determine Client and Machine details for Header
       const selectedClient = clientsOptions.find(c => c.client_name === clientName);
       const clientLogoUrl = selectedClient && selectedClient.client_logo 
-        ? (selectedClient.client_logo.startsWith('http') ? selectedClient.client_logo : `${import.meta.env.VITE_SERVER_URL}${selectedClient.client_logo}?t=${new Date().getTime()}`)
+        ? (selectedClient.client_logo.startsWith('http') ? selectedClient.client_logo : `${selectedClient.client_logo}?t=${new Date().getTime()}`)
         : null;
 
       let toiletIdStr = machineId ? machineId : "All Machines";
@@ -479,7 +479,7 @@ const Reports = () => {
         }
 
         // Load SmartBuddy Logo using the robust HD fetcher
-        const sbLogoUrl = `${import.meta.env.VITE_SERVER_URL}/uploads/logos/IMG-20260614-WA0003(1).jpg`;
+        const sbLogoUrl = `/uploads/logos/IMG-20260614-WA0003(1).jpg`;
         const sbImgObj = await getBase64FromUrl(sbLogoUrl);
         if (!sbImgObj) {
           toast.error("Failed to load HD SmartBuddy Logo");
