@@ -9,6 +9,10 @@
       "destination": "http://back.theaaryatechnologies.com/uploads/:match*"
     },
     {
+      "source": "/s3-proxy/:match*",
+      "destination": "https://smartbuddyiot.s3.ap-south-1.amazonaws.com/:match*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
