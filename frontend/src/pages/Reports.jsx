@@ -255,14 +255,9 @@ const Reports = () => {
       
       // Determine Client and Machine details for Header
       const selectedClient = clientsOptions.find(c => c.client_name === clientName);
-      let clientLogoUrl = selectedClient && selectedClient.client_logo 
+      const clientLogoUrl = selectedClient && selectedClient.client_logo 
         ? (selectedClient.client_logo.startsWith('http') ? selectedClient.client_logo : `${selectedClient.client_logo}?t=${new Date().getTime()}`)
         : null;
-
-      // Fix CORS for S3 by using Vercel proxy
-      if (clientLogoUrl && clientLogoUrl.includes('smartbuddyiot.s3.ap-south-1.amazonaws.com')) {
-        clientLogoUrl = clientLogoUrl.replace('https://smartbuddyiot.s3.ap-south-1.amazonaws.com', '/s3-proxy');
-      }
 
       let toiletIdStr = machineId ? machineId : "All Machines";
       let toiletLocationStr = "Various Locations";
