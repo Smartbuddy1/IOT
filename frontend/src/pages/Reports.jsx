@@ -7,7 +7,7 @@ import SkeletonTable from '../components/SkeletonTable';
 import PrintTemplate from '../components/PrintTemplate';
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-const logoImage = "/smartbuddy.png";
+const logoImage = "/smartbuddy.png.png";
 
 const Reports = () => {
   const { user } = useAuth();
@@ -479,7 +479,7 @@ const Reports = () => {
         }
 
         // Load SmartBuddy Logo using the robust HD fetcher
-        const sbLogoUrl = window.location.origin + `/smartbuddy.png`;
+        const sbLogoUrl = window.location.origin + `/smartbuddy.png.png`;
         const sbImgObj = await getBase64FromUrl(sbLogoUrl);
         if (!sbImgObj) {
           toast.error("Failed to load HD SmartBuddy Logo");
