@@ -39,9 +39,10 @@ const QRPay = () => {
         const fetchedMachine = response.data.machine;
         
         if (fetchedMachine) {
-          if (fetchedMachine.status === 'Busy') {
+          const status = fetchedMachine.status?.toLowerCase();
+          if (status === 'busy') {
             setError('❌ Machine is currently busy. Please wait for a moment.');
-          } else if (fetchedMachine.status === 'Maintenance' || fetchedMachine.status === 'Failed') {
+          } else if (status === 'maintenance' || status === 'failed' || status === 'offline') {
             setError('⚠️ Machine is under maintenance. Apologies for the inconvenience.');
           } else {
             setMachine(fetchedMachine);
