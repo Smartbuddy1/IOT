@@ -1,4 +1,5 @@
 import pool from '../config/db.js';
+import bcrypt from 'bcryptjs';
 
 export const getClients = async (req, res) => {
   try {
@@ -32,11 +33,14 @@ export const createClient = async (req, res) => {
     client_logo = req.file.location; // S3 full URL provided by multer-s3
   }
 
-  if (!client_name || !client_phone || !password) {
-    return res.status(400).json({ success: false, message: 'Client Name, Phone, and Password are required' });
+  if (!client_name || !client_phone || !password || !client_logo) {
+    return res.status(400).json({ success: false, message: 'Client Name, Phone, Password, and Logo are compulsory' });
   }
 
   try {
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     const [result] = await pool.query(
       `INSERT INTO clients 
       (client_name, client_phone, client_address, client_website, client_state, clinet_district, client_city, client_type, contact_person, contact_mobile, password, contact_email, client_logo) 
@@ -44,7 +48,7 @@ export const createClient = async (req, res) => {
       [
         client_name, client_phone, client_address || '', client_website || '', 
         client_state || '', clinet_district || '', client_city || '', client_type || '', 
-        contact_person || '', contact_mobile || '', password, contact_email || '', client_logo
+        contact_person || '', contact_mobile || '', hashedPassword, contact_email || '', client_logo
       ]
     );
 
@@ -73,6 +77,13 @@ export const updateClient = async (req, res) => {
   }
 
   try {
+    let finalPassword = password;
+    // If password exists and is NOT already a bcrypt hash, hash it
+    if (password && !password.startsWith('$2')) {
+      const salt = await bcrypt.genSalt(10);
+      finalPassword = await bcrypt.hash(password, salt);
+    }
+
     await pool.query(
       `UPDATE clients SET 
         client_name = ?, client_phone = ?, client_address = ?, client_website = ?, 
@@ -82,7 +93,7 @@ export const updateClient = async (req, res) => {
       [
         client_name, client_phone, client_address, client_website, 
         client_state, clinet_district, client_city, client_type, 
-        contact_person, contact_mobile, password, contact_email, client_logo, 
+        contact_person, contact_mobile, finalPassword, contact_email, client_logo, 
         id
       ]
     );
