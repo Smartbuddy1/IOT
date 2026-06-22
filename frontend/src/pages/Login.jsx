@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Smartphone, Lock, Eye, EyeOff, Sun, Moon, AlertCircle, Loader2, CheckCircle2, ArrowRight, LockKeyhole } from 'lucide-react';
-const logoImg = "/smartbuddy.png";
+const logoImg = "/SB_Logo.jpg";
 
 const Login = () => {
   const [username, setUsername] = useState('');
