@@ -229,10 +229,14 @@ const Machines = () => {
                   <td>
                     <span className={`badge-glow ${
                       machine.status === 'active' ? 'active' : 
-                      machine.status === 'maintenance' ? 'maintenance' : 'failed'
+                      machine.status === 'ready' ? 'active' : 
+                      machine.status === 'maintenance' ? 'maintenance' : 
+                      machine.status === 'busy' ? 'maintenance' : 'failed'
                     }`}>
                       {machine.status === 'active' ? 'Active' : 
-                       machine.status === 'maintenance' ? 'Maintenance' : 'Failed'}
+                       machine.status === 'ready' ? 'Ready' : 
+                       machine.status === 'maintenance' ? 'Maintenance' : 
+                       machine.status === 'busy' ? 'Busy' : 'Failed'}
                     </span>
                   </td>
                   <td style={{ fontWeight: '700', color: 'var(--slate-800)' }}>
