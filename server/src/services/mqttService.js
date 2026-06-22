@@ -89,8 +89,15 @@ export const initializeMqtt = () => {
           ['active', machineId]
         );
 
-        // 4. If it's a JSON payload, update device_live_status
-        if (Object.keys(payload).length > 0) {
+        // UPDATE HEARTBEAT: Always mark it as alive in device_live_status
+        await pool.query(
+          `INSERT INTO device_live_status (machine_id, last_updated) 
+           VALUES (?, NOW()) 
+           ON DUPLICATE KEY UPDATE last_updated = NOW()`,
+          [machineId]
+        );
+
+        // 4. If it's a JSON payload, update specific sensors
           // Default values for sensors
           const water_level = payload.water_level || payload.waterLevel || '0';
           const pir_sensor = payload.pir || payload.pir_sensor || '0';
