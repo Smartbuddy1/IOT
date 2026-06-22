@@ -81,46 +81,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* IOT LIVE MONITOR ROW */}
-      {Object.keys(liveStatus).length > 0 && (
-        <div style={{ marginBottom: '2rem', marginTop: '1rem' }} className="animate-entrance">
-          <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1rem', color: 'var(--slate-800)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#ef4444', display: 'inline-block', animation: 'pulse 2s infinite' }}></span>
-            Live Hardware Monitor
-          </h3>
-          <div className="stats-grid">
-            {Object.entries(liveStatus).map(([machineId, data]) => (
-              <div key={machineId} className="glass-panel stat-card hover-float" style={{ borderLeft: '4px solid #3b82f6' }}>
-                <div style={{ marginBottom: '10px', fontWeight: 'bold', fontSize: '1.1rem', color: '#1e293b' }}>
-                  Machine: {machineId}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.9rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: parseInt(data.water_level) > 20 ? '#10b981' : '#ef4444' }}></div>
-                    Water: {data.water_level}%
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: parseInt(data.pir_sensor) === 1 ? '#10b981' : '#cbd5e1' }}></div>
-                    PIR: {parseInt(data.pir_sensor) === 1 ? 'Motion' : 'Clear'}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: parseInt(data.door_lock) === 1 ? '#10b981' : '#ef4444' }}></div>
-                    Door: {parseInt(data.door_lock) === 1 ? 'Locked' : 'Open'}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: parseInt(data.pb_flush) === 1 ? '#3b82f6' : '#cbd5e1' }}></div>
-                    Flush: {parseInt(data.pb_flush) === 1 ? 'ON' : 'OFF'}
-                  </div>
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '10px', textAlign: 'right' }}>
-                  Updated: {new Date(data.last_updated).toLocaleTimeString()}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
+      {/* IOT LIVE MONITOR ROW REMOVED AS REQUESTED */}
       {/* ROW 1: General Stats */}
       <div className="stats-grid" style={{ marginBottom: '1.5rem' }}>
         {user?.role === 'Admin' && (
