@@ -71,7 +71,7 @@ const QRPay = () => {
     
     try {
       // 1. Create order on our server
-      const orderRes = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/transaction/payorder`, {
+      const orderRes = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/transaction/pay`, {
         machine_id: machineId,
         amount: machine.uses_amt // Typically from user selection, but using fixed rate for demo
       });
