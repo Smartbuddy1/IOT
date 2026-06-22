@@ -71,17 +71,27 @@ export const updateClient = async (req, res) => {
     contact_person, contact_mobile, password, contact_email 
   } = req.body;
 
-  let client_logo = req.body.client_logo || '';
-  if (req.file) {
-    client_logo = req.file.location; // S3 full URL provided by multer-s3
-  }
-
   try {
+    // Determine final logo: use new upload if provided, else keep existing from DB
+    let client_logo;
+    if (req.file) {
+      client_logo = req.file.location; // S3 full URL provided by multer-s3
+    } else {
+      // Fetch existing logo URL from DB to avoid overwriting with empty string
+      const [rows] = await pool.query('SELECT client_logo FROM clients WHERE id = ?', [id]);
+      client_logo = (rows.length > 0 && rows[0].client_logo) ? rows[0].client_logo : '';
+    }
+
     let finalPassword = password;
     // If password exists and is NOT already a bcrypt hash, hash it
     if (password && !password.startsWith('$2')) {
       const salt = await bcrypt.genSalt(10);
       finalPassword = await bcrypt.hash(password, salt);
+    }
+    // If no password provided during edit, keep the existing password
+    if (!password) {
+      const [rows] = await pool.query('SELECT password FROM clients WHERE id = ?', [id]);
+      finalPassword = rows.length > 0 ? rows[0].password : '';
     }
 
     await pool.query(

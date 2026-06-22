@@ -253,15 +253,7 @@ const Reports = () => {
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       
       // Determine Client and Machine details for Header
-      const selectedClient = clientsOptions.find(c => c.client_name === clientName);
-      let clientLogoUrl = selectedClient && selectedClient.client_logo ? selectedClient.client_logo : null;
-      
-      if (clientLogoUrl && clientLogoUrl.includes('smartbuddyiot.s3.ap-south-1.amazonaws.com')) {
-        clientLogoUrl = clientLogoUrl.replace('https://smartbuddyiot.s3.ap-south-1.amazonaws.com', '/s3-proxy');
-      } else if (clientLogoUrl && !clientLogoUrl.startsWith('http')) {
-        clientLogoUrl = `${clientLogoUrl}?t=${new Date().getTime()}`;
-      }
-
+      let finalClientName = clientName;
       let toiletIdStr = machineId ? machineId : "All Machines";
       let toiletLocationStr = "Various Locations";
       
@@ -269,7 +261,21 @@ const Reports = () => {
         const selectedMachine = machinesOptions.find(m => m.machine_id === machineId);
         if (selectedMachine) {
           toiletLocationStr = selectedMachine.inst_address || selectedMachine.address || selectedMachine.city || "Location details not available";
+          // Auto-infer client name from machine if not explicitly set
+          if (!finalClientName && selectedMachine.client_name) {
+            finalClientName = selectedMachine.client_name;
+          }
         }
+      }
+
+      const selectedClient = clientsOptions.find(c => c.client_name === finalClientName);
+      let originalClientLogoUrl = selectedClient && selectedClient.client_logo ? selectedClient.client_logo : null;
+      let clientLogoUrl = originalClientLogoUrl;
+
+      // Make sure local images work
+      if (clientLogoUrl && !clientLogoUrl.startsWith('http')) {
+        clientLogoUrl = window.location.origin + (clientLogoUrl.startsWith('/') ? '' : '/') + clientLogoUrl + `?t=${new Date().getTime()}`;
+        originalClientLogoUrl = clientLogoUrl;
       }
 
       // Load SmartBuddy Logo
@@ -333,7 +339,7 @@ const Reports = () => {
         
         doc.setTextColor(37, 99, 235); // Blue
         doc.setFontSize(10);
-        doc.text(`Client Name: ${clientName || 'All Clients'}`, centerX, 22, { align: 'center', maxWidth: 110 });
+        doc.text(`Client Name: ${finalClientName || 'All Clients'}`, centerX, 22, { align: 'center', maxWidth: 110 });
         
         doc.setTextColor(100, 100, 100); // Gray
         doc.setFontSize(9);
@@ -421,65 +427,88 @@ const Reports = () => {
         toast.success('HD PDF Report Downloaded');
       };
       
-      // Helper function: Two-stage guaranteed image loader (HD Quality Preserved)
-      const getBase64FromUrl = async (url) => {
-        try {
-          const res = await axios.get(url, { responseType: 'blob' });
-          const blob = res.data;
-          
-          if (!blob.type.startsWith('image/')) {
-            toast.error("Fetched file is not an image!");
-            return null;
-          }
-
-          const rawDataUrl = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-
-          return new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-              // If it's already a standard format, bypass canvas for 100% HD Original Quality
-              if (blob.type === 'image/jpeg' || blob.type === 'image/png') {
-                const ext = blob.type === 'image/jpeg' ? 'JPEG' : 'PNG';
-                resolve({ base64: rawDataUrl, ext, width: img.width, height: img.height });
-                return;
-              }
-
-              // Only use canvas fallback for WEBP, AVIF, BMP etc.
-              try {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-                const finalPngDataUrl = canvas.toDataURL('image/png', 1.0); // Highest quality
-                resolve({ base64: finalPngDataUrl, ext: 'PNG', width: img.width, height: img.height });
-              } catch (e) {
-                resolve(null);
-              }
-            };
-            img.onerror = () => resolve(null);
-            img.src = rawDataUrl;
-          });
-
-        } catch (error) {
-          toast.error("Network Error: Could not fetch logo from server");
-          return null;
+      // Helper function: Multi-fallback guaranteed image loader using Native Fetch (HD Quality Preserved)
+      const getBase64FromUrl = async (url, originalUrl) => {
+        const urlsToTry = [];
+        
+        // 1. Vercel / Vite s3-proxy (Preferred for avoiding CORS)
+        if (originalUrl && originalUrl.includes('amazonaws.com')) {
+           const pathOnly = originalUrl.replace(/https?:\/\/[^\/]+\.amazonaws\.com/, '');
+           urlsToTry.push(window.location.origin + '/s3-proxy' + pathOnly);
         }
+        
+        // 2. Direct S3 URL
+        if (originalUrl) urlsToTry.push(originalUrl);
+        else urlsToTry.push(url);
+        
+        // 3. Public CORS Proxies (Ultimate Fallbacks)
+        if (originalUrl && originalUrl.startsWith('http')) {
+           urlsToTry.push(`https://api.allorigins.win/raw?url=${encodeURIComponent(originalUrl)}`);
+           urlsToTry.push(`https://corsproxy.io/?${encodeURIComponent(originalUrl)}`);
+        }
+
+        for (const attemptUrl of urlsToTry) {
+          try {
+            // Use native fetch to avoid any Axios global headers or interceptors that S3 might reject
+            const res = await fetch(attemptUrl, { method: 'GET', mode: 'cors' });
+            
+            if (!res.ok) continue;
+            
+            const blob = await res.blob();
+            
+            if (!blob.type.startsWith('image/')) {
+              continue; 
+            }
+
+            const rawDataUrl = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+
+            return await new Promise((resolve) => {
+              const img = new Image();
+              img.onload = () => {
+                // If it's already a standard format, bypass canvas for 100% HD Original Quality
+                if (blob.type === 'image/jpeg' || blob.type === 'image/png') {
+                  const ext = blob.type === 'image/jpeg' ? 'JPEG' : 'PNG';
+                  resolve({ base64: rawDataUrl, ext, width: img.width, height: img.height });
+                  return;
+                }
+
+                // Only use canvas fallback for WEBP, AVIF, BMP etc.
+                try {
+                  const canvas = document.createElement('canvas');
+                  canvas.width = img.width;
+                  canvas.height = img.height;
+                  const ctx = canvas.getContext('2d');
+                  ctx.drawImage(img, 0, 0);
+                  const finalPngDataUrl = canvas.toDataURL('image/png', 1.0); 
+                  resolve({ base64: finalPngDataUrl, ext: 'PNG', width: img.width, height: img.height });
+                } catch (e) {
+                  resolve(null);
+                }
+              };
+              img.onerror = () => resolve(null);
+              img.src = rawDataUrl;
+            });
+          } catch (error) {
+            console.warn(`Failed to fetch image from ${attemptUrl}`, error.message);
+          }
+        }
+        
+        return null;
       };
 
       const generateReportWithImages = async () => {
         let clientImgObj = null;
         
         if (clientLogoUrl) {
-          toast.success("Trying to fetch logo: " + clientLogoUrl.split('?')[0]);
-          clientImgObj = await getBase64FromUrl(clientLogoUrl);
+          toast.success("Trying to fetch logo...");
+          clientImgObj = await getBase64FromUrl(clientLogoUrl, originalClientLogoUrl);
           if (!clientImgObj) {
-            toast.error("Base64 conversion returned null");
+            toast.error("Logo fetch failed");
           }
         } else {
           if (clientName && clientName !== 'All Clients') {
@@ -489,7 +518,7 @@ const Reports = () => {
 
         // Load SmartBuddy Logo using the robust HD fetcher
         const sbLogoUrl = window.location.origin + `/SB_Logo.jpg`;
-        const sbImgObj = await getBase64FromUrl(sbLogoUrl);
+        const sbImgObj = await getBase64FromUrl(sbLogoUrl, sbLogoUrl);
         if (!sbImgObj) {
           toast.error("Failed to load HD SmartBuddy Logo");
         }
