@@ -71,7 +71,7 @@ const QRPay = () => {
     
     try {
       // 1. Create order on our server
-      const orderRes = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/transaction/pay`, {
+      const orderRes = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/transactions/pay`, {
         machine_id: machineId,
         amount: machine.uses_amt // Typically from user selection, but using fixed rate for demo
       });
@@ -89,7 +89,7 @@ const QRPay = () => {
         handler: async function (response) {
           try {
             // 3. Verify and save transaction
-            const verifyRes = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/transaction/save`, {
+            const verifyRes = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/transactions/save`, {
               order_id: response.razorpay_order_id,
               pay_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
