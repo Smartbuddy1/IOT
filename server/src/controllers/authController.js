@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import pool from '../config/db.js';
 
 export const login = async (req, res) => {
@@ -21,8 +22,7 @@ export const login = async (req, res) => {
       let isMatch = false;
       if (dbUser.password && dbUser.password.startsWith('$2')) {
         try {
-          const bcrypt = await import('bcryptjs');
-          isMatch = await bcrypt.default.compare(password, dbUser.password);
+          isMatch = await bcrypt.compare(password, dbUser.password);
         } catch (err) {
           console.error('Bcrypt compare error for user:', err);
         }
@@ -33,9 +33,8 @@ export const login = async (req, res) => {
         // If plain text matches, auto-upgrade their security in the background!
         if (isMatch) {
           try {
-            const bcrypt = await import('bcryptjs');
-            const salt = await bcrypt.default.genSalt(10);
-            const hashedPassword = await bcrypt.default.hash(password, salt);
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
             // Update the user's password to the new hash in the database
             await pool.query('UPDATE tblusers SET password = ? WHERE mobile = ?', [hashedPassword, mobile]);
             console.log(`🔒 Upgraded password security for user: ${mobile}`);
@@ -100,8 +99,7 @@ export const login = async (req, res) => {
       let isMatch = false;
       if (dbClient.password && dbClient.password.startsWith('$2')) {
         try {
-          const bcrypt = await import('bcryptjs');
-          isMatch = await bcrypt.default.compare(password, dbClient.password);
+          isMatch = await bcrypt.compare(password, dbClient.password);
         } catch (err) {
           console.error('Bcrypt compare error for client:', err);
         }
