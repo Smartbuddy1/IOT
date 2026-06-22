@@ -98,6 +98,7 @@ export const initializeMqtt = () => {
         );
 
         // 4. If it's a JSON payload, update specific sensors
+        if (Object.keys(payload).length > 0) {
           // Default values for sensors
           const water_level = payload.water_level || payload.waterLevel || '0';
           const pir_sensor = payload.pir || payload.pir_sensor || '0';
