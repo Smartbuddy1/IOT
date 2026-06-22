@@ -208,18 +208,16 @@ const Machines = () => {
               <th>Sr No</th>
               <th onClick={() => requestSort('machine_id')} style={{cursor: 'pointer'}}>Machine ID <ArrowUpDown size={14} style={{verticalAlign: 'middle', marginLeft: '4px'}}/></th>
               <th onClick={() => requestSort('status')} style={{cursor: 'pointer'}}>Status <ArrowUpDown size={14} style={{verticalAlign: 'middle', marginLeft: '4px'}}/></th>
-              <th onClick={() => requestSort('machine_pin')} style={{cursor: 'pointer'}}>Machine PIN <ArrowUpDown size={14} style={{verticalAlign: 'middle', marginLeft: '4px'}}/></th>
-              <th onClick={() => requestSort('total_amt')} style={{cursor: 'pointer'}}>Total Amount <ArrowUpDown size={14} style={{verticalAlign: 'middle', marginLeft: '4px'}}/></th>
+              <th onClick={() => requestSort('uses_amt')} style={{cursor: 'pointer'}}>Assigned Amount <ArrowUpDown size={14} style={{verticalAlign: 'middle', marginLeft: '4px'}}/></th>
               <th onClick={() => requestSort('client_name')} style={{cursor: 'pointer'}}>Assigned Client <ArrowUpDown size={14} style={{verticalAlign: 'middle', marginLeft: '4px'}}/></th>
               <th onClick={() => requestSort('project_name')} style={{cursor: 'pointer'}}>Project Name <ArrowUpDown size={14} style={{verticalAlign: 'middle', marginLeft: '4px'}}/></th>
-              <th>Last Used</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {currentMachines.length === 0 ? (
               <tr className="premium-row">
-                <td colSpan="9" style={{ padding: '2rem', textAlign: 'center', color: 'var(--slate-500)' }}>
+                <td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: 'var(--slate-500)' }}>
                   No machines found.
                 </td>
               </tr>
@@ -237,17 +235,13 @@ const Machines = () => {
                        machine.status === 'maintenance' ? 'Maintenance' : 'Failed'}
                     </span>
                   </td>
-                  <td style={{ fontFamily: 'monospace', fontWeight: '600' }}>{machine.machine_pin || '-'}</td>
                   <td style={{ fontWeight: '700', color: 'var(--slate-800)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      ₹ {machine.total_amt || '0'}
+                      ₹ {machine.uses_amt || '0'}
                     </div>
                   </td>
                   <td style={{ color: 'var(--slate-600)' }}>{machine.client_name || '-'}</td>
                   <td style={{ color: 'var(--slate-600)' }}>{machine.project_name || '-'}</td>
-                  <td style={{ color: 'var(--slate-500)', fontSize: '0.85rem' }}>
-                    {machine.last_update ? new Date(machine.last_update).toLocaleString() : '-'}
-                  </td>
                   <td>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button 
@@ -381,7 +375,15 @@ const Machines = () => {
           <div className="full-width" style={{ fontWeight: '600', color: 'var(--slate-800)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginTop: '1rem' }}>Configuration & Pricing</div>
           <div className="form-group">
             <label className="form-label">Uses Amount (₹) *</label>
-            <input type="number" name="uses_amt" value={formData.uses_amt} onChange={handleInputChange} className="form-input" required />
+            <input 
+              type="number" 
+              name="uses_amt" 
+              value={formData.uses_amt} 
+              onChange={handleInputChange} 
+              className="form-input" 
+              required 
+              disabled={formData.free === 'Yes'} 
+            />
           </div>
           <div className="form-group">
             <label className="form-label">Wall Clean Mode</label>
@@ -409,40 +411,68 @@ const Machines = () => {
 
           {/* Section: Payment Modes */}
           <div className="full-width" style={{ fontWeight: '600', color: 'var(--slate-800)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginTop: '1rem' }}>Payment Modes Supported</div>
-          <div className="form-group">
-            <label className="form-label">Free (Button)</label>
-            <select name="free" value={formData.free} onChange={handleInputChange} className="form-input">
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Coin Acceptor</label>
-            <select name="coin" value={formData.coin} onChange={handleInputChange} className="form-input">
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">UPI (QR Code)</label>
-            <select name="upi" value={formData.upi} onChange={handleInputChange} className="form-input">
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Smart Card</label>
-            <select name="smart_card" value={formData.smart_card} onChange={handleInputChange} className="form-input">
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Digital Token</label>
-            <select name="digital_token" value={formData.digital_token} onChange={handleInputChange} className="form-input">
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
+          
+          <div className="full-width" style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', marginTop: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input 
+                type="checkbox" id="free_cb"
+                checked={formData.free === 'Yes'} 
+                onChange={(e) => {
+                  const isFree = e.target.checked ? 'Yes' : 'No';
+                  setFormData(prev => ({
+                    ...prev, 
+                    free: isFree,
+                    ...(isFree === 'Yes' ? { uses_amt: 0, coin: 'No', upi: 'No', smart_card: 'No', digital_token: 'No' } : {})
+                  }));
+                }}
+                style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer', accentColor: 'var(--primary-color)' }}
+              />
+              <label htmlFor="free_cb" style={{ marginBottom: 0, cursor: 'pointer', fontSize: '0.95rem', color: 'var(--slate-700)' }}>Free (Button)</label>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: formData.free === 'Yes' ? 0.5 : 1 }}>
+              <input 
+                type="checkbox" id="coin_cb"
+                checked={formData.coin === 'Yes'} 
+                onChange={(e) => setFormData({...formData, coin: e.target.checked ? 'Yes' : 'No'})} 
+                disabled={formData.free === 'Yes'}
+                style={{ width: '1.2rem', height: '1.2rem', cursor: formData.free === 'Yes' ? 'not-allowed' : 'pointer', accentColor: 'var(--primary-color)' }}
+              />
+              <label htmlFor="coin_cb" style={{ marginBottom: 0, cursor: formData.free === 'Yes' ? 'not-allowed' : 'pointer', fontSize: '0.95rem', color: 'var(--slate-700)' }}>Coin Acceptor</label>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: formData.free === 'Yes' ? 0.5 : 1 }}>
+              <input 
+                type="checkbox" id="upi_cb"
+                checked={formData.upi === 'Yes'} 
+                onChange={(e) => setFormData({...formData, upi: e.target.checked ? 'Yes' : 'No'})} 
+                disabled={formData.free === 'Yes'}
+                style={{ width: '1.2rem', height: '1.2rem', cursor: formData.free === 'Yes' ? 'not-allowed' : 'pointer', accentColor: 'var(--primary-color)' }}
+              />
+              <label htmlFor="upi_cb" style={{ marginBottom: 0, cursor: formData.free === 'Yes' ? 'not-allowed' : 'pointer', fontSize: '0.95rem', color: 'var(--slate-700)' }}>UPI (QR Code)</label>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: formData.free === 'Yes' ? 0.5 : 1 }}>
+              <input 
+                type="checkbox" id="smart_card_cb"
+                checked={formData.smart_card === 'Yes'} 
+                onChange={(e) => setFormData({...formData, smart_card: e.target.checked ? 'Yes' : 'No'})} 
+                disabled={formData.free === 'Yes'}
+                style={{ width: '1.2rem', height: '1.2rem', cursor: formData.free === 'Yes' ? 'not-allowed' : 'pointer', accentColor: 'var(--primary-color)' }}
+              />
+              <label htmlFor="smart_card_cb" style={{ marginBottom: 0, cursor: formData.free === 'Yes' ? 'not-allowed' : 'pointer', fontSize: '0.95rem', color: 'var(--slate-700)' }}>Smart Card</label>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: formData.free === 'Yes' ? 0.5 : 1 }}>
+              <input 
+                type="checkbox" id="digital_token_cb"
+                checked={formData.digital_token === 'Yes'} 
+                onChange={(e) => setFormData({...formData, digital_token: e.target.checked ? 'Yes' : 'No'})} 
+                disabled={formData.free === 'Yes'}
+                style={{ width: '1.2rem', height: '1.2rem', cursor: formData.free === 'Yes' ? 'not-allowed' : 'pointer', accentColor: 'var(--primary-color)' }}
+              />
+              <label htmlFor="digital_token_cb" style={{ marginBottom: 0, cursor: formData.free === 'Yes' ? 'not-allowed' : 'pointer', fontSize: '0.95rem', color: 'var(--slate-700)' }}>Digital Token</label>
+            </div>
           </div>
 
           <div className="full-width" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
@@ -457,7 +487,7 @@ const Machines = () => {
       {/* VIEW MACHINE MODAL */}
       <Modal isOpen={!!viewMachine} onClose={() => setViewMachine(null)} title="Machine Details">
         {viewMachine && (
-          <div style={{ padding: '1rem', maxHeight: '75vh', overflowY: 'auto' }}>
+          <div style={{ padding: '0.5rem' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #e2e8f0', fontSize: '0.9rem', backgroundColor: 'white' }}>
               <tbody>
                 {[
@@ -493,7 +523,7 @@ const Machines = () => {
                     label: 'QR Code', 
                     value: (
                       <img 
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(viewMachine.machine_id)}`} 
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${window.location.origin}/pay/${viewMachine.machine_id}`)}`} 
                         alt="QR Code" 
                         style={{ width: '100px', height: '100px' }} 
                       />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // Forced Update for Vercel
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ShieldCheck, Loader2, Sun, Moon, AlertCircle } from 'lucide-react';
@@ -32,21 +32,26 @@ const QRPay = () => {
   }, []);
 
   useEffect(() => {
-    // Fetch machine details to show rate
+    // Fetch machine details to show rate and check health
     const fetchMachineDetails = async () => {
       try {
-        // Since we might not be authenticated here, we might need a public endpoint or use a dummy fetch for now.
-        // Assuming there's an endpoint to get machine rate:
         const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/machines/${machineId}`);
-        setMachine(response.data.data);
+        const fetchedMachine = response.data.machine;
+        
+        if (fetchedMachine) {
+          if (fetchedMachine.status === 'Busy') {
+            setError('❌ Machine is currently busy. Please wait for a moment.');
+          } else if (fetchedMachine.status === 'Maintenance' || fetchedMachine.status === 'Failed') {
+            setError('⚠️ Machine is under maintenance. Apologies for the inconvenience.');
+          } else {
+            setMachine(fetchedMachine);
+          }
+        } else {
+          setError('Machine not found in our records.');
+        }
       } catch (err) {
         console.error(err);
-        // Fallback for demonstration if API fails or requires auth
-        setMachine({
-          machine_id: machineId,
-          uses_amt: 10,
-          flush_time: 1
-        });
+        setError("Failed to connect to the machine server.");
       } finally {
         setLoading(false);
       }

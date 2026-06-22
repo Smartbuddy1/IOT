@@ -281,8 +281,9 @@ const Clients = () => {
           </div>
           
           <div className="form-group full-width">
-            <label className="form-label">Client Logo (Optional)</label>
-            <input type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files[0])} className="form-input" style={{ padding: '0.5rem', background: 'transparent' }} />
+            <label className="form-label">Client Logo *</label>
+            <input type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files[0])} className="form-input" style={{ padding: '0.5rem', background: 'transparent' }} required={!editingId} />
+            {editingId && <small style={{ color: 'var(--slate-500)', fontSize: '0.75rem' }}>Upload new to replace existing logo</small>}
           </div>
 
           <div className="form-group">
@@ -363,14 +364,14 @@ const Clients = () => {
           </div>
           <div className="form-group">
             <label className="form-label">Password *</label>
-            <input type="text" name="password" value={formData.password || ''} onChange={handleInputChange} className="form-input" minLength="8" maxLength="10" required />
-            <small style={{ color: 'var(--slate-500)', fontSize: '0.75rem' }}>8-10 characters</small>
+            <input type="password" name="password" value={formData.password || ''} onChange={handleInputChange} className="form-input" minLength="8" maxLength="10" required={!editingId} />
+            <small style={{ color: 'var(--slate-500)', fontSize: '0.75rem' }}>{editingId ? "Leave blank to keep current password" : "8-10 characters"}</small>
           </div>
 
           <div className="full-width" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
             <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={formLoading}>
-              {formLoading ? 'Saving...' : 'Save Client'}
+              {formLoading ? 'Submitting...' : 'Submit'}
             </button>
           </div>
         </form>

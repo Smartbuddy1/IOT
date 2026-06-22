@@ -10,6 +10,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [liveStatus, setLiveStatus] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,6 +25,23 @@ const Dashboard = () => {
       }
     };
     fetchDashboard();
+  }, []);
+
+  // Poll IoT Live Data every 3 seconds
+  useEffect(() => {
+    const fetchLiveStatus = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/iot/live-status`);
+        if (response.data.success) {
+          setLiveStatus(response.data.data);
+        }
+      } catch (error) {
+        // Silently fail to avoid console spam
+      }
+    };
+    fetchLiveStatus();
+    const interval = setInterval(fetchLiveStatus, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {
@@ -62,6 +80,46 @@ const Dashboard = () => {
           <p style={{ color: 'var(--slate-500)', fontSize: '1.1rem' }}>Hello {user?.username}, here is your system overview.</p>
         </div>
       </div>
+
+      {/* IOT LIVE MONITOR ROW */}
+      {Object.keys(liveStatus).length > 0 && (
+        <div style={{ marginBottom: '2rem', marginTop: '1rem' }} className="animate-entrance">
+          <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1rem', color: 'var(--slate-800)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#ef4444', display: 'inline-block', animation: 'pulse 2s infinite' }}></span>
+            Live Hardware Monitor
+          </h3>
+          <div className="stats-grid">
+            {Object.entries(liveStatus).map(([machineId, data]) => (
+              <div key={machineId} className="glass-panel stat-card hover-float" style={{ borderLeft: '4px solid #3b82f6' }}>
+                <div style={{ marginBottom: '10px', fontWeight: 'bold', fontSize: '1.1rem', color: '#1e293b' }}>
+                  Machine: {machineId}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.9rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: parseInt(data.water_level) > 20 ? '#10b981' : '#ef4444' }}></div>
+                    Water: {data.water_level}%
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: parseInt(data.pir_sensor) === 1 ? '#10b981' : '#cbd5e1' }}></div>
+                    PIR: {parseInt(data.pir_sensor) === 1 ? 'Motion' : 'Clear'}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: parseInt(data.door_lock) === 1 ? '#10b981' : '#ef4444' }}></div>
+                    Door: {parseInt(data.door_lock) === 1 ? 'Locked' : 'Open'}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: parseInt(data.pb_flush) === 1 ? '#3b82f6' : '#cbd5e1' }}></div>
+                    Flush: {parseInt(data.pb_flush) === 1 ? 'ON' : 'OFF'}
+                  </div>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '10px', textAlign: 'right' }}>
+                  Updated: {new Date(data.last_updated).toLocaleTimeString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ROW 1: General Stats */}
       <div className="stats-grid" style={{ marginBottom: '1.5rem' }}>
@@ -222,40 +280,39 @@ const Dashboard = () => {
         <div className="glass-panel chart-card hover-float">
           <h3 className="chart-title">Machine Health Distribution</h3>
           <div style={{ height: '300px', width: '100%' }}>
-            {finalMachineHealth.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={finalMachineHealth}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70}
-                    outerRadius={105}
-                    cornerRadius={8}
-                    paddingAngle={6}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {finalMachineHealth.map((entry, index) => {
-                      // Map colors based on status string loosely
-                      const status = entry.name?.toLowerCase() || '';
-                      let color = '#3b82f6'; // default blue
-                      if (status.includes('ready') || status.includes('active')) color = '#10b981'; // emerald
-                      else if (status.includes('maintenance')) color = '#f59e0b'; // amber
-                      else if (status.includes('busy') || status.includes('failed')) color = '#ef4444'; // rose
-                      return <Cell key={`cell-${index}`} fill={color} />;
-                    })}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{backgroundColor: 'var(--card-bg)', color: 'var(--text-primary)', borderRadius: '0.75rem', border: '1px solid var(--border-color)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--slate-400)' }}>
-                No machine data.
-              </div>
-            )}
+            {(() => {
+              // Normalize data for UI consistency
+              const healthData = [
+                { name: 'Active', value: finalMachineHealth.find(s => s.name?.toLowerCase() === 'active' || s.name?.toLowerCase() === 'ready')?.value || 0, color: '#10b981' }, // Emerald Green
+                { name: 'Failed', value: finalMachineHealth.find(s => s.name?.toLowerCase() === 'failed' || s.name?.toLowerCase() === 'busy')?.value || 0, color: '#ef4444' }, // Rose Red
+                { name: 'Maintenance', value: finalMachineHealth.find(s => s.name?.toLowerCase() === 'maintenance')?.value || 0, color: '#f59e0b' } // Amber Orange
+              ];
+
+              return (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={healthData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      dataKey="value"
+                      stroke="none"
+                      label={({ name, percent }) => percent > 0 ? `${name} ${(percent * 100).toFixed(0)}%` : null}
+                      labelLine={({ percent }) => percent > 0}
+                    >
+                      {healthData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{backgroundColor: 'var(--card-bg)', color: 'var(--text-primary)', borderRadius: '0.75rem', border: '1px solid var(--border-color)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
+                    />
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                  </PieChart>
+                </ResponsiveContainer>
+              );
+            })()}
           </div>
         </div>
       </div>
