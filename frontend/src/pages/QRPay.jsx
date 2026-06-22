@@ -76,13 +76,13 @@ const QRPay = () => {
         amount: machine.uses_amt // Typically from user selection, but using fixed rate for demo
       });
       
-      const { order_id, amount, currency } = orderRes.data;
+      const { order_id, amount, currency, key } = orderRes.data;
       
       // 2. Open Razorpay Checkout
       const options = {
-        key: 'rzp_test_xxxxxx', // Replace with actual Razorpay Key ID
+        key: key, // Dynamically use the Razorpay Key ID from the backend
         amount: amount, // amount in the smallest currency unit
-        currency: currency,
+        currency: currency || 'INR',
         name: "SmartBuddy",
         description: `Machine activation for ${machineId}`,
         order_id: order_id,
