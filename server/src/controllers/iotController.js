@@ -46,3 +46,36 @@ export const handleHardwarePost = async (req, res) => {
     res.status(500).json({ status: "error", message: "Database error", error: error.message });
   }
 };
+
+export const getLiveStatus = async (req, res) => {
+  try {
+    const { machineId } = req.query;
+    let query = 'SELECT * FROM device_live_status';
+    let params = [];
+
+    if (machineId) {
+      query += ' WHERE machine_id = ?';
+      params.push(machineId);
+    }
+
+    const [rows] = await pool.query(query, params);
+    
+    // Convert to a format that's easy to consume on the frontend
+    const statuses = {};
+    rows.forEach(row => {
+      statuses[row.machine_id] = {
+        water_level: row.water_level,
+        pir_sensor: row.pir_sensor,
+        door_lock: row.door_lock,
+        pb_coin: row.pb_coin,
+        pb_flush: row.pb_flush,
+        last_updated: row.last_updated
+      };
+    });
+
+    res.json({ success: true, data: statuses });
+  } catch (error) {
+    console.error('Fetch live status error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};

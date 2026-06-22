@@ -21,7 +21,8 @@ import locationRoutes from './routes/locationRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import iotRoutes from './routes/iotRoutes.js';
 import { initializeMqtt } from './services/mqttService.js';
-
+import { startHeartbeatMonitor } from './services/heartbeatService.js';
+import { sanitizePayload } from './middlewares/sanitize.js';
 dotenv.config();
 
 const app = express();
@@ -54,6 +55,9 @@ app.use('/api/', apiLimiter);
 // Body parser
 app.use(express.json({ limit: '10mb' })); // Limit payload size to prevent DOS
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Global XSS Sanitization Middleware
+app.use(sanitizePayload);
 
 // Force CORS specifically for static files (needed for jsPDF canvas)
 app.use('/uploads', (req, res, next) => {
@@ -137,6 +141,9 @@ try {
 } catch (mqttError) {
   console.error('⚠️ Could not initialize MQTT broker background service:', mqttError.message);
 }
+
+// Initialize Heartbeat Monitor to auto-offline disconnected machines
+startHeartbeatMonitor();
 
 // Global Error Handler Middleware
 app.use((err, req, res, next) => {

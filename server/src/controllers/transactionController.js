@@ -71,11 +71,15 @@ export const createRazorpayOrder = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Machine not found' });
     }
 
-    const { status } = machines[0];
-    if (status === 'Busy') {
+    const status = machines[0].status?.toLowerCase()?.trim();
+    // Block payment if machine is not in a ready/active/idle state (Whitelist approach)
+    if (status === 'ready' || status === 'active' || status === 'idle') {
+      // Machine is safe, allow order creation
+    } else if (status === 'busy') {
       return res.status(400).json({ success: false, message: '❌ Machine is busy, please wait for some time.' });
-    } else if (status === 'Maintenance') {
-      return res.status(400).json({ success: false, message: '⚠️ Machine is under maintenance.' });
+    } else {
+      // Blocks 'failed', 'maintenance', 'offline', and ANY unknown status!
+      return res.status(400).json({ success: false, message: '⚠️ Machine is under maintenance or offline. Payment disabled.' });
     }
 
     // 2. Create Razorpay order
@@ -102,11 +106,30 @@ export const createRazorpayOrder = async (req, res) => {
   }
 };
 
+import crypto from 'crypto';
+
 export const saveTransaction = async (req, res) => {
-  const { machine_id, amount, pay_id, order_id, mobile, status } = req.body;
+  const { machine_id, amount, pay_id, order_id, razorpay_signature, mobile, status } = req.body;
 
   if (!machine_id || !amount || !status) {
     return res.status(400).json({ success: false, message: 'Missing transaction details' });
+  }
+
+  // Security: Verify Razorpay signature if it's a success transaction
+  if (status === 'success') {
+    if (!order_id || !pay_id || !razorpay_signature) {
+      return res.status(400).json({ success: false, message: 'Payment verification details missing' });
+    }
+
+    const secret = process.env.RAZORPAY_KEY_SECRET || '9jgUTLJZqWiz2E1AiXQVw1K9';
+    const generated_signature = crypto
+      .createHmac('sha256', secret)
+      .update(order_id + '|' + pay_id)
+      .digest('hex');
+
+    if (generated_signature !== razorpay_signature) {
+      return res.status(403).json({ success: false, message: 'Invalid payment signature. Transaction rejected.' });
+    }
   }
 
   try {

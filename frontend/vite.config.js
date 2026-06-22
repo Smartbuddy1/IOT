@@ -10,6 +10,11 @@ export default defineConfig({
       '/uploads': {
         target: 'http://localhost:5005',
         changeOrigin: true,
+      },
+      '/s3-proxy': {
+        target: 'https://smartbuddyiot.s3.ap-south-1.amazonaws.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/s3-proxy/, '')
       }
     }
   },

@@ -27,7 +27,22 @@ export const login = async (req, res) => {
           console.error('Bcrypt compare error for user:', err);
         }
       } else {
+        // Plaintext fallback (Legacy Migration)
         isMatch = (dbUser.password === password);
+        
+        // If plain text matches, auto-upgrade their security in the background!
+        if (isMatch) {
+          try {
+            const bcrypt = await import('bcryptjs');
+            const salt = await bcrypt.default.genSalt(10);
+            const hashedPassword = await bcrypt.default.hash(password, salt);
+            // Update the user's password to the new hash in the database
+            await pool.query('UPDATE tblusers SET password = ? WHERE mobile = ?', [hashedPassword, mobile]);
+            console.log(`🔒 Upgraded password security for user: ${mobile}`);
+          } catch (upgradeErr) {
+            console.error('Password auto-upgrade failed:', upgradeErr.message);
+          }
+        }
       }
 
       if (isMatch) {

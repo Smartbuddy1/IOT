@@ -35,6 +35,13 @@ export const initializeMqtt = () => {
         console.log('📡 Subscribed to aarya');
       }
     });
+
+    // Subscribe to smartbuddy topic (used by hardware)
+    client.subscribe('smartbuddy', (err) => {
+      if (!err) {
+        console.log('📡 Subscribed to smartbuddy'); // Forced update for git
+      }
+    });
   });
 
   client.on('message', async (topic, message) => {
@@ -48,33 +55,64 @@ export const initializeMqtt = () => {
         [topic, msgStr]
       );
 
-      // 2. If topic is aarya (or starts with machines/), log machine ping to datatest
-      if (topic === 'aarya' || topic.startsWith('machines/')) {
+      // 2. Extract machine ID and payload
+      let machineId = null;
+      let payload = {};
+
+      if (topic.startsWith('machines/') || topic.startsWith('smartbuddy/devices/')) {
+        machineId = topic.split('/').pop(); // Extract from topic
+      }
+      
+      // Try parsing JSON payload or comma-separated string
+      try {
+        if (msgStr.includes('{')) {
+          payload = JSON.parse(msgStr);
+          if (payload.machine_id) machineId = payload.machine_id;
+          if (payload.device_id) machineId = payload.device_id;
+        } else if (msgStr.includes(',')) {
+          // Hardware sends comma separated string like: SBE2T100,ready,Coin_UPI,5,En,5,5,11,11
+          const parts = msgStr.split(',');
+          if (parts.length > 0) {
+            machineId = parts[0].trim(); // First part is usually the Machine ID
+          }
+        } else if (msgStr.length > 0 && msgStr.length < 20) {
+          machineId = msgStr.trim();
+        }
+      } catch(e) {
+        console.log("Error parsing payload:", e.message);
+      }
+
+      // 3. Update the live machine status in the 'machines' table
+      if (machineId) {
         await pool.query(
-          'INSERT INTO datatest (topic_name, machine_id, received_time) VALUES (?, ?, NOW())',
-          [topic, msgStr]
+          'UPDATE machines SET status = ? WHERE machine_id = ?',
+          ['active', machineId]
         );
 
-        // 3. Update the live machine status in the 'machines' table
-        let machineId = null;
-        if (topic.startsWith('machines/')) {
-          machineId = topic.split('/')[1];
-        } else if (msgStr.length > 0 && msgStr.length < 20 && !msgStr.includes('{')) {
-          // Fallback if payload is just a plain machine ID string
-          machineId = msgStr;
-        } else {
-          // Attempt to parse JSON payload to find machine_id
-          try {
-            const parsed = JSON.parse(msgStr);
-            if (parsed.machine_id) machineId = parsed.machine_id;
-          } catch(e) {}
-        }
+        // 4. If it's a JSON payload, update device_live_status
+        if (Object.keys(payload).length > 0) {
+          // Default values for sensors
+          const water_level = payload.water_level || payload.waterLevel || '0';
+          const pir_sensor = payload.pir || payload.pir_sensor || '0';
+          const door_lock = payload.door || payload.door_lock || '0';
+          const pb_coin = payload.pb_coin || payload.coin || '0';
+          const pb_flush = payload.pb_flush || payload.flush || '0';
 
-        if (machineId) {
+          // Insert or Update the live status for this machine
           await pool.query(
-            'UPDATE machines SET status = ? WHERE machine_id = ?',
-            ['active', machineId]
+            `INSERT INTO device_live_status 
+            (machine_id, water_level, pir_sensor, door_lock, pb_coin, pb_flush, last_updated) 
+            VALUES (?, ?, ?, ?, ?, ?, NOW()) 
+            ON DUPLICATE KEY UPDATE 
+            water_level = VALUES(water_level), 
+            pir_sensor = VALUES(pir_sensor), 
+            door_lock = VALUES(door_lock), 
+            pb_coin = VALUES(pb_coin), 
+            pb_flush = VALUES(pb_flush), 
+            last_updated = NOW()`,
+            [machineId, water_level, pir_sensor, door_lock, pb_coin, pb_flush]
           );
+          console.log(`✅ Live status updated for machine: ${machineId}`);
         }
       }
     } catch (err) {
@@ -84,6 +122,15 @@ export const initializeMqtt = () => {
 
   client.on('error', (err) => {
     console.error('❌ MQTT Broker Connection Error:', err.message);
+    // Do not throw the error to prevent Node.js crash
+  });
+
+  client.on('offline', () => {
+    console.warn('⚠️ MQTT Broker went offline. Awaiting automatic reconnect...');
+  });
+
+  client.on('reconnect', () => {
+    console.log('🔄 MQTT Broker attempting to reconnect...');
   });
 
   client.on('close', () => {
