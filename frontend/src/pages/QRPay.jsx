@@ -126,8 +126,10 @@ const QRPay = () => {
       rzp1.open();
       
     } catch (err) {
-      console.error(err);
-      setError("Failed to initiate payment. Please check your connection.");
+      console.error('Payment initialization error:', err);
+      // Extract the actual error message sent by the backend if it exists
+      const errorMessage = err.response?.data?.message || err.message || "Failed to initiate payment. Please check your connection.";
+      setError("Error: " + errorMessage);
     } finally {
       setProcessing(false);
     }
