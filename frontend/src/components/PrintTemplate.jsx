@@ -1,5 +1,5 @@
 import React from "react";
-const logo = "/smartbuddy.png";
+import logo from '../assets/smartbuddy.png';
 
 const PrintTemplate = ({ title, children, isTable = true }) => {
   const currentDate = new Date();

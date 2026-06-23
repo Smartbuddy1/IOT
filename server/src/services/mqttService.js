@@ -84,6 +84,12 @@ export const initializeMqtt = () => {
 
       // 3. Update the live machine status in the 'machines' table
       if (machineId) {
+        // Validation: Machine ID must only contain letters, numbers, hyphens, or underscores
+        const isValidId = /^[a-zA-Z0-9_-]+$/.test(machineId);
+        if (!isValidId) {
+          console.log(`⚠️ Ignored invalid machine ID (likely an AT command): ${machineId}`);
+          return; // Stop processing this message
+        }
         await pool.query(
           'UPDATE machines SET status = ? WHERE machine_id = ?',
           ['active', machineId]
