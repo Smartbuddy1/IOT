@@ -2,7 +2,7 @@ import pool from '../config/db.js';
 
 export const getUsers = async (req, res) => {
   try {
-    const [users] = await pool.query('SELECT id, name, email, mobile, role, status, created, assigned_state FROM tblusers ORDER BY id DESC');
+    const [users] = await pool.query('SELECT id, name, email, mobile, role, status, created, assigned_state, assigned_client, assigned_project FROM tblusers ORDER BY id DESC');
     res.json({ success: true, users });
   } catch (error) {
     console.error('Fetch users error:', error);
@@ -11,7 +11,7 @@ export const getUsers = async (req, res) => {
 };
 
 export const createUser = async (req, res) => {
-  const { name, email, mobile, password, role, assigned_state } = req.body;
+  const { name, email, mobile, password, role, assigned_state, assigned_client, assigned_project } = req.body;
 
   if (!name || !mobile || !password || !role) {
     return res.status(400).json({ success: false, message: 'Name, Mobile, Password, and Role are required' });
@@ -19,8 +19,8 @@ export const createUser = async (req, res) => {
 
   try {
     const [result] = await pool.query(
-      'INSERT INTO tblusers (name, email, mobile, password, role, status, is_logged_in, assigned_state) VALUES (?, ?, ?, ?, ?, 1, 0, ?)',
-      [name, email || '', mobile, password, role, assigned_state || null]
+      'INSERT INTO tblusers (name, email, mobile, password, role, status, is_logged_in, assigned_state, assigned_client, assigned_project) VALUES (?, ?, ?, ?, ?, 1, 0, ?, ?, ?)',
+      [name, email || '', mobile, password, role, assigned_state || null, assigned_client || null, assigned_project || null]
     );
 
     res.json({
@@ -36,11 +36,11 @@ export const createUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   const { id } = req.params;
-  const { name, email, mobile, password, role, status, assigned_state } = req.body;
+  const { name, email, mobile, password, role, status, assigned_state, assigned_client, assigned_project } = req.body;
 
   try {
-    let query = 'UPDATE tblusers SET name = ?, email = ?, mobile = ?, role = ?, status = ?, assigned_state = ?';
-    let params = [name, email, mobile, role, status, assigned_state || null];
+    let query = 'UPDATE tblusers SET name = ?, email = ?, mobile = ?, role = ?, status = ?, assigned_state = ?, assigned_client = ?, assigned_project = ?';
+    let params = [name, email, mobile, role, status, assigned_state || null, assigned_client || null, assigned_project || null];
 
     if (password) {
       query += ', password = ?';

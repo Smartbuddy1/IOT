@@ -9,6 +9,8 @@ import SkeletonTable from '../components/SkeletonTable';
 const Staff = () => {
   const [users, setUsers] = useState([]);
   const [states, setStates] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,14 +22,17 @@ const Staff = () => {
     mobile: '',
     email: '',
     password: '',
-    role: 'Operation',
+    role: user?.role === 'Maintenance_Head' ? 'Field_Tech' : 'Maintenance_Head',
     status: 1,
-    assigned_state: ''
+    assigned_state: '',
+    assigned_client: '',
+    assigned_project: ''
   });
 
   useEffect(() => {
     fetchUsers();
     fetchStates();
+    fetchClientsAndProjects();
   }, []);
 
   const fetchUsers = async () => {
@@ -52,6 +57,18 @@ const Staff = () => {
       }
     } catch (error) {
       console.error('Failed to fetch states');
+    }
+  };
+
+  const fetchClientsAndProjects = async () => {
+    try {
+      const clientRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/clients`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }});
+      if (clientRes.data.success) setClients(clientRes.data.clients || []);
+      
+      const projectRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/projects`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }});
+      if (projectRes.data.success) setProjects(projectRes.data.projects || []);
+    } catch (error) {
+      console.error('Failed to fetch clients or projects for dropdowns');
     }
   };
 
@@ -86,9 +103,11 @@ const Staff = () => {
       mobile: staff.mobile || '',
       email: staff.email || '',
       password: '', // Blank unless they want to change it
-      role: staff.role || 'Operation',
+      role: staff.role || (user?.role === 'Maintenance_Head' ? 'Field_Tech' : 'Maintenance_Head'),
       status: staff.status !== undefined ? staff.status : 1,
-      assigned_state: staff.assigned_state || ''
+      assigned_state: staff.assigned_state || '',
+      assigned_client: staff.assigned_client || '',
+      assigned_project: staff.assigned_project || ''
     });
     setEditingId(staff.id);
     setIsModalOpen(true);
@@ -116,9 +135,11 @@ const Staff = () => {
       mobile: '',
       email: '',
       password: '',
-      role: 'Operation',
+      role: user?.role === 'Maintenance_Head' ? 'Field_Tech' : 'Maintenance_Head',
       status: 1,
-      assigned_state: ''
+      assigned_state: '',
+      assigned_client: '',
+      assigned_project: ''
     });
     setEditingId(null);
     setIsModalOpen(true);
@@ -167,7 +188,7 @@ const Staff = () => {
                   <th>Name</th>
                   <th>Mobile</th>
                   <th>Role</th>
-                  <th>Assigned State</th>
+                  <th>Jurisdiction (State / Client / Project)</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -195,8 +216,12 @@ const Staff = () => {
                         </span>
                       </td>
                       <td>
-                        {staff.role === 'Operation' ? (
-                          <span style={{ color: '#10b981', fontWeight: '500' }}>{staff.assigned_state || 'All States'}</span>
+                        {(staff.role === 'Maintenance_Head' || staff.role === 'Field_Tech') ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                            <span style={{ color: '#10b981', fontWeight: '500', fontSize: '0.85rem' }}>State: {staff.assigned_state || 'All'}</span>
+                            <span style={{ color: '#3b82f6', fontWeight: '500', fontSize: '0.85rem' }}>Client: {staff.assigned_client || 'All'}</span>
+                            <span style={{ color: '#8b5cf6', fontWeight: '500', fontSize: '0.85rem' }}>Project: {staff.assigned_project || 'All'}</span>
+                          </div>
                         ) : (
                           <span style={{ color: 'var(--slate-400)' }}>-</span>
                         )}
@@ -268,23 +293,47 @@ const Staff = () => {
               <label className="form-label">Role <span style={{color:'red'}}>*</span></label>
               <select className="form-input" value={formData.role} onChange={e => {
                 setFormData({...formData, role: e.target.value, assigned_state: e.target.value === 'Admin' ? '' : formData.assigned_state})
-              }} required>
-                <option value="Operation">Operation (Maintenance)</option>
-                <option value="Admin">Admin</option>
+              }} required disabled={user?.role === 'Maintenance_Head'}>
+                {user?.role === 'Admin' && <option value="Admin">Admin (Superuser)</option>}
+                {user?.role === 'Admin' && <option value="Maintenance_Head">Maintenance Head</option>}
+                <option value="Field_Tech">Field Technician</option>
               </select>
             </div>
 
-            {formData.role === 'Operation' && (
-              <div className="form-group">
-                <label className="form-label">Assign State</label>
-                <select className="form-input" value={formData.assigned_state} onChange={e => setFormData({...formData, assigned_state: e.target.value})}>
-                  <option value="">-- Select State --</option>
-                  {states.map(state => (
-                    <option key={state} value={state}>{state}</option>
-                  ))}
-                </select>
-                <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>If left blank, user can see all states.</p>
-              </div>
+            {(formData.role === 'Maintenance_Head' || formData.role === 'Field_Tech') && (
+              <>
+                <div className="form-group">
+                  <label className="form-label">Assign State</label>
+                  <select className="form-input" value={formData.assigned_state} onChange={e => setFormData({...formData, assigned_state: e.target.value})}>
+                    <option value="">-- All States --</option>
+                    {states.map(state => (
+                      <option key={state} value={state}>{state}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Assign Client</label>
+                  <select className="form-input" value={formData.assigned_client} onChange={e => setFormData({...formData, assigned_client: e.target.value, assigned_project: ''})}>
+                    <option value="">-- All Clients --</option>
+                    {clients.map(c => (
+                      <option key={c.id} value={c.client_name}>{c.client_name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Assign Project</label>
+                  <select className="form-input" value={formData.assigned_project} onChange={e => setFormData({...formData, assigned_project: e.target.value})}>
+                    <option value="">-- All Projects --</option>
+                    {projects
+                      .filter(p => !formData.assigned_client || p.client_name === formData.assigned_client)
+                      .map(p => (
+                      <option key={p.id} value={p.project_name}>{p.project_name}</option>
+                    ))}
+                  </select>
+                </div>
+              </>
             )}
 
             <div className="form-group">

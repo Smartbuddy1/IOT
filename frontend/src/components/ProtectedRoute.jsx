@@ -14,7 +14,8 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    // Redirect to a forbidden page or just back to dashboard
+    if (user.role === 'Field_Tech') return <Navigate to="/field-tech" replace />;
+    if (user.role === 'Maintenance_Head') return <Navigate to="/allocations" replace />;
     return <Navigate to="/dashboard" replace />;
   }
 

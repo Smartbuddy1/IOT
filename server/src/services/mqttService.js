@@ -6,6 +6,10 @@ dotenv.config();
 
 let client = null;
 
+// In-memory cache to prevent spamming the database with UPDATE machines SET status='active'
+// Every time a machine sends a message, we only update the DB once per minute.
+const activeMachineCache = {};
+
 export const initializeMqtt = () => {
   const brokerUrl = process.env.MQTT_BROKER_URL || 'mqtt://127.0.0.1:1883';
   const options = {
@@ -49,11 +53,11 @@ export const initializeMqtt = () => {
     console.log(`📩 MQTT Message: [${topic}] -> ${msgStr}`);
 
     try {
-      // 1. Save all logs to mqtt_messages table
-      await pool.query(
+      // 1. Save all logs to mqtt_messages table (Fire and forget, don't await to avoid blocking)
+      pool.query(
         'INSERT INTO mqtt_messages (topic, message) VALUES (?, ?)',
         [topic, msgStr]
-      );
+      ).catch(e => console.error('Failed to log MQTT message:', e.message));
 
       // 2. Extract machine ID and payload
       let machineId = null;
@@ -90,30 +94,27 @@ export const initializeMqtt = () => {
           console.log(`⚠️ Ignored invalid machine ID (likely an AT command): ${machineId}`);
           return; // Stop processing this message
         }
-        await pool.query(
-          'UPDATE machines SET status = ? WHERE machine_id = ?',
-          ['active', machineId]
-        );
 
-        // UPDATE HEARTBEAT: Always mark it as alive in device_live_status
-        await pool.query(
-          `INSERT INTO device_live_status (machine_id, last_updated) 
-           VALUES (?, NOW()) 
-           ON DUPLICATE KEY UPDATE last_updated = NOW()`,
-          [machineId]
-        );
+        // OPTIMIZATION: Only update machines table if we haven't updated it in the last 60 seconds
+        const now = Date.now();
+        if (!activeMachineCache[machineId] || (now - activeMachineCache[machineId]) > 60000) {
+          activeMachineCache[machineId] = now;
+          pool.query(
+            'UPDATE machines SET status = ? WHERE machine_id = ? AND status != ?',
+            ['active', machineId, 'active']
+          ).catch(e => {});
+        }
 
-        // 4. If it's a JSON payload, update specific sensors
+        // 4. Update device_live_status (Sensors and Heartbeat)
         if (Object.keys(payload).length > 0) {
-          // Default values for sensors
+          // Insert or Update the live status with sensors
           const water_level = payload.water_level || payload.waterLevel || '0';
           const pir_sensor = payload.pir || payload.pir_sensor || '0';
           const door_lock = payload.door || payload.door_lock || '0';
           const pb_coin = payload.pb_coin || payload.coin || '0';
           const pb_flush = payload.pb_flush || payload.flush || '0';
 
-          // Insert or Update the live status for this machine
-          await pool.query(
+          pool.query(
             `INSERT INTO device_live_status 
             (machine_id, water_level, pir_sensor, door_lock, pb_coin, pb_flush, last_updated) 
             VALUES (?, ?, ?, ?, ?, ?, NOW()) 
@@ -125,8 +126,15 @@ export const initializeMqtt = () => {
             pb_flush = VALUES(pb_flush), 
             last_updated = NOW()`,
             [machineId, water_level, pir_sensor, door_lock, pb_coin, pb_flush]
-          );
-          console.log(`✅ Live status updated for machine: ${machineId}`);
+          ).catch(e => {});
+        } else {
+          // Just update Heartbeat
+          pool.query(
+            `INSERT INTO device_live_status (machine_id, last_updated) 
+             VALUES (?, NOW()) 
+             ON DUPLICATE KEY UPDATE last_updated = NOW()`,
+            [machineId]
+          ).catch(e => {});
         }
       }
     } catch (err) {

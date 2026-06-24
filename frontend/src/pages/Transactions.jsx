@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'; // TIMESTAMP: 1782110500
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { IndianRupee, CheckCircle, XCircle, Download, FileText, Printer, Search } from 'lucide-react';
+import { IndianRupee, CheckCircle, XCircle, Download, FileText, Printer, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { exportToPDF, exportToExcel, handlePrint } from '../utils/exportUtils';
 import jsPDF from "jspdf";
@@ -15,11 +15,22 @@ const Transactions = () => {
   const [searchTerm, setSearchTerm] = useState(''); // FORCED UPDATE 2
   const { user } = useAuth();
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+
   useEffect(() => {
     const fetchTransactions = async () => {
+      setLoading(true);
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/transactions`);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/transactions`, {
+          params: { page, limit: 50, search: searchTerm }
+        });
         setTransactions(response.data.transactions || []);
+        if (response.data.pagination) {
+          setTotalPages(response.data.pagination.totalPages);
+          setTotalRecords(response.data.pagination.total);
+        }
       } catch (error) {
         console.error("Failed to fetch transactions", error);
         toast.error("Failed to load transactions");
@@ -27,8 +38,19 @@ const Transactions = () => {
         setLoading(false);
       }
     };
-    fetchTransactions();
-  }, []);
+    
+    // Add a small delay for search debouncing
+    const timer = setTimeout(() => {
+      fetchTransactions();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [page, searchTerm]);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
 
   const getTableData = () => {
     const columns = ["Trans ID", "Machine ID", "Project", "Amount", "Date & Time", "Status"];
@@ -233,26 +255,14 @@ const Transactions = () => {
             </tr>
           </thead>
           <tbody>
-            {transactions
-              .filter(t => 
-                t.machin_id?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                t.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                t.project_name?.toLowerCase().includes(searchTerm.toLowerCase())
-              )
-              .length === 0 ? (
+            {transactions.length === 0 ? (
               <tr className="premium-row">
                 <td colSpan="6" style={{ padding: '2rem', textAlign: 'center', color: 'var(--slate-500)' }}>
                   No transactions found.
                 </td>
               </tr>
             ) : (
-              transactions
-                .filter(t => 
-                  t.machin_id?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                  t.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                  t.project_name?.toLowerCase().includes(searchTerm.toLowerCase())
-                )
-                .map((t) => (
+              transactions.map((t) => (
                 <tr key={t.id} className="premium-row">
                   <td style={{ color: 'var(--slate-500)', fontSize: '0.875rem' }}>{t.trans_id || '-'}</td>
                   <td style={{ fontWeight: '700', color: 'var(--slate-800)' }}>{t.machin_id}</td>
@@ -277,6 +287,34 @@ const Transactions = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', padding: '1rem', backgroundColor: 'var(--surface-bg)', borderRadius: '1rem', boxShadow: 'var(--shadow-sm)' }}>
+          <div style={{ fontSize: '0.875rem', color: 'var(--slate-500)' }}>
+            Showing <b>{transactions.length}</b> of <b>{totalRecords}</b> transactions
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <button 
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              style={{ display: 'flex', alignItems: 'center', padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', backgroundColor: page === 1 ? 'var(--bg-color)' : 'white', cursor: page === 1 ? 'not-allowed' : 'pointer', color: 'var(--slate-600)' }}
+            >
+              <ChevronLeft size={18} /> Prev
+            </button>
+            <span style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', fontWeight: '600', color: 'var(--slate-700)' }}>
+              Page {page} of {totalPages}
+            </span>
+            <button 
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              style={{ display: 'flex', alignItems: 'center', padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', backgroundColor: page === totalPages ? 'var(--bg-color)' : 'white', cursor: page === totalPages ? 'not-allowed' : 'pointer', color: 'var(--slate-600)' }}
+            >
+              Next <ChevronRight size={18} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

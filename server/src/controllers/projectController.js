@@ -4,19 +4,41 @@ export const getProjects = async (req, res) => {
   const { role, name } = req.user;
 
   try {
-    let query = 'SELECT * FROM projects';
+    let query = `
+      SELECT p.id, p.project_name, p.project_starts, p.project_end, p.work_ord_no, p.sale_ord_no, p.project_status, p.state, p.remark,
+             COALESCE(
+               p.client_name, 
+               (SELECT client_name FROM machines m WHERE m.project_name = p.project_name AND m.client_name IS NOT NULL AND m.client_name != '' LIMIT 1)
+             ) AS client_name
+      FROM projects p
+    `;
     let params = [];
+
+    let assignedProject = req.user.assigned_project;
+    if (role === 'Field_Tech' && !assignedProject) {
+      const [[tech]] = await pool.query('SELECT assigned_project FROM tblusers WHERE id = ?', [req.user.id]);
+      if (tech) {
+        assignedProject = tech.assigned_project;
+      }
+    }
 
     if (role === 'Client') {
       // Find projects where client_name matches OR where the project is assigned to a machine owned by the client
-      query += ' WHERE client_name = ? OR project_name IN (SELECT DISTINCT project_name FROM machines WHERE client_name = ? AND project_name IS NOT NULL)';
+      query += ' WHERE p.client_name = ? OR p.project_name IN (SELECT DISTINCT project_name FROM machines WHERE client_name = ? AND project_name IS NOT NULL)';
       params.push(name, name);
-    } else if (role === 'Operation' && req.user.assigned_state) {
-      query += ' WHERE state = ?';
+    } else if (role === 'Field_Tech') {
+      if (assignedProject) {
+        query += ' WHERE p.project_name = ?';
+        params.push(assignedProject);
+      } else {
+        query += ' WHERE 1=0';
+      }
+    } else if (role === 'Maintenance_Head' && req.user.assigned_state) {
+      query += ' WHERE p.state = ?';
       params.push(req.user.assigned_state);
     }
 
-    query += ' ORDER BY id DESC';
+    query += ' ORDER BY p.id DESC';
 
     const [projects] = await pool.query(query, params);
     res.json({ success: true, projects });

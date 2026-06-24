@@ -1,0 +1,19 @@
+export const getUnassignedMachines = async (req, res) => {
+  try {
+    const role = req.user.role;
+    let query = 'SELECT m.machine_id, m.status, m.state, m.city FROM machines m LEFT JOIN tech_allocations a ON m.machine_id = a.machine_id WHERE a.machine_id IS NULL';
+    let params = [];
+
+    if ((role === 'Maintenance_Head' || role === 'Field_Tech') && req.user.assigned_state) {
+      query += ' AND m.state = ?';
+      params.push(req.user.assigned_state);
+    }
+    
+    query += ' ORDER BY m.machine_id DESC';
+    const [machines] = await pool.query(query, params);
+    res.json({ success: true, data: machines });
+  } catch (error) {
+    console.error('Fetch unassigned machines error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};

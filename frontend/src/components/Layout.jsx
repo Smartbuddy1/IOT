@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Users, Folder, Monitor, LogOut, FileText, Sun, Moon, Settings, User, Phone, Shield, Menu, Activity, PieChart, Tag } from 'lucide-react';
+import { LayoutDashboard, Users, Folder, Monitor, LogOut, FileText, Sun, Moon, Settings, User, Phone, Shield, Menu, Activity, PieChart, Tag, ClipboardList, Radio } from 'lucide-react';
 
 const Layout = () => {
   const { user, logout } = useAuth();
@@ -43,15 +43,19 @@ const Layout = () => {
   };
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Clients', href: '/clients', icon: Users, roles: ['Admin', 'Operation'] },
-    { name: 'Projects', href: '/projects', icon: Folder, roles: ['Admin', 'Operation', 'Client'] },
-    { name: 'Machines', href: '/machines', icon: Monitor },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Client', 'Maintenance_Head'] },
+    { name: 'Clients', href: '/clients', icon: Users, roles: ['Admin', 'Field_Tech'] },
+    { name: 'Projects', href: '/projects', icon: Folder, roles: ['Admin', 'Client', 'Field_Tech'] },
+    { name: 'Machines', href: '/machines', icon: Monitor, roles: ['Admin', 'Client', 'Field_Tech'] },
+    { name: 'Testing', href: '/field-tech', icon: Radio, roles: ['Field_Tech'] },
+    { name: 'Maintenance Form', href: '/test-form', icon: FileText, roles: ['Field_Tech'] },
     { name: 'Unassigned', href: '/unassigned-machines', icon: Tag, roles: ['Admin'] },
-    { name: 'Transactions', href: '/transactions', icon: FileText },
-    { name: 'Reports', href: '/reports', icon: Activity, roles: ['Admin', 'Operation', 'Client'] },
-    { name: 'Analytics', href: '/analytics', icon: PieChart, roles: ['Admin', 'Operation', 'Client'] },
-    { name: 'Staff', href: '/staff', icon: Shield, roles: ['Admin'] },
+    { name: 'Allocations', href: '/allocations', icon: ClipboardList, roles: ['Maintenance_Head'] },
+    { name: 'Transactions', href: '/transactions', icon: FileText, roles: ['Admin', 'Client'] },
+    { name: 'Reports', href: '/reports', icon: Activity, roles: ['Admin', 'Client'] },
+    { name: 'Analytics', href: '/analytics', icon: PieChart, roles: ['Admin', 'Client'] },
+    { name: 'Maintenance Logs', href: '/maintenance-logs', icon: FileText, roles: ['Admin', 'Maintenance_Head'] },
+    { name: 'Staff', href: '/staff', icon: Shield, roles: ['Admin', 'Maintenance_Head'] },
   ];
 
   return (

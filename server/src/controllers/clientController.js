@@ -5,8 +5,28 @@ export const getClients = async (req, res) => {
   try {
     let query = 'SELECT * FROM clients';
     let params = [];
+    let assignedClient = req.user.assigned_client;
+    let assignedState = req.user.assigned_state;
 
-    if (req.user.role === 'Operation' && req.user.assigned_state) {
+    if (req.user.role === 'Field_Tech' && !assignedClient) {
+      const [[tech]] = await pool.query('SELECT assigned_client, assigned_state FROM tblusers WHERE id = ?', [req.user.id]);
+      if (tech) {
+        assignedClient = tech.assigned_client;
+        assignedState = tech.assigned_state || assignedState;
+      }
+    }
+
+    if (req.user.role === 'Field_Tech') {
+      if (assignedClient) {
+        query += ' WHERE client_name = ?';
+        params.push(assignedClient);
+      } else if (assignedState) {
+        query += ' WHERE client_state = ?';
+        params.push(assignedState);
+      } else {
+        query += ' WHERE 1=0'; // Show no clients if unassigned
+      }
+    } else if (req.user.role === 'Maintenance_Head' && req.user.assigned_state) {
       query += ' WHERE client_state = ?';
       params.push(req.user.assigned_state);
     }

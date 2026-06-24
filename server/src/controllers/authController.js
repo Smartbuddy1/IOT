@@ -12,7 +12,7 @@ export const login = async (req, res) => {
   try {
     // 1. Check in tblusers table
     const [users] = await pool.query(
-      'SELECT id, mobile, role, password, assigned_state FROM tblusers WHERE mobile = ? AND status = 1 LIMIT 1',
+      'SELECT id, name, mobile, role, password, assigned_state, assigned_client, assigned_project FROM tblusers WHERE mobile = ? AND status = 1 LIMIT 1',
       [mobile]
     );
 
@@ -68,7 +68,14 @@ export const login = async (req, res) => {
 
       // Generate JWT Token
       const token = jwt.sign(
-        { id: user.id, mobile: user.mobile, role: user.role, assigned_state: user.assigned_state },
+        { 
+          id: user.id, 
+          mobile: user.mobile, 
+          role: user.role, 
+          assigned_state: user.assigned_state,
+          assigned_client: user.assigned_client,
+          assigned_project: user.assigned_project
+        },
         process.env.JWT_SECRET || 'smartbuddy_super_secret_jwt_key_2026',
         { expiresIn: '12h' }
       );
@@ -79,10 +86,12 @@ export const login = async (req, res) => {
         token,
         user: {
           id: user.id,
-          name: user.mobile, // fallback
+          name: user.name || user.mobile,
           mobile: user.mobile,
           role: user.role,
-          assigned_state: user.assigned_state
+          assigned_state: user.assigned_state,
+          assigned_client: user.assigned_client,
+          assigned_project: user.assigned_project
         }
       });
     }

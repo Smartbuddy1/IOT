@@ -28,7 +28,13 @@ const Login = () => {
 
     const result = await login(username, password);
     if (result.success) {
-      navigate('/dashboard');
+      if (result.role === 'Field_Tech') {
+        navigate('/field-tech');
+      } else if (result.role === 'Maintenance_Head') {
+        navigate('/allocations');
+      } else {
+        navigate('/dashboard');
+      }
     } else {
       setError(result.message);
     }
@@ -187,6 +193,17 @@ const Login = () => {
             </button>
           </form>
         </div>
+      </div>
+
+      {/* Public Legal Links for Razorpay */}
+      <div style={{ position: 'absolute', bottom: '1.5rem', width: '100%', textAlign: 'center', color: '#64748b', fontSize: '0.85rem', display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0.75rem', zIndex: 10 }}>
+        <a href="/terms-conditions" style={{ color: 'inherit', textDecoration: 'underline' }}>Terms & Conditions</a>
+        <span style={{ opacity: 0.5 }}>|</span>
+        <a href="/privacy-policy" style={{ color: 'inherit', textDecoration: 'underline' }}>Privacy Policy</a>
+        <span style={{ opacity: 0.5 }}>|</span>
+        <a href="/refund-policy" style={{ color: 'inherit', textDecoration: 'underline' }}>Refund Policy</a>
+        <span style={{ opacity: 0.5 }}>|</span>
+        <a href="/contact-us" style={{ color: 'inherit', textDecoration: 'underline' }}>Contact Us</a>
       </div>
     </div>
   );

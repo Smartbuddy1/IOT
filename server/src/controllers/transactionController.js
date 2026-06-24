@@ -12,11 +12,10 @@ const razorpay = new Razorpay({
 
 export const getTransactions = async (req, res) => {
   const { role, name } = req.user;
-  const { machine_id, client_name, start_date, end_date } = req.query;
+  const { machine_id, client_name, start_date, end_date, page = 1, limit = 50, search = '' } = req.query;
 
   try {
-    let query = `
-      SELECT t.*, m.client_name, m.project_name 
+    let baseQuery = `
       FROM trans t
       LEFT JOIN machines m ON t.machin_id = m.machine_id
       WHERE 1=1
@@ -25,32 +24,62 @@ export const getTransactions = async (req, res) => {
 
     // Role-based visibility
     if (role === 'Client') {
-      query += ' AND m.client_name = ?';
+      baseQuery += ' AND m.client_name = ?';
       params.push(name);
     } else if (client_name) {
-      query += ' AND m.client_name = ?';
+      baseQuery += ' AND m.client_name = ?';
       params.push(client_name);
     }
 
     if (machine_id) {
-      query += ' AND t.machin_id = ?';
+      baseQuery += ' AND t.machin_id = ?';
       params.push(machine_id);
     }
 
     if (start_date) {
-      query += ' AND DATE(t.date_time) >= ?';
+      baseQuery += ' AND DATE(t.date_time) >= ?';
       params.push(start_date);
     }
 
     if (end_date) {
-      query += ' AND DATE(t.date_time) <= ?';
+      baseQuery += ' AND DATE(t.date_time) <= ?';
       params.push(end_date);
     }
 
-    query += ' ORDER BY t.id DESC';
+    if (search) {
+      baseQuery += ' AND (t.machin_id LIKE ? OR m.client_name LIKE ? OR m.project_name LIKE ? OR t.trans_id LIKE ?)';
+      const searchParam = `%${search}%`;
+      params.push(searchParam, searchParam, searchParam, searchParam);
+    }
 
-    const [transactions] = await pool.query(query, params);
-    res.json({ success: true, transactions });
+    // Get total count concurrently for performance
+    const countPromise = pool.query(`SELECT COUNT(*) AS total ${baseQuery}`, params);
+
+    // Apply pagination
+    const offset = (page - 1) * limit;
+    const queryParams = [...params, Number(limit), Number(offset)];
+
+    const query = `
+      SELECT t.*, m.client_name, m.project_name 
+      ${baseQuery}
+      ORDER BY t.id DESC 
+      LIMIT ? OFFSET ?
+    `;
+    
+    const dataPromise = pool.query(query, queryParams);
+
+    const [[[{ total }]], [transactions]] = await Promise.all([countPromise, dataPromise]);
+
+    res.json({ 
+      success: true, 
+      transactions,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error('Fetch transactions error:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });

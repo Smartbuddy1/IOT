@@ -8,10 +8,31 @@ export const getMachines = async (req, res) => {
     let query = 'SELECT * FROM machines';
     let params = [];
 
+    let assignedProject = req.user.assigned_project;
+    let assignedClient = req.user.assigned_client;
+    
+    if (role === 'Field_Tech' && (!assignedProject || !assignedClient)) {
+      const [[tech]] = await pool.query('SELECT assigned_project, assigned_client FROM tblusers WHERE id = ?', [req.user.id]);
+      if (tech) {
+        assignedProject = tech.assigned_project || assignedProject;
+        assignedClient = tech.assigned_client || assignedClient;
+      }
+    }
+
     if (role === 'Client') {
       query += ' WHERE client_name = ?';
       params.push(name);
-    } else if (role === 'Operation' && req.user.assigned_state) {
+    } else if (role === 'Field_Tech') {
+      if (assignedProject) {
+        query += ' WHERE project_name = ?';
+        params.push(assignedProject);
+      } else if (assignedClient) {
+        query += ' WHERE client_name = ?';
+        params.push(assignedClient);
+      } else {
+        query += ' WHERE 1=0';
+      }
+    } else if (role === 'Maintenance_Head' && req.user.assigned_state) {
       query += ' WHERE state = ?';
       params.push(req.user.assigned_state);
     }
@@ -42,7 +63,7 @@ export const getMachineById = async (req, res) => {
 };
 
 export const createMachine = async (req, res) => {
-  const { machine_id, client_name, state, district, city, address, inst_address, project_name, po_date, dispatch_date, installation_date, status, wall_clean, seats, flush_time, floor_time, wall_time, uses_amt, free, coin, upi, smart_card, digital_token } = req.body;
+  const { machine_id, client_name, state, district, city, address, inst_address, project_name, po_date, dispatch_date, installation_date, status, wall_clean, seats, flush_time, floor_time, wall_time, uses_amt, free, coin, upi, smart_card, digital_token, gps_lat, gps_lng } = req.body;
 
   if (!machine_id) {
     return res.status(400).json({ success: false, message: 'Machine ID is required' });
@@ -62,12 +83,13 @@ export const createMachine = async (req, res) => {
 
   try {
     const [result] = await pool.query(
-      `INSERT INTO machines (machine_id, client_name, state, district, city, address, inst_address, project_name, po_date, dispatch_date, installation_date, status, wall_clean, seats, flush_time, floor_time, wall_time, uses_amt, free, coin, upi, smart_card, digital_token) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO machines (machine_id, client_name, state, district, city, address, inst_address, project_name, po_date, dispatch_date, installation_date, status, wall_clean, seats, flush_time, floor_time, wall_time, uses_amt, free, coin, upi, smart_card, digital_token, gps_lat, gps_lng) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         machine_id, client_name || null, state || '', district || '', city || '', address || '', inst_address || null, project_name || null, 
         poDate, dispatchDate, installationDate, status || 'ready', wall_clean || 'En', seatsNum, 
-        flushTime, floorTime, wallTime, usesAmt, free || 'No', coin || 'Yes', upi || 'Yes', smart_card || 'No', digital_token || 'No'
+        flushTime, floorTime, wallTime, usesAmt, free || 'No', coin || 'Yes', upi || 'Yes', smart_card || 'No', digital_token || 'No',
+        gps_lat || null, gps_lng || null
       ]
     );
 
@@ -89,7 +111,7 @@ export const updateMachine = async (req, res) => {
   const {
     machine_id, client_name, state, district, city, address, inst_address, project_name,
     po_date, dispatch_date, installation_date, status, wall_clean, seats, flush_time,
-    floor_time, wall_time, uses_amt, free, coin, upi, smart_card, digital_token
+    floor_time, wall_time, uses_amt, free, coin, upi, smart_card, digital_token, gps_lat, gps_lng
   } = req.body;
 
   // Convert empty strings to NULL for dates
@@ -117,12 +139,14 @@ export const updateMachine = async (req, res) => {
       `UPDATE machines SET 
         machine_id = ?, client_name = ?, state = ?, district = ?, city = ?, address = ?, inst_address = ?, project_name = ?, 
         po_date = ?, dispatch_date = ?, installation_date = ?, status = ?, wall_clean = ?, seats = ?, flush_time = ?, 
-        floor_time = ?, wall_time = ?, uses_amt = ?, free = ?, coin = ?, upi = ?, smart_card = ?, digital_token = ? 
+        floor_time = ?, wall_time = ?, uses_amt = ?, free = ?, coin = ?, upi = ?, smart_card = ?, digital_token = ?,
+        gps_lat = ?, gps_lng = ? 
        WHERE id = ?`,
       [
         machine_id, client_name || null, state || '', district || '', city || '', address || '', inst_address || null, project_name || null,
         poDate, dispatchDate, installationDate, status || 'ready', wall_clean || 'En', seatsNum, flushTime,
-        floorTime, wallTime, usesAmt, free || 'No', coin || 'Yes', upi || 'Yes', smart_card || 'No', digital_token || 'No', id
+        floorTime, wallTime, usesAmt, free || 'No', coin || 'Yes', upi || 'Yes', smart_card || 'No', digital_token || 'No', 
+        gps_lat || null, gps_lng || null, id
       ]
     );
 
@@ -210,10 +234,18 @@ export const deleteMachine = async (req, res) => {
 
 export const getUnassignedMachines = async (req, res) => {
   try {
-    const [machines] = await pool.query(
-      `SELECT * FROM machines WHERE client_name IS NULL OR client_name = '' ORDER BY id DESC`
-    );
-    res.json({ success: true, machines });
+    const role = req.user.role;
+    let query = 'SELECT m.machine_id, m.status, m.state, m.city FROM machines m LEFT JOIN tech_allocations a ON m.machine_id = a.machine_id WHERE a.machine_id IS NULL';
+    let params = [];
+
+    if ((role === 'Maintenance_Head' || role === 'Field_Tech') && req.user.assigned_state) {
+      query += ' AND m.state = ?';
+      params.push(req.user.assigned_state);
+    }
+    
+    query += ' ORDER BY m.machine_id DESC';
+    const [machines] = await pool.query(query, params);
+    res.json({ success: true, data: machines }); // Frontend expects res.data.data
   } catch (error) {
     console.error('Fetch unassigned machines error:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });

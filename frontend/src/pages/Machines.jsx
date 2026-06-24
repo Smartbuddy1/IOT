@@ -22,7 +22,7 @@ const Machines = () => {
     machine_id: '', client_name: '', state: '', district: '', city: '', address: '', inst_address: '',
     project_name: '', po_date: '', dispatch_date: '', installation_date: '', status: 'ready',
     wall_clean: 'En', seats: '', flush_time: '5', floor_time: '5', wall_time: '', uses_amt: '5',
-    free: 'No', coin: 'Yes', upi: 'Yes', smart_card: 'No', digital_token: 'No'
+    free: 'No', coin: 'Yes', upi: 'Yes', smart_card: 'No', digital_token: 'No', gps_lat: '', gps_lng: ''
   });
   const [formLoading, setFormLoading] = useState(false);
   
@@ -84,7 +84,7 @@ const Machines = () => {
       machine_id: '', client_name: '', state: (user.role === 'Operation' && user.assigned_state) ? user.assigned_state : '', district: '', city: '', address: '', inst_address: '',
       project_name: '', po_date: '', dispatch_date: '', installation_date: '', status: 'ready',
       wall_clean: 'En', seats: '', flush_time: '5', floor_time: '5', wall_time: '', uses_amt: '5',
-      free: 'No', coin: 'Yes', upi: 'Yes', smart_card: 'No', digital_token: 'No'
+      free: 'No', coin: 'Yes', upi: 'Yes', smart_card: 'No', digital_token: 'No', gps_lat: '', gps_lng: ''
     });
     setIsModalOpen(true);
   };
@@ -98,7 +98,9 @@ const Machines = () => {
       installation_date: fmt(machine.installation_date),
       uses_amt: machine.uses_amt || '',
       flush_time: machine.flush_time || '',
-      floor_time: machine.floor_time || ''
+      floor_time: machine.floor_time || '',
+      gps_lat: machine.gps_lat || '',
+      gps_lng: machine.gps_lng || ''
     });
     setEditingId(machine.id);
     setIsModalOpen(true);
@@ -359,6 +361,14 @@ const Machines = () => {
             <label className="form-label">Installation Address</label>
             <textarea name="inst_address" value={formData.inst_address} onChange={handleInputChange} className="form-input" rows="1"></textarea>
           </div>
+          <div className="form-group">
+            <label className="form-label">GPS Latitude</label>
+            <input type="text" name="gps_lat" value={formData.gps_lat} onChange={handleInputChange} className="form-input" placeholder="e.g. 19.0760" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">GPS Longitude</label>
+            <input type="text" name="gps_lng" value={formData.gps_lng} onChange={handleInputChange} className="form-input" placeholder="e.g. 72.8777" />
+          </div>
 
           {/* Section: Dates */}
           <div className="full-width" style={{ fontWeight: '600', color: 'var(--slate-800)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginTop: '1rem' }}>Timeline</div>
@@ -501,6 +511,7 @@ const Machines = () => {
                   { label: 'District', value: viewMachine.district },
                   { label: 'City', value: viewMachine.city },
                   { label: 'Address', value: viewMachine.address },
+                  { label: 'GPS Location', value: viewMachine.gps_lat ? `${viewMachine.gps_lat}, ${viewMachine.gps_lng}` : 'Not Set' },
                   { label: 'Project Name', value: viewMachine.project_name },
                   { label: 'PO Date', value: viewMachine.po_date ? new Date(viewMachine.po_date).toLocaleDateString() : '' },
                   { label: 'Installation Date', value: viewMachine.installation_date ? new Date(viewMachine.installation_date).toLocaleDateString() : '' },
