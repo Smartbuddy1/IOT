@@ -45,6 +45,7 @@ const MaintenanceAllocation = () => {
       const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/machines`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
+      if (res.data.success) {
         setMachines(res.data.machines || res.data.data || []);
       }
     } catch (error) {
