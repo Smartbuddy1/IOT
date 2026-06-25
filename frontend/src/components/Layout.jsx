@@ -67,8 +67,8 @@ const Layout = () => {
 
       {/* Sidebar */}
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
-        <div className="sidebar-header">
-          SmartBuddy
+        <div className="sidebar-header" style={{ padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <img src="/logo_new.jpeg" alt="SmartBuddy Logo" style={{ maxWidth: '100%', maxHeight: '45px', objectFit: 'contain' }} />
         </div>
         
         <div className="sidebar-nav">
