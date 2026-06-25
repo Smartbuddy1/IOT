@@ -17,6 +17,7 @@ const Projects = () => {
     work_ord_no: '', sale_ord_no: '', project_status: '', remark: '', state: ''
   });
   const [formLoading, setFormLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const [states, setStates] = useState([]);
   
   // Dropdowns
@@ -42,7 +43,33 @@ const Projects = () => {
   }, []);
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    const newFormData = { ...formData, [name]: value };
+    let errorMsg = '';
+
+    if (name === 'project_end' || name === 'project_starts') {
+      const start = name === 'project_starts' ? value : formData.project_starts;
+      const end = name === 'project_end' ? value : formData.project_end;
+      if (start && end && new Date(end) < new Date(start)) {
+        errorMsg = 'End date cannot be before start date';
+      }
+    }
+
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      if (errorMsg) newErrors.project_end = errorMsg;
+      else delete newErrors.project_end;
+      return newErrors;
+    });
+
+    setFormData(newFormData);
+  };
+
+  const isFormValid = () => {
+    if (Object.keys(errors).length > 0) return false;
+    if (!formData.project_name || !formData.client_name || !formData.sale_ord_no || !formData.state || !formData.project_starts || !formData.project_status) return false;
+    if (formData.project_status === 'Completed' && !formData.project_end) return false;
+    return true;
   };
 
   const handleOpenModal = () => {
@@ -52,6 +79,7 @@ const Projects = () => {
       work_ord_no: '', sale_ord_no: '', project_status: '', remark: '',
       state: (user.role === 'Operation' && user.assigned_state) ? user.assigned_state : ''
     });
+    setErrors({});
     setIsModalOpen(true);
   };
 
@@ -64,6 +92,7 @@ const Projects = () => {
       state: project.state || ''
     });
     setEditingId(project.id);
+    setErrors({});
     setIsModalOpen(true);
   };
 
@@ -254,7 +283,8 @@ const Projects = () => {
 
           <div className="form-group">
             <label className="form-label">Project Completed Date</label>
-            <input type="date" name="project_end" value={formData.project_end} onChange={handleInputChange} className="form-input" disabled={formData.project_status !== 'Completed'} required={formData.project_status === 'Completed'} />
+            <input type="date" name="project_end" value={formData.project_end} onChange={handleInputChange} className={`form-input ${errors.project_end ? 'error' : ''}`} disabled={formData.project_status !== 'Completed'} required={formData.project_status === 'Completed'} />
+            {errors.project_end && <small style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.project_end}</small>}
           </div>
           <div className="form-group full-width">
             <label className="form-label">Remarks</label>
@@ -263,7 +293,7 @@ const Projects = () => {
 
           <div className="full-width" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
             <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={formLoading}>
+            <button type="submit" className="btn btn-primary" disabled={formLoading || !isFormValid()}>
               {formLoading ? 'Saving...' : 'Save Project'}
             </button>
           </div>

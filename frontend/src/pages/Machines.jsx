@@ -25,6 +25,7 @@ const Machines = () => {
     free: 'No', coin: 'Yes', upi: 'Yes', smart_card: 'No', digital_token: 'No', gps_lat: '', gps_lng: ''
   });
   const [formLoading, setFormLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   
   // Dropdown states
   const [clients, setClients] = useState([]);
@@ -75,7 +76,29 @@ const Machines = () => {
   }, [formData.district]);
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let errorMsg = '';
+
+    if (name === 'machine_id' && value) {
+      if (!/^[a-zA-Z0-9_-]+$/.test(value)) {
+        errorMsg = 'Only letters, numbers, hyphens, and underscores allowed';
+      }
+    }
+
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      if (errorMsg) newErrors[name] = errorMsg;
+      else delete newErrors[name];
+      return newErrors;
+    });
+
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const isFormValid = () => {
+    if (Object.keys(errors).length > 0) return false;
+    if (!formData.machine_id || !formData.status || !formData.client_name || !formData.project_name || !formData.state || !formData.district || !formData.city) return false;
+    return true;
   };
 
   const handleOpenModal = () => {
@@ -86,6 +109,7 @@ const Machines = () => {
       wall_clean: 'En', seats: '', flush_time: '5', floor_time: '5', wall_time: '', uses_amt: '5',
       free: 'No', coin: 'Yes', upi: 'Yes', smart_card: 'No', digital_token: 'No', gps_lat: '', gps_lng: ''
     });
+    setErrors({});
     setIsModalOpen(true);
   };
 
@@ -103,6 +127,7 @@ const Machines = () => {
       gps_lng: machine.gps_lng || ''
     });
     setEditingId(machine.id);
+    setErrors({});
     setIsModalOpen(true);
   };
 
@@ -299,7 +324,8 @@ const Machines = () => {
           <div className="full-width" style={{ fontWeight: '600', color: 'var(--slate-800)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Basic Information</div>
           <div className="form-group">
             <label className="form-label">Machine ID *</label>
-            <input type="text" name="machine_id" value={formData.machine_id} onChange={handleInputChange} className="form-input" required />
+            <input type="text" name="machine_id" value={formData.machine_id} onChange={handleInputChange} className={`form-input ${errors.machine_id ? 'error' : ''}`} required />
+            {errors.machine_id && <small style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.machine_id}</small>}
           </div>
           <div className="form-group">
             <label className="form-label">Status *</label>
@@ -310,15 +336,15 @@ const Machines = () => {
             </select>
           </div>
           <div className="form-group">
-            <label className="form-label">Client Name</label>
-            <select name="client_name" value={formData.client_name} onChange={handleInputChange} className="form-input">
+            <label className="form-label">Client Name *</label>
+            <select name="client_name" value={formData.client_name} onChange={handleInputChange} className="form-input" required>
               <option value="">-- Select Client --</option>
               {clients.map(c => <option key={c.id} value={c.client_name}>{c.client_name}</option>)}
             </select>
           </div>
           <div className="form-group">
-            <label className="form-label">Project Name</label>
-            <select name="project_name" value={formData.project_name} onChange={handleInputChange} className="form-input">
+            <label className="form-label">Project Name *</label>
+            <select name="project_name" value={formData.project_name} onChange={handleInputChange} className="form-input" required>
               <option value="">-- Select Project --</option>
               {projects.map(p => <option key={p.id} value={p.project_name}>{p.project_name}</option>)}
             </select>
@@ -491,7 +517,7 @@ const Machines = () => {
 
           <div className="full-width" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
             <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={formLoading}>
+            <button type="submit" className="btn btn-primary" disabled={formLoading || !isFormValid()}>
               {formLoading ? 'Saving...' : 'Save Machine'}
             </button>
           </div>

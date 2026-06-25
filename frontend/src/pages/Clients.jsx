@@ -22,6 +22,7 @@ const Clients = ({ isTab = false }) => {
   });
   const [formLoading, setFormLoading] = useState(false);
   const [logoFile, setLogoFile] = useState(null);
+  const [errors, setErrors] = useState({});
   
   // Location states
   const [states, setStates] = useState([]);
@@ -68,7 +69,50 @@ const Clients = ({ isTab = false }) => {
   }, [formData.clinet_district]);
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    // Validation logic
+    let errorMsg = '';
+    if ((name === 'client_phone' || name === 'contact_mobile') && value) {
+      if (!/^\d*$/.test(value)) {
+        errorMsg = 'Only numbers are allowed';
+      } else if (value.length !== 10) {
+        errorMsg = 'Must be exactly 10 digits';
+      }
+    }
+    
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      if (errorMsg) newErrors[name] = errorMsg;
+      else delete newErrors[name];
+      return newErrors;
+    });
+
+    // Prevent typing non-digits in phone fields
+    if ((name === 'client_phone' || name === 'contact_mobile') && value && !/^\d*$/.test(value)) {
+      return; 
+    }
+
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB
+        toast.error('Logo file size must be less than 2MB');
+        setErrors(prev => ({ ...prev, logoFile: 'File too large (Max 2MB)' }));
+        setLogoFile(null);
+        e.target.value = null; // reset input
+      } else {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.logoFile;
+          return newErrors;
+        });
+        setLogoFile(file);
+      }
+    }
   };
 
   const handleOpenModal = () => {
@@ -80,6 +124,7 @@ const Clients = ({ isTab = false }) => {
       clinet_district: '', client_city: '', client_type: '', 
       contact_person: '', contact_mobile: '', password: '', contact_email: ''
     });
+    setErrors({});
     setIsModalOpen(true);
   };
 
@@ -92,6 +137,7 @@ const Clients = ({ isTab = false }) => {
       client_city: client.client_city || ''
     });
     setEditingId(client.id);
+    setErrors({});
     setIsModalOpen(true);
   };
 
@@ -140,6 +186,14 @@ const Clients = ({ isTab = false }) => {
     } finally {
       setFormLoading(false);
     }
+  };
+
+  const isFormValid = () => {
+    if (Object.keys(errors).length > 0) return false;
+    if (!formData.client_name || !formData.client_phone || !formData.client_address || !formData.client_type || !formData.client_state || !formData.clinet_district || !formData.client_city || !formData.contact_mobile) return false;
+    if (!editingId && !formData.password) return false;
+    if (!editingId && !logoFile) return false;
+    return true;
   };
 
   if (loading) {
@@ -286,8 +340,9 @@ const Clients = ({ isTab = false }) => {
           
           <div className="form-group full-width">
             <label className="form-label">Client Logo *</label>
-            <input type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files[0])} className="form-input" style={{ padding: '0.5rem', background: 'transparent' }} required={!editingId} />
-            {editingId && <small style={{ color: 'var(--slate-500)', fontSize: '0.75rem' }}>Upload new to replace existing logo</small>}
+            <input type="file" accept="image/*" onChange={handleLogoChange} className={`form-input ${errors.logoFile ? 'error' : ''}`} style={{ padding: '0.5rem', background: 'transparent' }} required={!editingId} />
+            {errors.logoFile && <small style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.logoFile}</small>}
+            {!errors.logoFile && editingId && <small style={{ color: 'var(--slate-500)', fontSize: '0.75rem' }}>Upload new to replace existing logo</small>}
           </div>
 
           <div className="form-group">
@@ -296,7 +351,8 @@ const Clients = ({ isTab = false }) => {
           </div>
           <div className="form-group">
             <label className="form-label">Client Phone *</label>
-            <input type="text" name="client_phone" value={formData.client_phone || ''} onChange={handleInputChange} className="form-input" maxLength="10" required />
+            <input type="text" name="client_phone" value={formData.client_phone || ''} onChange={handleInputChange} className={`form-input ${errors.client_phone ? 'error' : ''}`} maxLength="10" required />
+            {errors.client_phone && <small style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.client_phone}</small>}
           </div>
           <div className="form-group full-width">
             <label className="form-label">Client Address *</label>
@@ -360,7 +416,8 @@ const Clients = ({ isTab = false }) => {
           </div>
           <div className="form-group">
             <label className="form-label">Contact Mobile *</label>
-            <input type="text" name="contact_mobile" value={formData.contact_mobile || ''} onChange={handleInputChange} className="form-input" maxLength="10" required />
+            <input type="text" name="contact_mobile" value={formData.contact_mobile || ''} onChange={handleInputChange} className={`form-input ${errors.contact_mobile ? 'error' : ''}`} maxLength="10" required />
+            {errors.contact_mobile && <small style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.contact_mobile}</small>}
           </div>
           <div className="form-group">
             <label className="form-label">Contact Email</label>
@@ -374,7 +431,7 @@ const Clients = ({ isTab = false }) => {
 
           <div className="full-width" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
             <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={formLoading}>
+            <button type="submit" className="btn btn-primary" disabled={formLoading || !isFormValid()}>
               {formLoading ? 'Submitting...' : 'Submit'}
             </button>
           </div>

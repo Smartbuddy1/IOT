@@ -28,6 +28,7 @@ const Staff = ({ isTab = false }) => {
     assigned_client: '',
     assigned_project: ''
   });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     fetchUsers();
@@ -72,6 +73,38 @@ const Staff = ({ isTab = false }) => {
     }
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    let errorMsg = '';
+    
+    if (name === 'mobile' && value) {
+      if (!/^\d*$/.test(value)) errorMsg = 'Only numbers are allowed';
+      else if (value.length !== 10) errorMsg = 'Must be exactly 10 digits';
+    }
+    
+    if (name === 'password' && value && value.length < 8) {
+      errorMsg = 'Password must be at least 8 characters';
+    }
+
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      if (errorMsg) newErrors[name] = errorMsg;
+      else delete newErrors[name];
+      return newErrors;
+    });
+
+    if (name === 'mobile' && value && !/^\d*$/.test(value)) return;
+
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const isFormValid = () => {
+    if (Object.keys(errors).length > 0) return false;
+    if (!formData.name || !formData.mobile || !formData.role) return false;
+    if (!editingId && !formData.password) return false;
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -110,6 +143,7 @@ const Staff = ({ isTab = false }) => {
       assigned_project: staff.assigned_project || ''
     });
     setEditingId(staff.id);
+    setErrors({});
     setIsModalOpen(true);
   };
 
@@ -142,6 +176,7 @@ const Staff = ({ isTab = false }) => {
       assigned_project: ''
     });
     setEditingId(null);
+    setErrors({});
     setIsModalOpen(true);
   };
 
@@ -279,22 +314,24 @@ const Staff = ({ isTab = false }) => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
             <div className="form-group">
               <label className="form-label">Name <span style={{color:'red'}}>*</span></label>
-              <input type="text" className="form-input" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="e.g. John Doe" />
+              <input type="text" name="name" className="form-input" value={formData.name} onChange={handleInputChange} required placeholder="e.g. John Doe" />
             </div>
             
             <div className="form-group">
               <label className="form-label">Mobile Number <span style={{color:'red'}}>*</span></label>
-              <input type="text" className="form-input" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})} required placeholder="10-digit mobile" maxLength="10" />
+              <input type="text" name="mobile" className={`form-input ${errors.mobile ? 'error' : ''}`} value={formData.mobile} onChange={handleInputChange} required placeholder="10-digit mobile" maxLength="10" />
+              {errors.mobile && <small style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.mobile}</small>}
             </div>
 
             <div className="form-group">
               <label className="form-label">Email</label>
-              <input type="email" className="form-input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="Email address" autoComplete="off" />
+              <input type="email" name="email" className="form-input" value={formData.email} onChange={handleInputChange} placeholder="Email address" autoComplete="off" />
             </div>
 
             <div className="form-group">
               <label className="form-label">Password {editingId ? '(Leave blank to keep same)' : <span style={{color:"red"}}>*</span>}</label>
-              <input type="password" className="form-input" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required={!editingId} placeholder="Login password" autoComplete="new-password" />
+              <input type="password" name="password" className={`form-input ${errors.password ? 'error' : ''}`} value={formData.password} onChange={handleInputChange} required={!editingId} placeholder="Login password" autoComplete="new-password" />
+              {errors.password && <small style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.password}</small>}
             </div>
 
             <div className="form-group">
@@ -357,7 +394,7 @@ const Staff = ({ isTab = false }) => {
           
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
             <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
-            <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button type="submit" className="btn btn-primary" disabled={!isFormValid()} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Shield size={18} /> {editingId ? 'Update User' : 'Save User'}
             </button>
           </div>
