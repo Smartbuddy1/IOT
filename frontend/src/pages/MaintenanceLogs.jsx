@@ -5,6 +5,8 @@ import { Activity, Search, MapPin, Camera, Zap, Cpu, Settings, Calendar, User } 
 import toast from 'react-hot-toast';
 import SkeletonTable from '../components/SkeletonTable';
 import Modal from '../components/Modal';
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const MaintenanceLogs = () => {
   const { user } = useAuth();
@@ -46,6 +48,137 @@ const MaintenanceLogs = () => {
     return `${d.getDate().toString().padStart(2, '0')}-${(d.getMonth()+1).toString().padStart(2, '0')}-${d.getFullYear()} ${d.getHours()}:${d.getMinutes().toString().padStart(2,'0')}`;
   };
 
+  const handleExportPDF = () => {
+    if (filteredLogs.length === 0) {
+      toast.error('No data available to export');
+      return;
+    }
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    
+    // Header Data
+    const title = 'Maintenance Logs Report';
+    let finalClientName = 'All Clients';
+    if (searchQuery) finalClientName = `Search: ${searchQuery}`;
+    
+    const sbImg = new Image();
+    sbImg.src = "/SB_Logo.jpg";
+
+    const drawPDF = (sbImgObj) => {
+      const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
+      
+      // SmartBuddy Logo (Top Center)
+      if (sbImgObj && sbImgObj.base64) {
+        const sbMaxWidth = 35;
+        const sbMaxHeight = 20;
+        let sbCalcWidth = sbMaxWidth;
+        let sbCalcHeight = (sbImgObj.height * sbMaxWidth) / sbImgObj.width;
+        if (sbCalcHeight > sbMaxHeight) {
+          sbCalcHeight = sbMaxHeight;
+          sbCalcWidth = (sbImgObj.width * sbMaxHeight) / sbImgObj.height;
+        }
+        const sbYOffset = 8 + (sbMaxHeight - sbCalcHeight) / 2;
+        doc.addImage(sbImgObj.base64, sbImgObj.ext, (pageWidth/2) - (sbCalcWidth/2), sbYOffset, sbCalcWidth, sbCalcHeight);
+      }
+      
+      // Title
+      doc.setTextColor(16, 185, 129); // Green
+      doc.setFontSize(13);
+      doc.setFont("helvetica", "bold");
+      doc.text(title.toUpperCase(), pageWidth/2, 33, { align: 'center' });
+      
+      doc.setTextColor(37, 99, 235); // Blue
+      doc.setFontSize(10);
+      doc.text(finalClientName, pageWidth/2, 39, { align: 'center' });
+      
+      // Separator Line
+      doc.setDrawColor(37, 99, 235);
+      doc.setLineWidth(0.5);
+      doc.line(14, 43, pageWidth - 14, 43);
+
+      const headers = ['Date', 'Machine ID', 'Client', 'Technician', 'Issue', 'PCB Cond', 'Status'];
+      const rows = filteredLogs.map(log => [
+        formatDate(log.created_at),
+        log.machine_id,
+        log.client_name || '-',
+        log.tech_name || '-',
+        log.reported_issue || '-',
+        log.pcb_condition || '-',
+        log.status || '-'
+      ]);
+
+      doc.autoTable({
+        head: [headers],
+        body: rows,
+        startY: 47,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 3, lineColor: [37, 99, 235], lineWidth: 0.1 },
+        headStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: 'bold', halign: 'center' },
+        bodyStyles: { halign: 'center' },
+        alternateRowStyles: { fillColor: [240, 253, 244] },
+        margin: { bottom: 35 },
+        didDrawPage: (data) => {
+          // Watermark
+          try {
+            if (sbImgObj && sbImgObj.base64) {
+              doc.setGState(new doc.GState({opacity: 0.05}));
+              const wmMaxWidth = 110;
+              let wmWidth = wmMaxWidth;
+              let wmHeight = (sbImgObj.height * wmMaxWidth) / sbImgObj.width;
+              doc.addImage(sbImgObj.base64, sbImgObj.ext, (pageWidth/2) - (wmWidth/2), (pageHeight/2) - (wmHeight/2), wmWidth, wmHeight);
+              doc.setGState(new doc.GState({opacity: 1}));
+            }
+          } catch (e) { }
+
+          // Footer
+          const sepY = pageHeight - 15;
+          doc.setDrawColor(200, 200, 200);
+          doc.setLineWidth(0.5);
+          doc.line(14, sepY, pageWidth - 14, sepY);
+
+          doc.setFontSize(8);
+          doc.setTextColor(100, 100, 100);
+          doc.text('AARYA INNOVTECH PVT. LTD. CIN: U29305MH2019PTC327551 | +91 8806796868 | https://aaryainnovtech.com/', 14, sepY + 5);
+          doc.text('Nashik Office: Flat No.4A, Sayali Darshan A-Wing, Makhamalabad Road, Nashik-422003.', 14, sepY + 9);
+          
+          const generateDate = formatDate(new Date().toISOString());
+          doc.text(`Page ${data.pageNumber} of ${doc.internal.getNumberOfPages()}`, pageWidth - 14, sepY + 5, { align: 'right' });
+          doc.text(`Generated on: ${generateDate}`, pageWidth - 14, sepY + 9, { align: 'right' });
+        }
+      });
+      
+      const sigY = pageHeight - 25;
+      doc.setFontSize(9);
+      doc.setTextColor(80, 80, 80);
+      doc.setDrawColor(150, 150, 150);
+      doc.setLineWidth(0.2);
+      
+      doc.line(14, sigY, 64, sigY);
+      doc.text('System Administrator', 39, sigY + 5, { align: 'center' });
+      
+      doc.line(pageWidth - 64, sigY, pageWidth - 14, sigY);
+      doc.text('Authorized Signatory', pageWidth - 39, sigY + 5, { align: 'center' });
+      
+      doc.save(`Maintenance_Logs_${new Date().toISOString().split('T')[0]}.pdf`);
+      toast.success('HD PDF Report Downloaded');
+    };
+
+    sbImg.crossOrigin = "Anonymous";
+    sbImg.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = sbImg.width;
+      canvas.height = sbImg.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(sbImg, 0, 0);
+      const dataURL = canvas.toDataURL("image/jpeg", 0.95);
+      drawPDF({ base64: dataURL, width: sbImg.width, height: sbImg.height, ext: 'JPEG' });
+    };
+    sbImg.onerror = () => {
+      drawPDF(null);
+    };
+  };
+
   return (
     <div className="page-container fade-in">
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -55,16 +188,21 @@ const MaintenanceLogs = () => {
           </h1>
           <p style={{ color: 'var(--slate-500)', marginTop: '0.25rem' }}>Review hardware diagnostics and field tech reports.</p>
         </div>
-        <div style={{ position: 'relative', width: '300px' }}>
-          <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)' }} />
-          <input 
-            type="text" 
-            placeholder="Search by Machine, Tech, or Client..." 
-            className="form-input"
-            style={{ paddingLeft: '2.5rem', width: '100%', borderRadius: '20px' }}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div style={{ position: 'relative', width: '300px' }}>
+            <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)' }} />
+            <input 
+              type="text" 
+              placeholder="Search by Machine, Tech, or Client..." 
+              className="form-input"
+              style={{ paddingLeft: '2.5rem', width: '100%', borderRadius: '20px' }}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <button onClick={handleExportPDF} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#8b5cf6', borderColor: '#8b5cf6', borderRadius: '20px' }}>
+            Download PDF
+          </button>
         </div>
       </div>
 
