@@ -47,10 +47,14 @@ async function setupMaintenanceDB() {
         reported_issue TEXT,
         root_cause TEXT,
         action_taken TEXT,
-        before_photo VARCHAR(255),
-        after_photo VARCHAR(255),
+        before_photo LONGTEXT,
+        after_photo LONGTEXT,
         gps_lat VARCHAR(50),
         gps_lng VARCHAR(50),
+        pcb_condition VARCHAR(100),
+        voltage_reading VARCHAR(50),
+        relays_checked TINYINT(1) DEFAULT 0,
+        sensors_checked TINYINT(1) DEFAULT 0,
         status VARCHAR(50) DEFAULT 'Resolved',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
