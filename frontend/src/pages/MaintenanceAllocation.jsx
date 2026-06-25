@@ -60,16 +60,30 @@ const MaintenanceAllocation = () => {
     }
     
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/maintenance/allocate`, formData, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (res.data.success) {
-        toast.success(res.data.message);
-        setFormData({ tech_id: '', machine_id: '' });
-        fetchAllocations();
+      if (formData.machine_id === 'ALL') {
+        if (filteredMachines.length === 0) return toast.error("No machines found in this filter!");
+        toast.loading(`Allocating ${filteredMachines.length} machines...`, { id: 'alloc' });
+        for (const m of filteredMachines) {
+          await axios.post(`${import.meta.env.VITE_API_BASE_URL}/maintenance/allocate`, {
+            tech_id: formData.tech_id,
+            machine_id: m.machine_id
+          }, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          });
+        }
+        toast.success(`Successfully allocated ${filteredMachines.length} machines!`, { id: 'alloc' });
+      } else {
+        const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/maintenance/allocate`, formData, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        if (res.data.success) {
+          toast.success(res.data.message);
+        }
       }
+      setFormData({ tech_id: '', machine_id: '' });
+      fetchAllocations();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to allocate machine');
+      toast.error(error.response?.data?.message || 'Failed to allocate machine(s)', { id: 'alloc' });
     }
   };
 
@@ -129,6 +143,7 @@ const MaintenanceAllocation = () => {
               <label className="form-label">4. Select Machine <span style={{color:'red'}}>*</span></label>
               <select className="form-input" value={formData.machine_id} onChange={e => setFormData({...formData, machine_id: e.target.value})} required>
                 <option value="">-- Select Machine --</option>
+                <option value="ALL" style={{ fontWeight: 'bold', color: '#4338ca' }}>-- Allocate ALL Filtered Machines --</option>
                 {filteredMachines.map(m => <option key={m.machine_id} value={m.machine_id}>{m.machine_id}</option>)}
               </select>
             </div>
