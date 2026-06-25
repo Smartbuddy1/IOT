@@ -71,6 +71,8 @@ function App() {
             } />
             <Route path="dashboard" element={<ProtectedRoute allowedRoles={['Admin', 'Client', 'Maintenance_Head']}><Dashboard /></ProtectedRoute>} />
             <Route path="users" element={<ProtectedRoute allowedRoles={['Admin', 'Field_Tech', 'Maintenance_Head']}><UserManagement /></ProtectedRoute>} />
+            <Route path="clients" element={<Navigate to="/users" replace />} />
+            <Route path="staff" element={<Navigate to="/users" replace />} />
             <Route path="projects" element={<ProtectedRoute allowedRoles={['Admin', 'Client', 'Field_Tech']}><Projects /></ProtectedRoute>} />
             <Route path="machines" element={<ProtectedRoute allowedRoles={['Admin', 'Client', 'Field_Tech']}><Machines /></ProtectedRoute>} />
             <Route path="unassigned-machines" element={<ProtectedRoute allowedRoles={['Admin']}><UnassignedMachines /></ProtectedRoute>} />
