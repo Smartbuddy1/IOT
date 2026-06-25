@@ -15,5 +15,6 @@ router.post('/test-hardware', authenticateToken, maintenanceController.testHardw
 
 // Logs (Visible to Admin, Maintenance_Head, and Field_Tech themselves)
 router.get('/logs', authenticateToken, maintenanceController.getAllLogs);
+router.get('/logs/:id/photos', authenticateToken, maintenanceController.getLogPhotos);
 
 export default router;

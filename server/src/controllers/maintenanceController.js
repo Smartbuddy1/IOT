@@ -217,7 +217,11 @@ export const getAllLogs = async (req, res) => {
 
   try {
     let query = `
-      SELECT l.*, u.name as tech_name, m.client_name, m.project_name
+      SELECT 
+        l.log_id, l.machine_id, l.tech_id, l.reported_issue, l.root_cause, l.action_taken, 
+        l.gps_lat, l.gps_lng, l.pcb_condition, l.voltage_reading, l.relays_checked, 
+        l.sensors_checked, l.status, l.created_at, l.updated_at,
+        u.name as tech_name, m.client_name, m.project_name
       FROM maintenance_logs l
       JOIN tblusers u ON l.tech_id = u.id
       JOIN machines m ON l.machine_id = m.machine_id
@@ -250,6 +254,20 @@ export const getAllLogs = async (req, res) => {
     res.json({ success: true, logs });
   } catch (error) {
     console.error('Fetch all logs error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+export const getLogPhotos = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await pool.query('SELECT before_photo, after_photo FROM maintenance_logs WHERE log_id = ?', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Log not found' });
+    }
+    res.json({ success: true, before_photo: rows[0].before_photo, after_photo: rows[0].after_photo });
+  } catch (error) {
+    console.error('Fetch photos error:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };

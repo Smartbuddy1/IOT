@@ -22,6 +22,7 @@ const MaintenanceLogs = () => {
   
   // Modal for details
   const [selectedLog, setSelectedLog] = useState(null);
+  const [photosLoading, setPhotosLoading] = useState(false);
 
   useEffect(() => {
     fetchLogs();
@@ -71,6 +72,27 @@ const MaintenanceLogs = () => {
     if (!dateStr) return '-';
     const d = new Date(dateStr);
     return `${d.getDate().toString().padStart(2, '0')}-${(d.getMonth()+1).toString().padStart(2, '0')}-${d.getFullYear()} ${d.getHours()}:${d.getMinutes().toString().padStart(2,'0')}`;
+  };
+
+  const handleViewDetails = async (log) => {
+    setSelectedLog(log);
+    setPhotosLoading(true);
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/maintenance/logs/${log.log_id}/photos`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.data.success) {
+        setSelectedLog(prev => ({
+          ...prev,
+          before_photo: res.data.before_photo,
+          after_photo: res.data.after_photo
+        }));
+      }
+    } catch (e) {
+      console.error('Failed to load photos');
+    } finally {
+      setPhotosLoading(false);
+    }
   };
 
   const handleExportPDF = () => {
@@ -313,7 +335,7 @@ const MaintenanceLogs = () => {
                     </td>
                     <td>
                       <button 
-                        onClick={() => setSelectedLog(log)}
+                        onClick={() => handleViewDetails(log)}
                         className="btn btn-secondary" 
                         style={{ fontSize: '0.85rem', padding: '0.4rem 0.75rem', backgroundColor: '#f1f5f9', color: '#334155' }}
                       >
@@ -397,24 +419,31 @@ const MaintenanceLogs = () => {
               <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#334155', marginBottom: '1rem', fontWeight: 'bold' }}>
                 <Camera size={18} /> Visual Evidence
               </h4>
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem', display: 'block' }}>Before</span>
-                  {selectedLog.before_photo ? (
-                    <img src={selectedLog.before_photo} alt="Before" style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
-                  ) : (
-                    <div style={{ width: '100%', height: '150px', backgroundColor: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>No Image</div>
-                  )}
+              
+              {photosLoading ? (
+                <div style={{ display: 'flex', gap: '1rem', height: '150px', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="spinner"></div> Loading high-res photos...
                 </div>
-                <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem', display: 'block' }}>After</span>
-                  {selectedLog.after_photo ? (
-                    <img src={selectedLog.after_photo} alt="After" style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
-                  ) : (
-                    <div style={{ width: '100%', height: '150px', backgroundColor: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>No Image</div>
-                  )}
+              ) : (
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem', display: 'block' }}>Before</span>
+                    {selectedLog.before_photo ? (
+                      <img src={selectedLog.before_photo} alt="Before" style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: '150px', backgroundColor: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>No Image</div>
+                    )}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem', display: 'block' }}>After</span>
+                    {selectedLog.after_photo ? (
+                      <img src={selectedLog.after_photo} alt="After" style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: '150px', backgroundColor: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>No Image</div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
           </div>
