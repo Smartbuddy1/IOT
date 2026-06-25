@@ -14,6 +14,12 @@ const MaintenanceLogs = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Advanced Filters
+  const [filterTech, setFilterTech] = useState('');
+  const [filterClient, setFilterClient] = useState('');
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+  
   // Modal for details
   const [selectedLog, setSelectedLog] = useState(null);
 
@@ -36,11 +42,30 @@ const MaintenanceLogs = () => {
     }
   };
 
-  const filteredLogs = logs.filter(log => 
-    log.machine_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.tech_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.client_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const uniqueTechs = [...new Set(logs.map(l => l.tech_name).filter(Boolean))];
+  const uniqueClients = [...new Set(logs.map(l => l.client_name).filter(Boolean))];
+
+  const filteredLogs = logs.filter(log => {
+    // Text search
+    const matchesSearch = 
+      log.machine_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.tech_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      log.client_name?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+    // Dropdown filters
+    const matchesTech = filterTech ? log.tech_name === filterTech : true;
+    const matchesClient = filterClient ? log.client_name === filterClient : true;
+    
+    // Date filters
+    let matchesDate = true;
+    if (filterStartDate || filterEndDate) {
+      const logDate = log.created_at ? log.created_at.split('T')[0] : '';
+      if (filterStartDate && logDate < filterStartDate) matchesDate = false;
+      if (filterEndDate && logDate > filterEndDate) matchesDate = false;
+    }
+
+    return matchesSearch && matchesTech && matchesClient && matchesDate;
+  });
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
@@ -58,8 +83,16 @@ const MaintenanceLogs = () => {
     
     // Header Data
     const title = 'Maintenance Logs Report';
-    let finalClientName = 'All Clients';
-    if (searchQuery) finalClientName = `Search: ${searchQuery}`;
+    let finalClientName = 'All Logs';
+    let filterTexts = [];
+    if (filterClient) filterTexts.push(`Client: ${filterClient}`);
+    if (filterTech) filterTexts.push(`Tech: ${filterTech}`);
+    if (filterStartDate || filterEndDate) filterTexts.push(`Date: ${filterStartDate || '...'} to ${filterEndDate || '...'}`);
+    if (searchQuery) filterTexts.push(`Search: ${searchQuery}`);
+    
+    if (filterTexts.length > 0) {
+      finalClientName = filterTexts.join(' | ');
+    }
     
     const sbImg = new Image();
     sbImg.src = "/SB_Logo.jpg";
@@ -189,20 +222,49 @@ const MaintenanceLogs = () => {
           <p style={{ color: 'var(--slate-500)', marginTop: '0.25rem' }}>Review hardware diagnostics and field tech reports.</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div style={{ position: 'relative', width: '300px' }}>
+          <button onClick={handleExportPDF} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#8b5cf6', borderColor: '#8b5cf6', borderRadius: '20px' }}>
+            Download PDF
+          </button>
+        </div>
+      </div>
+
+      {/* Filter Panel */}
+      <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end' }}>
+        <div style={{ flex: 1, minWidth: '200px' }}>
+          <label className="form-label" style={{ fontSize: '0.85rem', color: 'var(--slate-500)' }}>Search Term</label>
+          <div style={{ position: 'relative' }}>
             <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--slate-400)' }} />
             <input 
               type="text" 
-              placeholder="Search by Machine, Tech, or Client..." 
+              placeholder="Machine, Tech..." 
               className="form-input"
-              style={{ paddingLeft: '2.5rem', width: '100%', borderRadius: '20px' }}
+              style={{ paddingLeft: '2.5rem', width: '100%', borderRadius: '8px' }}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <button onClick={handleExportPDF} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#8b5cf6', borderColor: '#8b5cf6', borderRadius: '20px' }}>
-            Download PDF
-          </button>
+        </div>
+        <div style={{ flex: 1, minWidth: '150px' }}>
+          <label className="form-label" style={{ fontSize: '0.85rem', color: 'var(--slate-500)' }}>Client</label>
+          <select className="form-input" value={filterClient} onChange={e => setFilterClient(e.target.value)} style={{ borderRadius: '8px' }}>
+            <option value="">All Clients</option>
+            {uniqueClients.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div style={{ flex: 1, minWidth: '150px' }}>
+          <label className="form-label" style={{ fontSize: '0.85rem', color: 'var(--slate-500)' }}>Technician</label>
+          <select className="form-input" value={filterTech} onChange={e => setFilterTech(e.target.value)} style={{ borderRadius: '8px' }}>
+            <option value="">All Technicians</option>
+            {uniqueTechs.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+        <div style={{ flex: 1, minWidth: '130px' }}>
+          <label className="form-label" style={{ fontSize: '0.85rem', color: 'var(--slate-500)' }}>From Date</label>
+          <input type="date" className="form-input" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} style={{ borderRadius: '8px' }} />
+        </div>
+        <div style={{ flex: 1, minWidth: '130px' }}>
+          <label className="form-label" style={{ fontSize: '0.85rem', color: 'var(--slate-500)' }}>To Date</label>
+          <input type="date" className="form-input" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} style={{ borderRadius: '8px' }} />
         </div>
       </div>
 
