@@ -216,7 +216,6 @@ const Dashboard = () => {
       )}
 
       {/* CHARTS & ACTIVITY */}
-      {/* ANALYTICS ROW 1 */}
       <div className="charts-grid animate-entrance delay-300" style={{ marginTop: '2rem' }}>
         {/* 7-Day Revenue Trend (Area Chart) */}
         {user?.role !== 'Maintenance_Head' && (
@@ -293,10 +292,7 @@ const Dashboard = () => {
             })()}
           </div>
         </div>
-      </div>
 
-      {/* ANALYTICS ROW 2 */}
-      <div className="charts-grid animate-entrance delay-400" style={{ marginTop: '1.5rem' }}>
         {/* Top Projects (Horizontal Bar Chart) */}
         {user?.role !== 'Maintenance_Head' && (
           <div className="glass-panel chart-card hover-float">
