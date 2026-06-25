@@ -109,6 +109,30 @@ const TestForm = () => {
     }
   }, []);
 
+  const handleTestHardware = async (action_type) => {
+    if (!formData.machine_id) return toast.error("Please enter a Machine ID first!");
+    if (!formData.gps_lat || !formData.gps_lng) return toast.error("Location not captured yet!");
+    
+    if (!window.confirm(`Are you sure you want to test ${action_type} on ${formData.machine_id}?`)) return;
+    
+    toast.loading(`Testing ${formData.machine_id}...`, { id: 'test-hw' });
+    try {
+      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/maintenance/test-hardware`, { 
+        machine_id: formData.machine_id, 
+        action_type,
+        gps_lat: formData.gps_lat,
+        gps_lng: formData.gps_lng
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.data.success) {
+        toast.success(res.data.message, { id: 'test-hw' });
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to send test command', { id: 'test-hw' });
+    }
+  };
+
   const handleImageCapture = (e, fieldName) => {
     const file = e.target.files[0];
     if (file) {
@@ -172,7 +196,11 @@ const TestForm = () => {
 
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">Machine ID <span style={{color:'red'}}>*</span></label>
-            <input type="text" className="form-input" required value={formData.machine_id} onChange={e => setFormData({...formData, machine_id: e.target.value})} placeholder="Enter Machine ID" />
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <input type="text" className="form-input" required value={formData.machine_id} onChange={e => setFormData({...formData, machine_id: e.target.value})} placeholder="Enter Machine ID" style={{ flex: 1 }} />
+              <button type="button" onClick={() => handleTestHardware('TEST_DOOR')} className="btn" style={{ backgroundColor: '#e0e7ff', color: '#4338ca', padding: '0.5rem 1rem', height: '42px', fontWeight: 'bold' }}>Test Door</button>
+              <button type="button" onClick={() => handleTestHardware('TEST_FLUSH')} className="btn" style={{ backgroundColor: '#e0e7ff', color: '#4338ca', padding: '0.5rem 1rem', height: '42px', fontWeight: 'bold' }}>Test Flush</button>
+            </div>
           </div>
 
           {/* Section 1: General Info */}

@@ -126,7 +126,13 @@ const FieldTechView = () => {
       <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#1e293b' }}>Hardware Testing</h1>
       <p style={{ color: '#64748b', marginTop: '0.5rem', marginBottom: '2rem' }}>Test Door, Flush, Payment, and view machine health.</p>
 
-      {isLoading ? <p>Loading machines...</p> : (
+      {isLoading ? <p>Loading machines...</p> : machines.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '4rem 2rem', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+          <CheckCircle size={48} color="#10b981" style={{ margin: '0 auto', marginBottom: '1rem' }} />
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#334155', marginBottom: '0.5rem' }}>You're all caught up!</h2>
+          <p style={{ color: '#64748b' }}>There are no machines currently assigned to you for maintenance. Enjoy your break!</p>
+        </div>
+      ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
           {machines.map(m => (
             <div key={m.machine_id} className="card" style={{ padding: '1.5rem', borderTop: m.machine_status === 'active' ? '4px solid #10b981' : '4px solid #ef4444' }}>
