@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
 import SkeletonTable from '../components/SkeletonTable';
 
-const Clients = () => {
+const Clients = ({ isTab = false }) => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -182,12 +182,16 @@ const Clients = () => {
   };
 
   return (
-    <div className="page-container">
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--slate-800)', letterSpacing: '-0.025em' }}>Clients</h1>
-          <p style={{ color: 'var(--slate-500)', marginTop: '0.25rem' }}>Manage your corporate and individual clients.</p>
-        </div>
+    <div className={isTab ? "" : "page-container fade-in"}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: isTab ? 'flex-end' : 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        {!isTab && (
+          <div>
+            <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--slate-800)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Users color="var(--primary-color)" /> Clients
+            </h1>
+            <p style={{ color: 'var(--slate-500)', marginTop: '0.25rem' }}>Manage registered clients and their details.</p>
+          </div>
+        )}
         {user.role === 'Admin' && (
           <button className="btn btn-primary" onClick={handleOpenModal}>
             <Plus size={18} style={{ marginRight: '0.5rem' }} /> Add Client

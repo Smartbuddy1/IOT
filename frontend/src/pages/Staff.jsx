@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
 import SkeletonTable from '../components/SkeletonTable';
 
-const Staff = () => {
+const Staff = ({ isTab = false }) => {
   const [users, setUsers] = useState([]);
   const [states, setStates] = useState([]);
   const [clients, setClients] = useState([]);
@@ -152,12 +152,16 @@ const Staff = () => {
   );
 
   return (
-    <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#1e293b' }}>Operations Management</h1>
-          <p style={{ color: '#64748b', marginTop: '0.5rem' }}>Manage admin and operation (maintenance) users.</p>
-        </div>
+    <div className={isTab ? "" : "page-container fade-in"}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: isTab ? 'flex-end' : 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+        {!isTab && (
+          <div>
+            <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--slate-800)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Shield color="var(--primary-color)" /> Operations Management
+            </h1>
+            <p style={{ color: 'var(--slate-500)', marginTop: '0.25rem' }}>Manage admin and operation (maintenance) users.</p>
+          </div>
+        )}
         <button className="btn btn-primary" onClick={openAddModal} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Plus size={20} /> Add User
         </button>

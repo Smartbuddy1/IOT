@@ -5,14 +5,13 @@ import { Toaster } from 'react-hot-toast';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import Clients from './pages/Clients';
+import UserManagement from './pages/UserManagement';
 import Projects from './pages/Projects';
 import Machines from './pages/Machines';
 import QRPay from './pages/QRPay';
 import Transactions from './pages/Transactions';
 import Reports from './pages/Reports';
 import Analytics from './pages/Analytics';
-import Staff from './pages/Staff';
 import UnassignedMachines from './pages/UnassignedMachines';
 import MaintenanceAllocation from './pages/MaintenanceAllocation';
 import FieldTechView from './pages/FieldTechView';
@@ -27,7 +26,7 @@ import { useAuth } from './context/AuthContext';
 
 const RoleBasedRedirect = () => {
   const { user } = useAuth();
-  if (user?.role === 'Field_Tech') return <Navigate to="/clients" replace />;
+  if (user?.role === 'Field_Tech') return <Navigate to="/users" replace />;
   return <Navigate to="/dashboard" replace />;
 };
 
@@ -71,14 +70,13 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="dashboard" element={<ProtectedRoute allowedRoles={['Admin', 'Client', 'Maintenance_Head']}><Dashboard /></ProtectedRoute>} />
-            <Route path="clients" element={<ProtectedRoute allowedRoles={['Admin', 'Field_Tech']}><Clients /></ProtectedRoute>} />
+            <Route path="users" element={<ProtectedRoute allowedRoles={['Admin', 'Field_Tech', 'Maintenance_Head']}><UserManagement /></ProtectedRoute>} />
             <Route path="projects" element={<ProtectedRoute allowedRoles={['Admin', 'Client', 'Field_Tech']}><Projects /></ProtectedRoute>} />
             <Route path="machines" element={<ProtectedRoute allowedRoles={['Admin', 'Client', 'Field_Tech']}><Machines /></ProtectedRoute>} />
             <Route path="unassigned-machines" element={<ProtectedRoute allowedRoles={['Admin']}><UnassignedMachines /></ProtectedRoute>} />
             <Route path="transactions" element={<ProtectedRoute allowedRoles={['Admin', 'Client']}><Transactions /></ProtectedRoute>} />
             <Route path="reports" element={<ProtectedRoute allowedRoles={['Admin', 'Client']}><Reports /></ProtectedRoute>} />
             <Route path="analytics" element={<ProtectedRoute allowedRoles={['Admin', 'Client']}><Analytics /></ProtectedRoute>} />
-            <Route path="staff" element={<ProtectedRoute allowedRoles={['Admin', 'Maintenance_Head']}><Staff /></ProtectedRoute>} />
             <Route path="allocations" element={<ProtectedRoute allowedRoles={['Maintenance_Head']}><MaintenanceAllocation /></ProtectedRoute>} />
             <Route path="maintenance-logs" element={<ProtectedRoute allowedRoles={['Admin', 'Maintenance_Head']}><MaintenanceLogs /></ProtectedRoute>} />
             <Route path="field-tech" element={<ProtectedRoute allowedRoles={['Field_Tech']}><FieldTechView /></ProtectedRoute>} />
