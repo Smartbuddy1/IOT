@@ -233,21 +233,25 @@ const Staff = () => {
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button 
-                            className="btn btn-secondary" 
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.875rem', borderRadius: '0.5rem' }} 
-                            onClick={() => handleEdit(staff)}
-                          >
-                            Edit
-                          </button>
-                          {user.id !== staff.id && (
-                            <button 
-                              className="btn btn-danger" 
-                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.875rem', borderRadius: '0.5rem', backgroundColor: '#ef4444', color: 'white', border: 'none', boxShadow: '0 4px 6px rgba(239,68,68,0.2)' }} 
-                              onClick={() => handleDelete(staff.id)}
-                            >
-                              Delete
-                            </button>
+                          {(user?.role === 'Admin' || (user?.role === 'Maintenance_Head' && staff.role === 'Field_Tech')) && (
+                            <>
+                              <button 
+                                className="btn btn-secondary" 
+                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.875rem', borderRadius: '0.5rem' }} 
+                                onClick={() => handleEdit(staff)}
+                              >
+                                Edit
+                              </button>
+                              {user.id !== staff.id && (
+                                <button 
+                                  className="btn btn-danger" 
+                                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.875rem', borderRadius: '0.5rem', backgroundColor: '#ef4444', color: 'white', border: 'none', boxShadow: '0 4px 6px rgba(239,68,68,0.2)' }} 
+                                  onClick={() => handleDelete(staff.id)}
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>
@@ -304,7 +308,7 @@ const Staff = () => {
               <>
                 <div className="form-group">
                   <label className="form-label">Assign State</label>
-                  <select className="form-input" value={formData.assigned_state} onChange={e => setFormData({...formData, assigned_state: e.target.value})}>
+                  <select className="form-input" value={formData.assigned_state} onChange={e => setFormData({...formData, assigned_state: e.target.value, assigned_client: '', assigned_project: ''})}>
                     <option value="">-- All States --</option>
                     {states.map(state => (
                       <option key={state} value={state}>{state}</option>
@@ -316,7 +320,9 @@ const Staff = () => {
                   <label className="form-label">Assign Client</label>
                   <select className="form-input" value={formData.assigned_client} onChange={e => setFormData({...formData, assigned_client: e.target.value, assigned_project: ''})}>
                     <option value="">-- All Clients --</option>
-                    {clients.map(c => (
+                    {clients
+                      .filter(c => !formData.assigned_state || c.client_state === formData.assigned_state)
+                      .map(c => (
                       <option key={c.id} value={c.client_name}>{c.client_name}</option>
                     ))}
                   </select>
