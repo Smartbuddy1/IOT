@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, X, Search, Shield } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Search, Filter, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';

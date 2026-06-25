@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Edit, Trash2, X, Search, ArrowUpDown } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Search, ArrowUpDown, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
 import SkeletonTable from '../components/SkeletonTable';
