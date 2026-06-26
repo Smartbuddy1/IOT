@@ -69,17 +69,22 @@ const Layout = () => {
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header" style={{ padding: '1.5rem 1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
           <div style={{ 
-            backgroundColor: '#ffffff', 
-            padding: '0.5rem', 
-            borderRadius: '12px', 
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', 
+            background: 'linear-gradient(145deg, #ffffff, #f3f4f6)', 
+            padding: '0.6rem 1.2rem', 
+            borderRadius: '100px', // Perfect pill shape 
+            boxShadow: '0 8px 16px -4px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255,255,255,0.8), 0 0 12px rgba(255,255,255,0.1)', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
-            width: '100%',
-            maxWidth: '180px'
+            width: 'fit-content',
+            minWidth: '160px',
+            maxWidth: '90%',
+            margin: '0 auto',
+            position: 'relative',
+            overflow: 'hidden'
           }}>
-            <img src="/logo_new.jpeg" alt="SmartBuddy Logo" style={{ width: '100%', height: 'auto', maxHeight: '45px', objectFit: 'contain' }} />
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '40%', background: 'linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 100%)', pointerEvents: 'none' }}></div>
+            <img src="/logo_new.jpeg" alt="SmartBuddy Logo" style={{ width: '100%', height: 'auto', maxHeight: '48px', objectFit: 'contain', mixBlendMode: 'darken', filter: 'contrast(1.05) saturate(1.1)' }} />
           </div>
         </div>
         
