@@ -177,12 +177,12 @@ export const updateMachine = async (req, res) => {
     const isChanged = (
       old.machine_id !== machine_id ||
       old.status !== status ||
-      old.uses_amt !== uses_amt ||
+      old.uses_amt !== usesAmt ||
       old.wall_clean !== wall_clean ||
-      old.seats !== seats ||
-      old.flush_time !== flush_time ||
-      old.floor_time !== floor_time ||
-      old.wall_time !== wall_time ||
+      old.seats !== seatsNum ||
+      old.flush_time !== flushTime ||
+      old.floor_time !== floorTime ||
+      old.wall_time !== wallTime ||
       old.free !== free ||
       old.coin !== coin ||
       old.upi !== upi ||
@@ -191,20 +191,62 @@ export const updateMachine = async (req, res) => {
     );
 
     if (isChanged) {
-      const payload = [
+      // Format A: Legacy format with SET_PARAMETERS
+      const payloadWithSet = [
         machine_id,
         "SET_PARAMETERS",
         status,
         modeStr,
-        uses_amt,
+        usesAmt,
         wall_clean,
-        seats || '',
-        flush_time,
-        floor_time,
-        wall_time || ''
+        seatsNum !== null ? seatsNum : '',
+        flushTime,
+        floorTime,
+        wallTime !== null ? wallTime : ''
       ].join(',');
 
-      publishMessage('aarya', payload);
+      // Format B: Direct configuration payload (matching status format)
+      const payloadDirect = [
+        machine_id,
+        status,
+        modeStr,
+        usesAmt,
+        wall_clean,
+        seatsNum !== null ? seatsNum : '0',
+        flushTime,
+        floorTime,
+        wallTime !== null ? wallTime : '0'
+      ].join(',');
+
+      // Format C: JSON payload
+      const payloadJson = JSON.stringify({
+        command: "SET_PARAMETERS",
+        machine_id,
+        status,
+        mode: modeStr,
+        uses_amt: usesAmt,
+        wall_clean,
+        seats: seatsNum,
+        flush_time: flushTime,
+        floor_time: floorTime,
+        wall_time: wallTime
+      });
+
+      console.log(`Publishing settings for machine ${machine_id}...`);
+      
+      // 1. Publish to legacy 'aarya' topic
+      publishMessage('aarya', payloadWithSet);
+      publishMessage('aarya', payloadDirect);
+
+      // 2. Publish to 'machine/{machine_id}/command' (as per IoT Guide)
+      publishMessage(`machine/${machine_id}/command`, payloadWithSet);
+      publishMessage(`machine/${machine_id}/command`, payloadDirect);
+      publishMessage(`machine/${machine_id}/command`, payloadJson);
+
+      // 3. Publish to 'smartbuddy/{machine_id}/cmd' (as per maintenance controller)
+      publishMessage(`smartbuddy/${machine_id}/cmd`, payloadWithSet);
+      publishMessage(`smartbuddy/${machine_id}/cmd`, payloadDirect);
+      publishMessage(`smartbuddy/${machine_id}/cmd`, payloadJson);
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
