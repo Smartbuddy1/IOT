@@ -11,6 +11,27 @@ export const handleHardwarePost = async (req, res) => {
     // 1. Register the machine if it doesn't exist (Unassigned Machine Logic)
     await pool.query('INSERT IGNORE INTO machines (machine_id) VALUES (?)', [machine_id]);
 
+    // Fetch the machine's current configuration from the database
+    const [machines] = await pool.query('SELECT * FROM machines WHERE machine_id = ? LIMIT 1', [machine_id]);
+    const machine = machines[0] || {};
+
+    const configData = {
+      status: machine.status || 'ready',
+      uses_amt: machine.uses_amt || 5,
+      wall_clean: machine.wall_clean || 'En',
+      seats: machine.seats || 0,
+      flush_time: machine.flush_time || 5,
+      floor_time: machine.floor_time || 5,
+      wall_time: machine.wall_time || 0,
+      free: machine.free || 'No',
+      coin: machine.coin || 'Yes',
+      upi: machine.upi || 'Yes',
+      smart_card: machine.smart_card || 'No',
+      digital_token: machine.digital_token || 'No',
+      gps_lat: machine.gps_lat || '',
+      gps_lng: machine.gps_lng || ''
+    };
+
     // 2. Process data based on type
     if (type === 'transaction') {
       const amount = req.body.amount ? parseFloat(req.body.amount) : 0.00;
@@ -23,7 +44,12 @@ export const handleHardwarePost = async (req, res) => {
         [machine_id, amount, payment_mode, status]
       );
       
-      return res.json({ status: "success", message: "Transaction saved" });
+      return res.json({ 
+        status: "success", 
+        message: "Transaction saved", 
+        ...configData, 
+        config: configData 
+      });
 
     } else if (type === 'live_update') {
       const water_level = req.body.water_level ? parseInt(req.body.water_level) : 0;
@@ -35,7 +61,12 @@ export const handleHardwarePost = async (req, res) => {
         [machine_id, topic_name]
       );
 
-      return res.json({ status: "success", message: "Live data updated" });
+      return res.json({ 
+        status: "success", 
+        message: "Live data updated", 
+        ...configData, 
+        config: configData 
+      });
 
     } else {
       return res.status(400).json({ status: "error", message: "Unknown type" });
