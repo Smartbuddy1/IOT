@@ -1,6 +1,6 @@
 :root {
-  --font-sans: 'Cambria', Georgia, serif;
-  --font-heading: 'Cambria', Georgia, serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Outfit', 'Inter', system-ui, sans-serif;
 
   --slate-50: #f8fafc;
   --slate-100: #f1f5f9;
@@ -353,8 +353,10 @@ button {
   grid-template-columns: 1fr;
   border-radius: 1.5rem;
   overflow: hidden;
-  box-shadow: 0 25px 50px -12px var(--shadow-color);
-  background: var(--surface-bg);
+  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.25);
+  background: var(--card-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-color);
   z-index: 10;
   transition: all 0.3s ease;
@@ -368,13 +370,14 @@ button {
 
 /* Left Side (Gradient Panel) */
 .auth-split-left {
-  background: linear-gradient(135deg, #10b981 0%, #059669 35%, #2563eb 100%);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.75) 0%, rgba(37, 99, 235, 0.65) 100%);
   padding: 3.5rem 2.5rem;
   color: white;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .auth-split-left-top {
@@ -390,14 +393,14 @@ button {
 }
 
 .auth-split-logo-img {
-  height: 52px;
+  height: 64px;
   width: auto;
-  max-width: 160px;
+  max-width: 200px;
   object-fit: contain;
   border-radius: 0.5rem;
-  background-color: white;
-  padding: 4px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 6px 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 .auth-split-logo-text {

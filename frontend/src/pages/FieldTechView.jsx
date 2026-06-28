@@ -5,10 +5,10 @@ import { Power, Settings, ShieldAlert, CheckCircle, Camera, MapPin, Zap, Cpu, To
 import Modal from '../components/Modal';
 
 const FieldTechView = () => {
-  const [machines, setMachines] = useState([]);
+  const [tickets, setTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedMachine, setSelectedMachine] = useState(null);
+  const [selectedTicket, setSelectedTicket] = useState(null);
   
   const [formData, setFormData] = useState({
     reported_issue: '',
@@ -24,25 +24,25 @@ const FieldTechView = () => {
     sensors_checked: false
   });
 
-  useEffect(() => {
-    fetchMyMachines();
-  }, []);
-
-  const fetchMyMachines = async () => {
+  const fetchMyTickets = async () => {
     try {
       setIsLoading(true);
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/maintenance/my-machines`, {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/maintenance/tickets`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       if (res.data.success) {
-        setMachines(res.data.machines);
+        setTickets(res.data.tickets);
       }
     } catch (error) {
-      toast.error('Failed to fetch assigned machines');
+      toast.error('Failed to fetch assigned tickets');
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchMyTickets();
+  }, []);
 
   const handleTestHardware = async (machine_id, action_type) => {
     if (!window.confirm(`Are you sure you want to test ${action_type} on ${machine_id}?\n\nNote: You must be physically present at the machine location.`)) return;
@@ -77,10 +77,10 @@ const FieldTechView = () => {
     }
   };
 
-  const openMaintenanceForm = (machine_id) => {
-    setSelectedMachine(machine_id);
+  const openMaintenanceForm = (ticket) => {
+    setSelectedTicket(ticket);
     setFormData({ 
-      reported_issue: '', root_cause: '', action_taken: '', 
+      reported_issue: ticket.title, root_cause: '', action_taken: '', 
       before_photo: '', after_photo: '', gps_lat: '', gps_lng: '',
       pcb_condition: 'Good', voltage_reading: '', relays_checked: false, sensors_checked: false
     });
@@ -102,22 +102,35 @@ const FieldTechView = () => {
     }
   };
 
-  const handleLogSubmit = async (e) => {
+  const submitLog = async (e) => {
     e.preventDefault();
-    if (!formData.gps_lat || !formData.gps_lng) {
-      return toast.error("Missing GPS coordinates!");
-    }
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/maintenance/submit-log`, { machine_id: selectedMachine, ...formData }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      toast.loading('Submitting maintenance log...', { id: 'submit-log' });
+      const payload = new FormData();
+      Object.keys(formData).forEach(key => {
+        if (key === 'before_photo' || key === 'after_photo') {
+          if (formData[key] instanceof File) {
+            payload.append(key, formData[key]);
+          }
+        } else {
+          payload.append(key, formData[key]);
+        }
+      });
+      payload.append('machine_id', selectedTicket.machine_id);
+      payload.append('ticket_id', selectedTicket.ticket_id);
+
+      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/maintenance/submit-log`, payload, {
+        headers: { 
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'multipart/form-data'
+        }
       });
       if (res.data.success) {
-        toast.success(res.data.message);
+        toast.success(res.data.message, { id: 'submit-log' });
         setIsModalOpen(false);
-        fetchMyMachines();
       }
     } catch (error) {
-      toast.error('Failed to submit maintenance log');
+      toast.error(error.response?.data?.message || 'Failed to submit log', { id: 'submit-log' });
     }
   };
 
@@ -126,58 +139,54 @@ const FieldTechView = () => {
       <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#1e293b' }}>Hardware Testing</h1>
       <p style={{ color: '#64748b', marginTop: '0.5rem', marginBottom: '2rem' }}>Test Door, Flush, Payment, and view machine health.</p>
 
-      {isLoading ? <p>Loading machines...</p> : machines.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '4rem 2rem', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
-          <CheckCircle size={48} color="#10b981" style={{ margin: '0 auto', marginBottom: '1rem' }} />
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#334155', marginBottom: '0.5rem' }}>You're all caught up!</h2>
-          <p style={{ color: '#64748b' }}>There are no machines currently assigned to you for maintenance. Enjoy your break!</p>
+      {isLoading ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+          {[1, 2, 3].map(i => <div key={i} className="skeleton-box" style={{ height: '200px' }}></div>)}
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-          {machines.map(m => (
-            <div key={m.machine_id} className="card" style={{ padding: '1.5rem', borderTop: m.machine_status === 'active' ? '4px solid #10b981' : '4px solid #ef4444' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                <h3 style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>{m.machine_id}</h3>
-                <span className={`badge-glow ${m.machine_status === 'active' ? 'badge-success' : 'badge-error'}`}>{m.machine_status}</span>
+          {tickets.length > 0 ? tickets.map(ticket => (
+            <div key={ticket.ticket_id} className="card hover-float" style={{ padding: '1.5rem', background: 'var(--surface-bg)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                <div>
+                  <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.25rem' }}>{ticket.machine_id}</h3>
+                  <p style={{ margin: 0, color: 'var(--slate-500)', fontSize: '0.875rem' }}>{ticket.client_name} - {ticket.project_name}</p>
+                </div>
+                <span className={`badge-glow ${ticket.status === 'Open' ? 'failed' : 'maintenance'}`}>{ticket.status}</span>
               </div>
-              <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{m.project_name} | {m.client_name}</p>
               
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                <div style={{ flex: 1, backgroundColor: '#f1f5f9', padding: '0.5rem', borderRadius: '8px', textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontSize: '0.8rem', color: '#64748b' }}>Water</span>
-                  <strong style={{ color: '#0ea5e9' }}>{m.water_level || '0'}%</strong>
-                </div>
-                <div style={{ flex: 1, backgroundColor: '#f1f5f9', padding: '0.5rem', borderRadius: '8px', textAlign: 'center' }}>
-                  <span style={{ display: 'block', fontSize: '0.8rem', color: '#64748b' }}>Door</span>
-                  <strong style={{ color: m.door_lock === '1' ? '#ef4444' : '#10b981' }}>{m.door_lock === '1' ? 'LOCKED' : 'OPEN'}</strong>
-                </div>
+              <div style={{ padding: '1rem', background: 'var(--slate-50)', borderRadius: '0.5rem', marginBottom: '1.5rem', borderLeft: `4px solid ${ticket.priority === 'High' ? '#ef4444' : '#f59e0b'}` }}>
+                <p style={{ margin: '0 0 0.5rem 0', fontWeight: 'bold' }}>{ticket.ticket_id} ({ticket.priority} Priority)</p>
+                <p style={{ margin: 0, fontSize: '0.9rem' }}>{ticket.title}</p>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '1rem' }}>
-                <button onClick={() => handleTestHardware(m.machine_id, 'TEST_DOOR')} className="btn" style={{ backgroundColor: '#e0e7ff', color: '#4338ca', fontSize: '0.8rem', padding: '0.5rem' }}>Test Door</button>
-                <button onClick={() => handleTestHardware(m.machine_id, 'TEST_FLUSH')} className="btn" style={{ backgroundColor: '#e0e7ff', color: '#4338ca', fontSize: '0.8rem', padding: '0.5rem' }}>Test Flush</button>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                <button className="btn" onClick={() => handleTestHardware(ticket.machine_id, 'REBOOT')} style={{ background: 'var(--slate-800)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem', borderRadius: '8px' }}>
+                  <Power size={16} /> Test
+                </button>
+                <button className="btn btn-outline" onClick={() => openMaintenanceForm(ticket)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem', borderRadius: '8px', color: 'var(--slate-700)', borderColor: 'var(--slate-300)' }}>
+                  <Settings size={16} /> Add Worklog
+                </button>
               </div>
-
-              <button onClick={() => openMaintenanceForm(m.machine_id)} className="btn btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-                <Settings size={18} /> Fix / Submit Log
-              </button>
             </div>
-          ))}
+          )) : (
+            <p style={{ color: 'var(--slate-500)' }}>No open tickets assigned to you.</p>
+          )}
         </div>
       )}
 
-      {/* Premium Maintenance Form Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Maintenance Log: ${selectedMachine}`}>
-        <form onSubmit={handleLogSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '0.5rem' }}>
-          
-          {/* Location Verification Section */}
-          <div style={{ backgroundColor: '#ecfdf5', padding: '1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#065f46', border: '1px solid #a7f3d0' }}>
-            <MapPin size={24} />
-            <div>
-              <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Location Verified</div>
-              <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>{formData.gps_lat}, {formData.gps_lng}</div>
+      {isModalOpen && selectedTicket && (
+        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Add Worklog: ${selectedTicket.ticket_id}`}>
+          <form onSubmit={submitLog} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '0.5rem' }}>
+            
+            {/* Location Verification Section */}
+            <div style={{ backgroundColor: '#ecfdf5', padding: '1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#065f46', border: '1px solid #a7f3d0' }}>
+              <MapPin size={24} />
+              <div>
+                <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Location Verified</div>
+                <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>{formData.gps_lat}, {formData.gps_lng}</div>
+              </div>
             </div>
-          </div>
 
           {/* Section 1: General Info */}
           <div style={{ padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
@@ -242,12 +251,22 @@ const FieldTechView = () => {
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Before Photo URL</label>
-                <input type="text" className="form-input" value={formData.before_photo} onChange={e => setFormData({...formData, before_photo: e.target.value})} placeholder="Image Link" />
+                <label className="form-label">Before Photo</label>
+                <div style={{ position: 'relative' }}>
+                  <input type="file" id="before_photo" accept="image/*" capture="environment" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} onChange={e => setFormData({...formData, before_photo: e.target.files[0]})} />
+                  <label htmlFor="before_photo" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', backgroundColor: formData.before_photo ? '#ecfdf5' : 'white', borderColor: formData.before_photo ? '#10b981' : '#cbd5e1', color: formData.before_photo ? '#047857' : '#475569' }}>
+                    <Camera size={18} /> {formData.before_photo ? 'Photo Selected' : 'Tap to open Camera / Files'}
+                  </label>
+                </div>
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">After Photo URL</label>
-                <input type="text" className="form-input" value={formData.after_photo} onChange={e => setFormData({...formData, after_photo: e.target.value})} placeholder="Image Link" />
+                <label className="form-label">After Photo</label>
+                <div style={{ position: 'relative' }}>
+                  <input type="file" id="after_photo" accept="image/*" capture="environment" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} onChange={e => setFormData({...formData, after_photo: e.target.files[0]})} />
+                  <label htmlFor="after_photo" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', backgroundColor: formData.after_photo ? '#ecfdf5' : 'white', borderColor: formData.after_photo ? '#10b981' : '#cbd5e1', color: formData.after_photo ? '#047857' : '#475569' }}>
+                    <Camera size={18} /> {formData.after_photo ? 'Photo Selected' : 'Tap to open Camera / Files'}
+                  </label>
+                </div>
               </div>
             </div>
           </div>
@@ -257,6 +276,7 @@ const FieldTechView = () => {
           </button>
         </form>
       </Modal>
+      )}
     </div>
   );
 };

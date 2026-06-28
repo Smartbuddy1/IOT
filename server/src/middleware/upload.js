@@ -43,3 +43,25 @@ export const uploadLogo = multer({
   },
   fileFilter: fileFilter
 });
+
+const worklogStorage = multerS3({
+  s3: s3,
+  bucket: process.env.S3_BUCKET_NAME || 'smartbuddyiot',
+  contentType: multerS3.AUTO_CONTENT_TYPE,
+  metadata: function (req, file, cb) {
+    cb(null, { fieldName: file.fieldname });
+  },
+  key: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, `worklogs/photo_${uniqueSuffix}${ext}`);
+  }
+});
+
+export const uploadWorklogPhotos = multer({
+  storage: worklogStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10 MB limit for high res camera photos
+  },
+  fileFilter: fileFilter
+});

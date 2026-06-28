@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Smartphone, Lock, Eye, EyeOff, Sun, Moon, AlertCircle, Loader2, CheckCircle2, ArrowRight, LockKeyhole } from 'lucide-react';
-const logoImg = "/SB_Logo.jpg";
+const logoImg = `${import.meta.env.VITE_API_BASE_URL.replace('/api', '')}/uploads/logos/new%20logo.png`;
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -57,52 +57,34 @@ const Login = () => {
         {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
       </button>
       
-      {/* Split Auth Card */}
-      <div className="auth-split-card animate-entrance">
-        {/* Left Side (Gradient Panel with Logo & Features) */}
-        <div className="auth-split-left">
-          <div className="auth-split-left-top">
-            <div className="auth-split-brand">
-              <img src={logoImg} alt="SmartBuddy Logo" className="auth-split-logo-img" />
-              <span className="auth-split-logo-text">SmartBuddy</span>
-            </div>
-            
-            <div className="auth-split-promo">
-              <h2>Secure Access Portal</h2>
-              <p>Enterprise-grade authentication system with advanced security features and QR-based access management.</p>
-            </div>
-          </div>
+      {/* Centered Auth Card */}
+      <div className="auth-split-card animate-entrance" style={{ maxWidth: '480px', gridTemplateColumns: '1fr', minHeight: 'auto' }}>
+        
+        {/* Form Panel */}
+        <div className="auth-split-right" style={{ padding: '3rem 2.5rem' }}>
           
-          <div className="auth-features-list">
-            <div className="auth-feature-item">
-              <CheckCircle2 className="auth-feature-icon" size={18} />
-              <span>Multi-factor authentication</span>
-            </div>
-            <div className="auth-feature-item">
-              <CheckCircle2 className="auth-feature-icon" size={18} />
-              <span>Encrypted session management</span>
-            </div>
-            <div className="auth-feature-item">
-              <CheckCircle2 className="auth-feature-icon" size={18} />
-              <span>Real-time access monitoring</span>
-            </div>
-            <div className="auth-feature-item">
-              <CheckCircle2 className="auth-feature-icon" size={18} />
-              <span>Role-based permissions</span>
-            </div>
+          <div className="auth-split-brand" style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.5rem' }}>
+            <img 
+              src={logoImg} 
+              alt="Aarya Innovtech Logo" 
+              style={{ 
+                height: '75px', 
+                width: 'auto', 
+                maxWidth: '100%', 
+                objectFit: 'contain', 
+                display: 'block' 
+              }} 
+            />
           </div>
-        </div>
 
-        {/* Right Side (Form Panel) */}
-        <div className="auth-split-right">
-          <div className="auth-split-right-header">
-            <h2>Welcome Back</h2>
+          <div className="auth-split-right-header" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+            <h2>Welcome</h2>
             <p>Please enter your credentials to continue</p>
           </div>
 
           {/* Error Notification Block */}
           {error && (
-            <div className="auth-error">
+            <div className="auth-error" style={{ marginBottom: '1.5rem' }}>
               <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
               <span>{error}</span>
             </div>
@@ -111,8 +93,8 @@ const Login = () => {
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' }}>
             {/* Username / Mobile Field */}
             <div className="form-group">
-              <label className="form-label" htmlFor="username" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
-                <Smartphone size={16} /> Mobile Number
+              <label className="form-label" htmlFor="username" style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
+                Mobile Number
               </label>
               <div className="auth-input-wrapper">
                 <input
@@ -132,13 +114,14 @@ const Login = () => {
                   placeholder="Enter 10-digit mobile number"
                   title="Mobile number must be exactly 10 digits"
                 />
+                <Smartphone size={18} className="auth-input-icon" />
               </div>
             </div>
             
             {/* Password Field */}
             <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-              <label className="form-label" htmlFor="password" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
-                <Lock size={16} /> Password
+              <label className="form-label" htmlFor="password" style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
+                Password
               </label>
               <div className="auth-input-wrapper">
                 <input
@@ -150,6 +133,7 @@ const Login = () => {
                   required
                   placeholder="Enter your password"
                 />
+                <Lock size={18} className="auth-input-icon" />
                 <button
                   type="button"
                   className="auth-password-toggle"

@@ -14,6 +14,7 @@ import Reports from './pages/Reports';
 import Analytics from './pages/Analytics';
 import UnassignedMachines from './pages/UnassignedMachines';
 import MaintenanceAllocation from './pages/MaintenanceAllocation';
+import MaintenanceTickets from './pages/MaintenanceTickets';
 import FieldTechView from './pages/FieldTechView';
 import TestForm from './pages/TestForm';
 import MaintenanceLogs from './pages/MaintenanceLogs';
@@ -81,6 +82,7 @@ function App() {
             <Route path="analytics" element={<ProtectedRoute allowedRoles={['Admin', 'Client']}><Analytics /></ProtectedRoute>} />
             <Route path="allocations" element={<ProtectedRoute allowedRoles={['Maintenance_Head']}><MaintenanceAllocation /></ProtectedRoute>} />
             <Route path="maintenance-logs" element={<ProtectedRoute allowedRoles={['Admin', 'Maintenance_Head']}><MaintenanceLogs /></ProtectedRoute>} />
+            <Route path="tickets" element={<ProtectedRoute allowedRoles={['Admin', 'Maintenance_Head', 'Field_Tech']}><MaintenanceTickets /></ProtectedRoute>} />
             <Route path="field-tech" element={<ProtectedRoute allowedRoles={['Field_Tech']}><FieldTechView /></ProtectedRoute>} />
             <Route path="test-form" element={<ProtectedRoute allowedRoles={['Field_Tech']}><TestForm /></ProtectedRoute>} />
           </Route>

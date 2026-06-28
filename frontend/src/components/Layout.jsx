@@ -54,6 +54,7 @@ const Layout = () => {
     { name: 'Transactions', href: '/transactions', icon: FileText, roles: ['Admin', 'Client'] },
     { name: 'Reports', href: '/reports', icon: Activity, roles: ['Admin', 'Client'] },
     { name: 'Analytics', href: '/analytics', icon: PieChart, roles: ['Admin', 'Client'] },
+    { name: 'Issue Tickets', href: '/tickets', icon: ClipboardList, roles: ['Admin', 'Maintenance_Head', 'Field_Tech'] },
     { name: 'Maintenance Logs', href: '/maintenance-logs', icon: FileText, roles: ['Admin', 'Maintenance_Head'] },
   ];
 
@@ -69,22 +70,18 @@ const Layout = () => {
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header" style={{ padding: '1.5rem 1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
           <div style={{ 
-            background: 'linear-gradient(145deg, #ffffff, #f3f4f6)', 
-            padding: '0.6rem 1.2rem', 
-            borderRadius: '100px', // Perfect pill shape 
-            boxShadow: '0 8px 16px -4px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255,255,255,0.8), 0 0 12px rgba(255,255,255,0.1)', 
+            backgroundColor: '#ffffff', 
+            padding: '0.5rem 1rem', 
+            borderRadius: '8px', 
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
-            width: 'fit-content',
-            minWidth: '160px',
-            maxWidth: '90%',
-            margin: '0 auto',
-            position: 'relative',
-            overflow: 'hidden'
+            width: '100%',
+            maxWidth: '180px',
+            margin: '0 auto'
           }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '40%', background: 'linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 100%)', pointerEvents: 'none' }}></div>
-            <img src="/logo_new.jpeg" alt="SmartBuddy Logo" style={{ width: '100%', height: 'auto', maxHeight: '48px', objectFit: 'contain', mixBlendMode: 'darken', filter: 'contrast(1.05) saturate(1.1)' }} />
+            <img src="/logo_new.jpeg" alt="SmartBuddy Logo" style={{ width: '100%', height: 'auto', maxHeight: '50px', objectFit: 'contain' }} />
           </div>
         </div>
         

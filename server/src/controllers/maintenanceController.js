@@ -115,10 +115,23 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
 };
 
 export const submitLog = async (req, res) => {
-  const { machine_id, reported_issue, root_cause, action_taken, before_photo, after_photo, gps_lat, gps_lng, pcb_condition, voltage_reading, relays_checked, sensors_checked } = req.body;
-  const tech_id = req.user.id;
-
   try {
+    const { machine_id, reported_issue, root_cause, action_taken, pcb_condition, voltage_reading, relays_checked, sensors_checked, gps_lat, gps_lng } = req.body;
+    const tech_id = req.user.id;
+
+    // Get photo URLs from uploaded files if they exist, else from body (for legacy support)
+    let before_photo = req.body.before_photo || null;
+    let after_photo = req.body.after_photo || null;
+
+    if (req.files) {
+      if (req.files.before_photo && req.files.before_photo[0]) {
+        before_photo = req.files.before_photo[0].location || req.files.before_photo[0].path; // S3 gives .location, local gives .path
+      }
+      if (req.files.after_photo && req.files.after_photo[0]) {
+        after_photo = req.files.after_photo[0].location || req.files.after_photo[0].path;
+      }
+    }
+
     // Basic verification - did they actually send coords?
     if (!gps_lat || !gps_lng) {
       return res.status(400).json({ success: false, message: 'Location data is missing. Geo-fencing failed.' });
@@ -151,9 +164,9 @@ export const submitLog = async (req, res) => {
 
     await pool.query(`
       INSERT INTO maintenance_logs 
-      (machine_id, tech_id, reported_issue, root_cause, action_taken, before_photo, after_photo, gps_lat, gps_lng, pcb_condition, voltage_reading, relays_checked, sensors_checked, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Fixed')
-    `, [machine_id, tech_id, reported_issue, root_cause, action_taken, before_photo, after_photo, gps_lat, gps_lng, pcb_condition || null, voltage_reading || null, relays_checked ? 1 : 0, sensors_checked ? 1 : 0]);
+      (machine_id, tech_id, reported_issue, root_cause, action_taken, before_photo, after_photo, gps_lat, gps_lng, pcb_condition, voltage_reading, relays_checked, sensors_checked, status, ticket_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Fixed', ?)
+    `, [machine_id, tech_id, reported_issue, root_cause, action_taken, before_photo, after_photo, gps_lat, gps_lng, pcb_condition || null, voltage_reading || null, relays_checked ? 1 : 0, sensors_checked ? 1 : 0, req.body.ticket_id || null]);
 
     // Update machine status back to active
     await pool.query('UPDATE machines SET status = ? WHERE machine_id = ?', ['active', machine_id]);
@@ -220,7 +233,7 @@ export const getAllLogs = async (req, res) => {
       SELECT 
         l.log_id, l.machine_id, l.tech_id, l.reported_issue, l.root_cause, l.action_taken, 
         l.gps_lat, l.gps_lng, l.pcb_condition, l.voltage_reading, l.relays_checked, 
-        l.sensors_checked, l.status, l.created_at, l.updated_at,
+        l.sensors_checked, l.status, l.created_at,
         u.name as tech_name, m.client_name, m.project_name
       FROM maintenance_logs l
       JOIN tblusers u ON l.tech_id = u.id
@@ -268,6 +281,100 @@ export const getLogPhotos = async (req, res) => {
     res.json({ success: true, before_photo: rows[0].before_photo, after_photo: rows[0].after_photo });
   } catch (error) {
     console.error('Fetch photos error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+// --- TICKETING SYSTEM ---
+
+export const getTickets = async (req, res) => {
+  const { role, id, assigned_state, assigned_client, assigned_project } = req.user;
+  try {
+    let query = `
+      SELECT t.*, m.client_name, m.project_name, m.state,
+             u1.name as creator_name, u2.name as assigned_tech_name
+      FROM maintenance_tickets t
+      JOIN machines m ON t.machine_id = m.machine_id
+      LEFT JOIN tblusers u1 ON t.created_by = u1.id
+      LEFT JOIN tblusers u2 ON t.assigned_tech_id = u2.id
+      WHERE 1=1
+    `;
+    let params = [];
+
+    if (role === 'Maintenance_Head') {
+      if (assigned_state) { query += ' AND m.state = ?'; params.push(assigned_state); }
+      if (assigned_client) { query += ' AND m.client_name = ?'; params.push(assigned_client); }
+      if (assigned_project) { query += ' AND m.project_name = ?'; params.push(assigned_project); }
+    } else if (role === 'Field_Tech') {
+      query += ' AND t.assigned_tech_id = ?';
+      params.push(id);
+    }
+    query += ' ORDER BY t.created_at DESC';
+
+    const [tickets] = await pool.query(query, params);
+    res.json({ success: true, tickets });
+  } catch (error) {
+    console.error('Fetch tickets error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+export const createTicket = async (req, res) => {
+  const { machine_id, title, description, priority, assigned_tech_id } = req.body;
+  const created_by = req.user.id;
+  try {
+    const ticket_id = `TKT-${Math.floor(100000 + Math.random() * 900000)}`;
+    await pool.query(
+      'INSERT INTO maintenance_tickets (ticket_id, machine_id, title, description, priority, status, assigned_tech_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [ticket_id, machine_id, title, description, priority || 'Medium', 'Open', assigned_tech_id || null, created_by]
+    );
+    res.json({ success: true, message: 'Ticket created successfully', ticket_id });
+  } catch (error) {
+    console.error('Create ticket error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+export const updateTicket = async (req, res) => {
+  const { id } = req.params;
+  const { status, priority, assigned_tech_id } = req.body;
+  try {
+    let updateQuery = 'UPDATE maintenance_tickets SET ';
+    let params = [];
+    if (status) { updateQuery += 'status = ?, '; params.push(status); }
+    if (priority) { updateQuery += 'priority = ?, '; params.push(priority); }
+    if (assigned_tech_id !== undefined) { updateQuery += 'assigned_tech_id = ?, '; params.push(assigned_tech_id); }
+    
+    if (status === 'Resolved' || status === 'Closed') {
+      updateQuery += 'resolved_at = CURRENT_TIMESTAMP, ';
+    }
+    
+    if (params.length === 0) return res.json({ success: true });
+
+    updateQuery = updateQuery.slice(0, -2) + ' WHERE ticket_id = ?';
+    params.push(id);
+    
+    await pool.query(updateQuery, params);
+    res.json({ success: true, message: 'Ticket updated successfully' });
+  } catch (error) {
+    console.error('Update ticket error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+export const getTicketWorklogs = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [worklogs] = await pool.query(`
+      SELECT l.*, u.name as tech_name
+      FROM maintenance_logs l
+      JOIN tblusers u ON l.tech_id = u.id
+      WHERE l.ticket_id = ?
+      ORDER BY l.created_at ASC
+    `, [id]);
+    res.json({ success: true, worklogs });
+  } catch (error) {
+    console.error('Fetch worklogs error:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };

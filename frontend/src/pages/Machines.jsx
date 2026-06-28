@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
 import SkeletonTable from '../components/SkeletonTable';
 import { QRCodeCanvas } from 'qrcode.react';
+import jsPDF from 'jspdf';
 
 const Machines = () => {
   const [machines, setMachines] = useState([]);
@@ -594,9 +595,12 @@ const Machines = () => {
               <QRCodeCanvas 
                 id="qr-code-canvas"
                 value={`${window.location.origin}/pay/${qrMachine.machine_id}`}
-                size={220}
+                size={400}
+                style={{ width: '220px', height: '220px', display: 'block', margin: '0 auto' }}
                 level={"H"}
                 includeMargin={true}
+                bgColor={"#ffffff"}
+                fgColor={"#000000"}
               />
               <h3 style={{ marginTop: '0.5rem', color: '#1e293b', fontWeight: 'bold', fontSize: '1.25rem' }}>ID: {qrMachine.machine_id}</h3>
             </div>
@@ -611,37 +615,117 @@ const Machines = () => {
               onClick={() => {
                 const canvas = document.getElementById('qr-code-canvas');
                 if (canvas) {
-                  // Create a new canvas to add the text at the bottom
-                  const newCanvas = document.createElement('canvas');
-                  const extraBottom = 60;
-                  newCanvas.width = canvas.width;
-                  newCanvas.height = canvas.height + extraBottom;
-                  const ctx = newCanvas.getContext('2d');
-                  
-                  // Fill white background
-                  ctx.fillStyle = '#ffffff';
-                  ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
-                  
-                  // Draw original QR code
-                  ctx.drawImage(canvas, 0, 0);
-                  
-                  // Add text
-                  ctx.fillStyle = '#000000';
-                  ctx.font = 'bold 24px Arial';
-                  ctx.textAlign = 'center';
-                  ctx.textBaseline = 'top';
-                  ctx.fillText(qrMachine.machine_id, newCanvas.width / 2, canvas.height + 10);
-                  
-                  // Download
-                  const link = document.createElement('a');
-                  link.href = newCanvas.toDataURL('image/png');
-                  link.download = `machine_${qrMachine.machine_id}_qrcode.png`;
-                  link.click();
-                  toast.success("QR Code downloaded successfully!");
+                  try {
+                    const qrDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                    const doc = new jsPDF({
+                      orientation: 'portrait',
+                      unit: 'mm',
+                      format: 'a4'
+                    });
+
+                    // 1. Draw Page Borders
+                    // Outer blue border
+                    doc.setDrawColor(59, 130, 246); // #3B82F6
+                    doc.setLineWidth(1.5);
+                    doc.rect(8, 8, 194, 281);
+                    
+                    // Inner slate border
+                    doc.setDrawColor(30, 41, 59); // #1E293B
+                    doc.setLineWidth(0.5);
+                    doc.rect(10, 10, 190, 277);
+
+                    // 2. Top Header Banner
+                    doc.setFillColor(30, 41, 59); // #1E293B
+                    doc.rect(10, 10, 190, 30, 'F');
+                    
+                    // Header text
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(18);
+                    doc.text("AARYA INNOVTECH PVT. LTD.", 105, 23, { align: 'center' });
+                    
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(10);
+                    doc.setTextColor(165, 180, 252); // Light Indigo/Blue
+                    doc.text("SMARTBUDDY AUTOMATED HYGIENE SERVICES", 105, 32, { align: 'center' });
+
+                    // 3. Call to Action Title
+                    doc.setTextColor(37, 99, 235); // #2563EB
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(26);
+                    doc.text("SCAN & PAY HERE", 105, 58, { align: 'center' });
+                    
+                    doc.setTextColor(71, 85, 105); // #475569
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(12);
+                    doc.text("Scan this QR code using any UPI app to access the toilet facility.", 105, 66, { align: 'center' });
+
+                    // 4. QR Code Card Container
+                    doc.setFillColor(248, 250, 252); // #F8FAFC
+                    doc.setDrawColor(226, 232, 240); // #E2E8F0
+                    doc.setLineWidth(0.5);
+                    doc.roundedRect(45, 78, 120, 120, 4, 4, 'FD');
+
+                    // 5. Draw QR Code inside container
+                    doc.addImage(qrDataUrl, 'JPEG', 55, 84, 100, 100, undefined, 'FAST');
+
+                    // 6. Draw Machine ID below QR
+                    doc.setTextColor(15, 23, 42); // #0F172A
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(16);
+                    doc.text(`ID: ${qrMachine.machine_id}`, 105, 192, { align: 'center' });
+
+                    // 7. Instructions Block
+                    doc.setFillColor(241, 245, 249); // #F1F5F9
+                    doc.roundedRect(20, 208, 170, 50, 3, 3, 'F');
+                    
+                    doc.setTextColor(15, 23, 42); // #0F172A
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(12);
+                    doc.text("HOW TO USE / कसे वापरावे:", 25, 216);
+
+                    // Instruction Step 1
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(10);
+                    doc.text("1. Scan QR:", 25, 224);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text("Open GPay, PhonePe, Paytm, or Camera and scan the QR code.", 48, 224);
+
+                    // Instruction Step 2
+                    doc.setFont('helvetica', 'bold');
+                    doc.text("2. Pay:", 25, 232);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text("Enter/confirm the toilet entry fee and complete the payment.", 48, 232);
+
+                    // Instruction Step 3
+                    doc.setFont('helvetica', 'bold');
+                    doc.text("3. Enter:", 25, 240);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text("Once payment is successful, the smart lock will open automatically.", 48, 240);
+
+                    // 8. Footer Info
+                    doc.setTextColor(148, 163, 184); // #94A3B8
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(9);
+                    doc.text("Powered by SmartBuddy IoT Platforms  |  Aarya Innovtech Pvt. Ltd.", 105, 276, { align: 'center' });
+
+                    // 9. Save PDF
+                    doc.save(`machine_${qrMachine.machine_id}_payment_qr.pdf`);
+                    toast.success("Payment QR Poster downloaded as PDF successfully!");
+                  } catch (pdfError) {
+                    console.error("Error generating PDF:", pdfError);
+                    toast.error("Failed to generate PDF. Downloading PNG instead...");
+                    
+                    // PNG Fallback
+                    const link = document.createElement('a');
+                    link.href = canvas.toDataURL('image/png');
+                    link.download = `machine_${qrMachine.machine_id}_qrcode.png`;
+                    link.click();
+                  }
                 }
               }}
             >
-              <QrCode size={18} /> Download QR Code
+              <QrCode size={18} /> Download QR PDF
             </button>
           </div>
         )}
