@@ -191,45 +191,53 @@ export const updateMachine = async (req, res) => {
     );
 
     if (isChanged) {
+      // Map status 'active' or 'online' to 'ready' which the hardware expects
+      const hardwareStatus = (status === 'active' || status === 'online') ? 'ready' : (status || 'ready');
+
+      // Default any empty fields to '0' or 'En' to prevent consecutive commas (like ,,) which break strtok in firmware
+      const valSeats = seatsNum !== null ? seatsNum : 0;
+      const valWallTime = wallTime !== null ? wallTime : 0;
+      const valWallClean = wall_clean || 'En';
+
       // Format A: Legacy format with SET_PARAMETERS
       const payloadWithSet = [
         machine_id,
         "SET_PARAMETERS",
-        status,
+        hardwareStatus,
         modeStr,
         usesAmt,
-        wall_clean,
-        seatsNum !== null ? seatsNum : '',
+        valWallClean,
+        valSeats,
         flushTime,
         floorTime,
-        wallTime !== null ? wallTime : ''
+        valWallTime
       ].join(',');
 
       // Format B: Direct configuration payload (matching status format)
       const payloadDirect = [
         machine_id,
-        status,
+        hardwareStatus,
         modeStr,
         usesAmt,
-        wall_clean,
-        seatsNum !== null ? seatsNum : '0',
+        valWallClean,
+        valSeats,
         flushTime,
         floorTime,
-        wallTime !== null ? wallTime : '0'
+        valWallTime
       ].join(',');
 
       // Format C: JSON payload
       const payloadJson = JSON.stringify({
         command: "SET_PARAMETERS",
         machine_id,
-        status,
+        status: hardwareStatus,
         mode: modeStr,
         uses_amt: usesAmt,
-        wall_clean,
-        seats: seatsNum,
+        wall_clean: valWallClean,
+        seats: valSeats,
         flush_time: flushTime,
         floor_time: floorTime,
-        wall_time: wallTime
+        wall_time: valWallTime
       });
 
       console.log(`Publishing settings for machine ${machine_id}...`);
@@ -243,10 +251,20 @@ export const updateMachine = async (req, res) => {
       publishMessage(`machine/${machine_id}/command`, payloadDirect);
       publishMessage(`machine/${machine_id}/command`, payloadJson);
 
-      // 3. Publish to 'smartbuddy/{machine_id}/cmd' (as per maintenance controller)
+      // 3. Publish to 'machines/{machine_id}/command' (with plural s)
+      publishMessage(`machines/${machine_id}/command`, payloadWithSet);
+      publishMessage(`machines/${machine_id}/command`, payloadDirect);
+      publishMessage(`machines/${machine_id}/command`, payloadJson);
+
+      // 4. Publish to 'smartbuddy/{machine_id}/cmd' (as per maintenance controller)
       publishMessage(`smartbuddy/${machine_id}/cmd`, payloadWithSet);
       publishMessage(`smartbuddy/${machine_id}/cmd`, payloadDirect);
       publishMessage(`smartbuddy/${machine_id}/cmd`, payloadJson);
+
+      // 5. Publish to 'smartbuddy/devices/{machine_id}' (as per mqttService.js startsWith)
+      publishMessage(`smartbuddy/devices/${machine_id}`, payloadWithSet);
+      publishMessage(`smartbuddy/devices/${machine_id}`, payloadDirect);
+      publishMessage(`smartbuddy/devices/${machine_id}`, payloadJson);
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
