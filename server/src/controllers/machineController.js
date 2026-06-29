@@ -191,52 +191,23 @@ export const updateMachine = async (req, res) => {
     );
 
     if (isChanged) {
-      // 1. Map status 'active' to 'ready' because the new PCB firmware rejects 'active'
+      // 1. Map status 'active' or 'online' to 'ready' which the hardware expects
       const hardwareStatus = (status === 'active' || status === 'online') ? 'ready' : (status || 'ready');
 
-      // 2. Use 0 for empty fields instead of 'NULL' because the new PCB firmware expects numbers
+      // Default any empty fields to 0 or 'En' to ensure numeric parsing succeeds on firmware
       const valSeats = (seatsNum !== null && seatsNum !== '') ? seatsNum : 0;
       const valWallTime = (wallTime !== null && wallTime !== '') ? wallTime : 0;
       const valWallClean = wall_clean || 'En';
 
-      // Format A: Legacy format (For OLD PCBs on 'aarya' topic)
+      // Format A: Legacy format (Exactly what PHP sends)
       const payloadLegacy = [
         machine_id, "SET_PARAMETERS", hardwareStatus, modeStr, usesAmt, valWallClean, valSeats, flushTime, floorTime, valWallTime
       ].join(',');
 
-      // Format B: Direct configuration (matching status format)
-      const payloadDirect = [
-        machine_id, hardwareStatus, modeStr, usesAmt, valWallClean, valSeats, flushTime, floorTime, valWallTime
-      ].join(',');
-
-      // Format C: JSON Payload (Modern IoT Standard)
-      const payloadJson = JSON.stringify({
-        command: "SET_PARAMETERS", machine_id, status: hardwareStatus, mode: modeStr, uses_amt: usesAmt, wall_clean: valWallClean, seats: valSeats, flush_time: flushTime, floor_time: floorTime, wall_time: valWallTime
-      });
-
-      // Format D: No ID prefix (Since topic has ID)
-      const payloadNoId = [
-        "SET_PARAMETERS", hardwareStatus, modeStr, usesAmt, valWallClean, valSeats, flushTime, floorTime, valWallTime
-      ].join(',');
-
       console.log(`Publishing settings for machine ${machine_id}...`);
       
-      // 1. Publish Legacy format to 'aarya' (For OLD PCBs)
+      // 1. Publish EXACTLY like PHP does (only to aarya)
       publishMessage('aarya', payloadLegacy);
-
-      // 2. Publish all formats to NEW PCB topics with 500ms delays to prevent SIM800L crash
-      const newTopics = [`machine/${machine_id}/command`, `smartbuddy/${machine_id}/cmd`];
-      const formats = [payloadLegacy, payloadDirect, payloadJson, payloadNoId];
-      
-      let delayMs = 500;
-      newTopics.forEach(topic => {
-        formats.forEach(msg => {
-          setTimeout(() => {
-            publishMessage(topic, msg);
-          }, delayMs);
-          delayMs += 500; // 500ms apart
-        });
-      });
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
