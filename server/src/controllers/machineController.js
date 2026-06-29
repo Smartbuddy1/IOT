@@ -255,15 +255,41 @@ export const updateMachine = async (req, res) => {
 
       console.log(`Publishing settings for machine ${machine_id}...`);
 
-      // 1. For OLD PCBs (Format A on aarya)
-      publishMessage('aarya', payloadWithSet);
+      const allTopics = [
+        `aarya`,
+        `machine/${machine_id}/command`,
+        `machines/${machine_id}/command`,
+        `smartbuddy/${machine_id}/cmd`,
+        `smartbuddy/devices/${machine_id}`,
+        `smartbuddy/${machine_id}`,
+        `smartbuddy`,
+        `machine/${machine_id}`
+      ];
+
+      const allPayloads = [
+        { name: "Format A (Legacy)", data: payloadWithSet },
+        { name: "Format B (Direct)", data: payloadDirect },
+        { name: "Format D (No ID + SET)", data: payloadNoIdWithSet },
+        { name: "Format E (Raw Values)", data: payloadNoIdDirect },
+        { name: "Format C (JSON)", data: payloadJson }
+      ];
+
+      let delayMs = 0;
+      let count = 1;
       
-      // 2. For NEW PCBs (Format A on smartbuddy/SBE2T101)
-      // The 5-second delay test proved that Test 26 was the ONLY successful update.
-      publishMessage(`smartbuddy/${machine_id}`, payloadWithSet);
+      allTopics.forEach(topic => {
+        allPayloads.forEach(payload => {
+          setTimeout(() => {
+            console.log(`\n▶️ [Test ${count}/40] Sending ${payload.name} on topic: ${topic}`);
+            publishMessage(topic, payload.data);
+          }, delayMs);
+          delayMs += 500; // 500ms delay between each of the 40 messages
+          count++;
+        });
+      });
     }
 
-    res.json({ success: true, message: 'Machine updated successfully!' });
+    res.json({ success: true, message: 'Machine updated successfully! Testing all 40 combinations.' });
   } catch (error) {
     console.error('Update machine error:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
