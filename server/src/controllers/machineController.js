@@ -191,23 +191,107 @@ export const updateMachine = async (req, res) => {
     );
 
     if (isChanged) {
-      // 1. Map status 'active' or 'online' to 'ready' which the hardware expects
+      // Map status 'active' or 'online' to 'ready' which the hardware expects
       const hardwareStatus = (status === 'active' || status === 'online') ? 'ready' : (status || 'ready');
 
       // Default any empty fields to 0 or 'En' to ensure numeric parsing succeeds on firmware
-      const valSeats = (seatsNum !== null && seatsNum !== '') ? seatsNum : 0;
-      const valWallTime = (wallTime !== null && wallTime !== '') ? wallTime : 0;
+      const valSeats = seatsNum !== null ? seatsNum : 0;
+      const valWallTime = wallTime !== null ? wallTime : 0;
       const valWallClean = wall_clean || 'En';
 
-      // Format A: Legacy format (Exactly what PHP sends)
-      const payloadLegacy = [
-        machine_id, "SET_PARAMETERS", hardwareStatus, modeStr, usesAmt, valWallClean, valSeats, flushTime, floorTime, valWallTime
+      // Format A: Legacy format with SET_PARAMETERS
+      const payloadWithSet = [
+        machine_id,
+        "SET_PARAMETERS",
+        hardwareStatus,
+        modeStr,
+        usesAmt,
+        valWallClean,
+        valSeats,
+        flushTime,
+        floorTime,
+        valWallTime
+      ].join(',');
+
+      // Format B: Direct configuration payload (matching status format)
+      const payloadDirect = [
+        machine_id,
+        hardwareStatus,
+        modeStr,
+        usesAmt,
+        valWallClean,
+        valSeats,
+        flushTime,
+        floorTime,
+        valWallTime
+      ].join(',');
+
+      // Format C: JSON payload
+      const payloadJson = JSON.stringify({
+        command: "SET_PARAMETERS",
+        machine_id,
+        status: hardwareStatus,
+        mode: modeStr,
+        uses_amt: usesAmt,
+        wall_clean: valWallClean,
+        seats: valSeats,
+        flush_time: flushTime,
+        floor_time: floorTime,
+        wall_time: valWallTime
+      });
+
+      // Format D: CSV WITH SET_PARAMETERS but WITHOUT machine_id prefix
+      const payloadNoIdWithSet = [
+        "SET_PARAMETERS",
+        hardwareStatus,
+        modeStr,
+        usesAmt,
+        valWallClean,
+        valSeats,
+        flushTime,
+        floorTime,
+        valWallTime
+      ].join(',');
+
+      // Format E: Raw CSV values ONLY (matching hardware reports) WITHOUT machine_id prefix
+      const payloadNoIdDirect = [
+        hardwareStatus,
+        modeStr,
+        usesAmt,
+        valWallClean,
+        valSeats,
+        flushTime,
+        floorTime,
+        valWallTime
       ].join(',');
 
       console.log(`Publishing settings for machine ${machine_id}...`);
-      
-      // 1. Publish EXACTLY like PHP does (only to aarya)
-      publishMessage('aarya', payloadLegacy);
+
+      const allPayloads = [
+        payloadWithSet,
+        payloadDirect,
+        payloadNoIdWithSet,
+        payloadNoIdDirect,
+        payloadJson
+      ];
+
+      // Publish to all possible topics the new and old PCBs might be listening to
+      const topics = [
+        `aarya`,
+        `machine/${machine_id}/command`,
+        `machines/${machine_id}/command`,
+        `smartbuddy/${machine_id}/cmd`,
+        `smartbuddy/devices/${machine_id}`,
+        `smartbuddy/${machine_id}`,
+        `smartbuddy`,
+        `machine/${machine_id}`
+      ];
+
+      topics.forEach(topic => {
+        allPayloads.forEach(payload => {
+          publishMessage(topic, payload);
+        });
+      });
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
