@@ -194,9 +194,9 @@ export const updateMachine = async (req, res) => {
       // Map status 'active' or 'online' to 'ready' which the hardware expects
       const hardwareStatus = (status === 'active' || status === 'online') ? 'ready' : (status || 'ready');
 
-      // Default any empty fields to 'NULL' or 'En' to match old PHP project MQTT payload format
-      const valSeats = seatsNum !== null ? seatsNum : 'NULL';
-      const valWallTime = wallTime !== null ? wallTime : 'NULL';
+      // Default any empty fields to 0 or 'En' to ensure numeric parsing succeeds on firmware
+      const valSeats = seatsNum !== null ? seatsNum : 0;
+      const valWallTime = wallTime !== null ? wallTime : 0;
       const valWallClean = wall_clean || 'En';
 
       // Format A: Legacy format with SET_PARAMETERS
