@@ -228,21 +228,29 @@ export const updateMachine = async (req, res) => {
 
       console.log(`Publishing settings for machine ${machine_id}...`);
       
-      // Stagger publishes with 300ms delay to prevent IoT hardware buffer overflow
-      // Cover ALL possible topics since machine may subscribe to any one after reboot
-      const topicsToPublish = [
-        'aarya',                                    // Legacy topic (old PHP project)
-        `machines/${machine_id}/command`,            // machines with 's'
-        `machine/${machine_id}/command`,             // machine without 's'
-        `smartbuddy/${machine_id}/cmd`,              // machine-specific cmd
-        `smartbuddy/${machine_id}`,                  // machine-specific direct
-        `smartbuddy`,                                // main status channel
+      // Stagger publishes with 250ms delay to prevent IoT hardware buffer overflow
+      // Send payloadDirect FIRST (format that worked before crash), then payloadWithSet as backup
+      const allPublishes = [
+        // Round 1: payloadDirect (matches machine's own status format - more likely to be accepted)
+        { topic: 'aarya', msg: payloadDirect },
+        { topic: `machines/${machine_id}/command`, msg: payloadDirect },
+        { topic: `machine/${machine_id}/command`, msg: payloadDirect },
+        { topic: `smartbuddy/${machine_id}/cmd`, msg: payloadDirect },
+        { topic: `smartbuddy/${machine_id}`, msg: payloadDirect },
+        { topic: 'smartbuddy', msg: payloadDirect },
+        // Round 2: payloadWithSet (legacy SET_PARAMETERS format)
+        { topic: 'aarya', msg: payloadWithSet },
+        { topic: `machines/${machine_id}/command`, msg: payloadWithSet },
+        { topic: `machine/${machine_id}/command`, msg: payloadWithSet },
+        { topic: `smartbuddy/${machine_id}/cmd`, msg: payloadWithSet },
+        { topic: `smartbuddy/${machine_id}`, msg: payloadWithSet },
+        { topic: 'smartbuddy', msg: payloadWithSet },
       ];
 
-      topicsToPublish.forEach((topic, index) => {
+      allPublishes.forEach((pub, index) => {
         setTimeout(() => {
-          publishMessage(topic, payloadWithSet);
-        }, index * 300);
+          publishMessage(pub.topic, pub.msg);
+        }, index * 250);
       });
     }
 
