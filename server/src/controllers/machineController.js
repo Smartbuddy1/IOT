@@ -253,13 +253,39 @@ export const updateMachine = async (req, res) => {
         valWallTime
       ].join(',');
 
+      // Format B: Direct (No SET_PARAMETERS, matches heartbeat exactly)
+      const payloadDirect = [
+        machine_id,
+        hardwareStatus,
+        modeStr,
+        usesAmt,
+        valWallClean,
+        valSeats,
+        flushTime,
+        floorTime,
+        valWallTime
+      ].join(',');
+
       console.log(`Publishing settings for machine ${machine_id}...`);
 
-      // 1. For OLD PCBs (listens on aarya)
+      // 1. For OLD PCBs (Format A on aarya)
       publishMessage('aarya', payloadWithSet);
       
-      // 2. For NEW PCBs (listens on smartbuddy)
-      publishMessage('smartbuddy', payloadWithSet);
+      // 2. For NEW PCBs (Testing Format B on 4 topics with 2s delay)
+      const newTopics = [
+        `smartbuddy/${machine_id}`,
+        `smartbuddy/devices/${machine_id}`,
+        `smartbuddy/${machine_id}/cmd`,
+        `machine/${machine_id}/command`
+      ];
+
+      let delayMs = 0;
+      newTopics.forEach((topic, index) => {
+        setTimeout(() => {
+          publishMessage(topic, payloadDirect);
+        }, delayMs);
+        delayMs += 2000;
+      });
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
