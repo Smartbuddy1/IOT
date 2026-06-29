@@ -191,8 +191,8 @@ export const updateMachine = async (req, res) => {
     );
 
     if (isChanged) {
-      // Map status 'active' or 'online' to 'ready' which the hardware expects
-      const hardwareStatus = (status === 'active' || status === 'online') ? 'ready' : (status || 'ready');
+      // Send status as-is (old PHP project sent status directly: 'active', 'ready', etc.)
+      const hardwareStatus = status || 'ready';
 
       // Default any empty fields to 0 or 'En' to ensure numeric parsing succeeds on firmware
       const valSeats = seatsNum !== null ? seatsNum : 0;
