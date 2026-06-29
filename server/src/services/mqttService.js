@@ -165,7 +165,7 @@ export const publishMessage = (topic, message) => {
     console.error('❌ Cannot publish: MQTT client not connected');
     return false;
   }
-  client.publish(topic, message, { qos: 1 }, (err) => {
+  client.publish(topic, message, { qos: 0 }, (err) => {
     if (err) {
       console.error(`❌ Failed to publish to [${topic}]:`, err.message);
     } else {
