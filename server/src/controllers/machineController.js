@@ -215,13 +215,8 @@ export const updateMachine = async (req, res) => {
 
       console.log(`Publishing settings for machine ${machine_id}: ${payloadString}`);
       
-      // 4. Publish to 'aarya' topic ONCE to prevent SIM800L buffer overflow.
+      // 4. Publish to 'aarya' topic ONCE. Do NOT publish to any other topic, to strictly match PHP logic.
       publishMessage('aarya', payloadString);
-      
-      // Also publish to smartbuddy for the backend logs to see it, with a delay to prevent buffer clash
-      setTimeout(() => {
-        publishMessage('smartbuddy', payloadString);
-      }, 500);
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
