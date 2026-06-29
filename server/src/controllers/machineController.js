@@ -191,13 +191,12 @@ export const updateMachine = async (req, res) => {
     );
 
     if (isChanged) {
-      // Old PHP Project Logic: 
-      // 1. Used raw status ('active', 'maintenance', etc.)
-      const hardwareStatus = status || 'active';
+      // 1. Map status 'active' to 'ready' because the new PCB firmware rejects 'active'
+      const hardwareStatus = (status === 'active' || status === 'online') ? 'ready' : (status || 'ready');
 
-      // 2. Used literal string "NULL" for empty fields instead of 0
-      const valSeats = (seatsNum !== null && seatsNum !== '') ? seatsNum : 'NULL';
-      const valWallTime = (wallTime !== null && wallTime !== '') ? wallTime : 'NULL';
+      // 2. Use 0 for empty fields instead of 'NULL' because the new PCB firmware expects numbers
+      const valSeats = (seatsNum !== null && seatsNum !== '') ? seatsNum : 0;
+      const valWallTime = (wallTime !== null && wallTime !== '') ? wallTime : 0;
       const valWallClean = wall_clean || 'En';
 
       // 3. Exact format: machine_id,SET_PARAMETERS,status,mode,uses_amt,wall_clean,seats,flush_time,floor_time,wall_time
@@ -216,8 +215,7 @@ export const updateMachine = async (req, res) => {
 
       console.log(`Publishing settings for machine ${machine_id}: ${payloadString}`);
       
-      // 4. Old PHP only published to 'aarya' topic ONCE. 
-      // Blasting 30 messages causes SIM800L buffer overflow on the IoT hardware.
+      // 4. Publish to 'aarya' topic ONCE to prevent SIM800L buffer overflow.
       publishMessage('aarya', payloadString);
       
       // Also publish to smartbuddy for the backend logs to see it, with a delay to prevent buffer clash
