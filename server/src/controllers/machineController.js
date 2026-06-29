@@ -253,6 +253,18 @@ export const updateMachine = async (req, res) => {
         valWallTime
       ].join(',');
 
+      // Format E: Raw CSV values ONLY (matching hardware reports) WITHOUT machine_id prefix
+      const payloadNoIdDirect = [
+        hardwareStatus,
+        modeStr,
+        usesAmt,
+        valWallClean,
+        valSeats,
+        flushTime,
+        floorTime,
+        valWallTime
+      ].join(',');
+
       console.log(`Publishing settings for machine ${machine_id}...`);
 
       const allTopics = [
