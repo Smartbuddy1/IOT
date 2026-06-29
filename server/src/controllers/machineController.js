@@ -262,23 +262,13 @@ export const updateMachine = async (req, res) => {
         valSeats,
         flushTime,
         floorTime,
-        valWallTime
-      ].join(',');
-
       console.log(`Publishing settings for machine ${machine_id}...`);
 
-      // The 5-second delay test proved the update happened between Test 21 and 30!
-      // This means the correct topic is either 'smartbuddy/SBE2T101' or 'smartbuddy/devices/SBE2T101'.
-      
-      // 1. For OLD PCBs
+      // 1. For OLD PCBs (listens on aarya)
       publishMessage('aarya', payloadWithSet);
       
-      // 2. For NEW PCBs (Publishing to the specific device topics with a 1-second delay to avoid clash)
-      publishMessage(`smartbuddy/${machine_id}`, payloadWithSet);
-      
-      setTimeout(() => {
-        publishMessage(`smartbuddy/devices/${machine_id}`, payloadJson);
-      }, 1000);
+      // 2. For NEW PCBs (listens on smartbuddy)
+      publishMessage('smartbuddy', payloadWithSet);
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
