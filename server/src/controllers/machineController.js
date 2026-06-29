@@ -215,8 +215,17 @@ export const updateMachine = async (req, res) => {
 
       console.log(`Publishing settings for machine ${machine_id}: ${payloadString}`);
       
-      // 4. Publish to 'aarya' topic ONCE. Do NOT publish to any other topic, to strictly match PHP logic.
+      // 4. Publish to 'aarya' (for OLD PCBs)
       publishMessage('aarya', payloadString);
+
+      // 5. Publish to new topics (for NEW PCBs like SBE2T101) with a delay to prevent buffer crash
+      setTimeout(() => {
+        publishMessage(`machine/${machine_id}/command`, payloadString);
+      }, 500);
+
+      setTimeout(() => {
+        publishMessage(`smartbuddy/${machine_id}/cmd`, payloadString);
+      }, 1000);
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
