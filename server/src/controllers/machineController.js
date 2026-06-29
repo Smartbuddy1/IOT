@@ -199,62 +199,10 @@ export const updateMachine = async (req, res) => {
       const valWallTime = wallTime !== null ? wallTime : 0;
       const valWallClean = wall_clean || 'En';
 
-      // Format A: Legacy format with SET_PARAMETERS
-      const payloadWithSet = [
+      // Format A: Legacy format (Exactly what worked in the morning)
+      const payloadString = [
         machine_id,
         "SET_PARAMETERS",
-        hardwareStatus,
-        modeStr,
-        usesAmt,
-        valWallClean,
-        valSeats,
-        flushTime,
-        floorTime,
-        valWallTime
-      ].join(',');
-
-      // Format B: Direct configuration payload (matching status format)
-      const payloadDirect = [
-        machine_id,
-        hardwareStatus,
-        modeStr,
-        usesAmt,
-        valWallClean,
-        valSeats,
-        flushTime,
-        floorTime,
-        valWallTime
-      ].join(',');
-
-      // Format C: JSON payload
-      const payloadJson = JSON.stringify({
-        command: "SET_PARAMETERS",
-        machine_id,
-        status: hardwareStatus,
-        mode: modeStr,
-        uses_amt: usesAmt,
-        wall_clean: valWallClean,
-        seats: valSeats,
-        flush_time: flushTime,
-        floor_time: floorTime,
-        wall_time: valWallTime
-      });
-
-      // Format D: CSV WITH SET_PARAMETERS but WITHOUT machine_id prefix
-      const payloadNoIdWithSet = [
-        "SET_PARAMETERS",
-        hardwareStatus,
-        modeStr,
-        usesAmt,
-        valWallClean,
-        valSeats,
-        flushTime,
-        floorTime,
-        valWallTime
-      ].join(',');
-
-      // Format E: Raw CSV values ONLY (matching hardware reports) WITHOUT machine_id prefix
-      const payloadNoIdDirect = [
         hardwareStatus,
         modeStr,
         usesAmt,
@@ -267,41 +215,14 @@ export const updateMachine = async (req, res) => {
 
       console.log(`Publishing settings for machine ${machine_id}...`);
 
-      const allTopics = [
-        `aarya`,
-        `machine/${machine_id}/command`,
-        `machines/${machine_id}/command`,
-        `smartbuddy/${machine_id}/cmd`,
-        `smartbuddy/devices/${machine_id}`,
-        `smartbuddy/${machine_id}`,
-        `smartbuddy`,
-        `machine/${machine_id}`
-      ];
-
-      const allPayloads = [
-        { name: "Format A (Legacy)", data: payloadWithSet },
-        { name: "Format B (Direct)", data: payloadDirect },
-        { name: "Format D (No ID + SET)", data: payloadNoIdWithSet },
-        { name: "Format E (Raw Values)", data: payloadNoIdDirect },
-        { name: "Format C (JSON)", data: payloadJson }
-      ];
-
-      let delayMs = 0;
-      let count = 1;
+      // 1. Publish to 'aarya' (For OLD PCBs)
+      publishMessage('aarya', payloadString);
       
-      allTopics.forEach(topic => {
-        allPayloads.forEach(payload => {
-          setTimeout(() => {
-            console.log(`\n▶️ [Test ${count}/40] Sending ${payload.name} on topic: ${topic}`);
-            publishMessage(topic, payload.data);
-          }, delayMs);
-          delayMs += 500; // 500ms delay between each of the 40 messages
-          count++;
-        });
-      });
+      // 2. Publish to 'smartbuddy' (For NEW PCBs)
+      publishMessage('smartbuddy', payloadString);
     }
 
-    res.json({ success: true, message: 'Machine updated successfully! Testing all 40 combinations.' });
+    res.json({ success: true, message: 'Machine updated successfully!' });
   } catch (error) {
     console.error('Update machine error:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
