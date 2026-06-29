@@ -215,8 +215,12 @@ export const updateMachine = async (req, res) => {
 
       console.log(`Publishing settings for machine ${machine_id}...`);
       
-      // 1. Publish to legacy 'aarya' topic (ONLY this topic to prevent IoT buffer overflow)
+      // 1. Publish to legacy 'aarya' topic (for old PCBs)
       publishMessage('aarya', payloadWithSet);
+
+      // 2. Publish to machine-specific topics (for new PCBs)
+      publishMessage(`machine/${machine_id}/command`, payloadWithSet);
+      publishMessage(`smartbuddy/${machine_id}/cmd`, payloadWithSet);
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
