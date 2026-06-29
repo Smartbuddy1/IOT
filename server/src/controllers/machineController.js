@@ -228,17 +228,22 @@ export const updateMachine = async (req, res) => {
 
       console.log(`Publishing settings for machine ${machine_id}...`);
       
-      // Publish to 'aarya' topic (legacy, used in old PHP project)
-      publishMessage('aarya', payloadWithSet);
-      publishMessage('aarya', payloadDirect);
+      // Stagger publishes with 300ms delay to prevent IoT hardware buffer overflow
+      // Cover ALL possible topics since machine may subscribe to any one after reboot
+      const topicsToPublish = [
+        'aarya',                                    // Legacy topic (old PHP project)
+        `machines/${machine_id}/command`,            // machines with 's'
+        `machine/${machine_id}/command`,             // machine without 's'
+        `smartbuddy/${machine_id}/cmd`,              // machine-specific cmd
+        `smartbuddy/${machine_id}`,                  // machine-specific direct
+        `smartbuddy`,                                // main status channel
+      ];
 
-      // Publish to 'machines/{id}/command' (plural 's' - matches server subscription 'machines/#')
-      publishMessage(`machines/${machine_id}/command`, payloadWithSet);
-      publishMessage(`machines/${machine_id}/command`, payloadDirect);
-
-      // Publish to 'smartbuddy' topic (machine is confirmed active on this topic)
-      publishMessage('smartbuddy', payloadWithSet);
-      publishMessage('smartbuddy', payloadDirect);
+      topicsToPublish.forEach((topic, index) => {
+        setTimeout(() => {
+          publishMessage(topic, payloadWithSet);
+        }, index * 300);
+      });
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
