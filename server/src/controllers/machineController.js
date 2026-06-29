@@ -201,7 +201,7 @@ export const updateMachine = async (req, res) => {
       const valWallClean = wall_clean || 'En';
 
       // 3. Exact format: machine_id,SET_PARAMETERS,status,mode,uses_amt,wall_clean,seats,flush_time,floor_time,wall_time
-      const publishMessage = [
+      const payloadString = [
         machine_id,
         "SET_PARAMETERS",
         hardwareStatus,
@@ -214,15 +214,15 @@ export const updateMachine = async (req, res) => {
         valWallTime
       ].join(',');
 
-      console.log(`Publishing settings for machine ${machine_id}: ${publishMessage}`);
+      console.log(`Publishing settings for machine ${machine_id}: ${payloadString}`);
       
       // 4. Old PHP only published to 'aarya' topic ONCE. 
       // Blasting 30 messages causes SIM800L buffer overflow on the IoT hardware.
-      publishMessage('aarya', publishMessage);
+      publishMessage('aarya', payloadString);
       
       // Also publish to smartbuddy for the backend logs to see it, with a delay to prevent buffer clash
       setTimeout(() => {
-        publishMessage('smartbuddy', publishMessage);
+        publishMessage('smartbuddy', payloadString);
       }, 500);
     }
 
