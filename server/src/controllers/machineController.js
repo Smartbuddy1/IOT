@@ -228,15 +228,17 @@ export const updateMachine = async (req, res) => {
 
       console.log(`Publishing settings for machine ${machine_id}...`);
       
-      // 1. Publish to legacy 'aarya' topic (for old PCBs)
+      // Publish to 'aarya' topic (legacy, used in old PHP project)
       publishMessage('aarya', payloadWithSet);
       publishMessage('aarya', payloadDirect);
 
-      // 2. Publish to machine-specific topics (for new PCBs)
-      publishMessage(`machine/${machine_id}/command`, payloadWithSet);
-      publishMessage(`machine/${machine_id}/command`, payloadDirect);
-      publishMessage(`smartbuddy/${machine_id}/cmd`, payloadWithSet);
-      publishMessage(`smartbuddy/${machine_id}/cmd`, payloadDirect);
+      // Publish to 'machines/{id}/command' (plural 's' - matches server subscription 'machines/#')
+      publishMessage(`machines/${machine_id}/command`, payloadWithSet);
+      publishMessage(`machines/${machine_id}/command`, payloadDirect);
+
+      // Publish to 'smartbuddy' topic (machine is confirmed active on this topic)
+      publishMessage('smartbuddy', payloadWithSet);
+      publishMessage('smartbuddy', payloadDirect);
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
