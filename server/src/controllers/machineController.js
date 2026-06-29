@@ -199,33 +199,44 @@ export const updateMachine = async (req, res) => {
       const valWallTime = (wallTime !== null && wallTime !== '') ? wallTime : 0;
       const valWallClean = wall_clean || 'En';
 
-      // 3. Exact format: machine_id,SET_PARAMETERS,status,mode,uses_amt,wall_clean,seats,flush_time,floor_time,wall_time
-      const payloadString = [
-        machine_id,
-        "SET_PARAMETERS",
-        hardwareStatus,
-        modeStr,
-        usesAmt,
-        valWallClean,
-        valSeats,
-        flushTime,
-        floorTime,
-        valWallTime
+      // Format A: Legacy format (For OLD PCBs on 'aarya' topic)
+      const payloadLegacy = [
+        machine_id, "SET_PARAMETERS", hardwareStatus, modeStr, usesAmt, valWallClean, valSeats, flushTime, floorTime, valWallTime
       ].join(',');
 
-      console.log(`Publishing settings for machine ${machine_id}: ${payloadString}`);
+      // Format B: Direct configuration (matching status format)
+      const payloadDirect = [
+        machine_id, hardwareStatus, modeStr, usesAmt, valWallClean, valSeats, flushTime, floorTime, valWallTime
+      ].join(',');
+
+      // Format C: JSON Payload (Modern IoT Standard)
+      const payloadJson = JSON.stringify({
+        command: "SET_PARAMETERS", machine_id, status: hardwareStatus, mode: modeStr, uses_amt: usesAmt, wall_clean: valWallClean, seats: valSeats, flush_time: flushTime, floor_time: floorTime, wall_time: valWallTime
+      });
+
+      // Format D: No ID prefix (Since topic has ID)
+      const payloadNoId = [
+        "SET_PARAMETERS", hardwareStatus, modeStr, usesAmt, valWallClean, valSeats, flushTime, floorTime, valWallTime
+      ].join(',');
+
+      console.log(`Publishing settings for machine ${machine_id}...`);
       
-      // 4. Publish to 'aarya' (for OLD PCBs)
-      publishMessage('aarya', payloadString);
+      // 1. Publish Legacy format to 'aarya' (For OLD PCBs)
+      publishMessage('aarya', payloadLegacy);
 
-      // 5. Publish to new topics (for NEW PCBs like SBE2T101) with a delay to prevent buffer crash
-      setTimeout(() => {
-        publishMessage(`machine/${machine_id}/command`, payloadString);
-      }, 500);
-
-      setTimeout(() => {
-        publishMessage(`smartbuddy/${machine_id}/cmd`, payloadString);
-      }, 1000);
+      // 2. Publish all formats to NEW PCB topics with 500ms delays to prevent SIM800L crash
+      const newTopics = [`machine/${machine_id}/command`, `smartbuddy/${machine_id}/cmd`];
+      const formats = [payloadLegacy, payloadDirect, payloadJson, payloadNoId];
+      
+      let delayMs = 500;
+      newTopics.forEach(topic => {
+        formats.forEach(msg => {
+          setTimeout(() => {
+            publishMessage(topic, msg);
+          }, delayMs);
+          delayMs += 500; // 500ms apart
+        });
+      });
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
