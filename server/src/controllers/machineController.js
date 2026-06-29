@@ -258,21 +258,9 @@ export const updateMachine = async (req, res) => {
       // 1. For OLD PCBs (Format A on aarya)
       publishMessage('aarya', payloadWithSet);
       
-      // 2. For NEW PCBs (Testing Format B on 4 topics with 2s delay)
-      const newTopics = [
-        `smartbuddy/${machine_id}`,
-        `smartbuddy/devices/${machine_id}`,
-        `smartbuddy/${machine_id}/cmd`,
-        `machine/${machine_id}/command`
-      ];
-
-      let delayMs = 0;
-      newTopics.forEach((topic, index) => {
-        setTimeout(() => {
-          publishMessage(topic, payloadDirect);
-        }, delayMs);
-        delayMs += 2000;
-      });
+      // 2. For NEW PCBs (Format A on smartbuddy/SBE2T101)
+      // The 5-second delay test proved that Test 26 was the ONLY successful update.
+      publishMessage(`smartbuddy/${machine_id}`, payloadWithSet);
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
