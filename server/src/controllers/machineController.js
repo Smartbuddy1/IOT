@@ -213,14 +213,30 @@ export const updateMachine = async (req, res) => {
         valWallTime
       ].join(',');
 
+      // Format B: Direct configuration payload (expected by NEW PCB firmware)
+      const payloadDirect = [
+        machine_id,
+        hardwareStatus,
+        modeStr,
+        usesAmt,
+        valWallClean,
+        valSeats,
+        flushTime,
+        floorTime,
+        valWallTime
+      ].join(',');
+
       console.log(`Publishing settings for machine ${machine_id}...`);
       
       // 1. Publish to legacy 'aarya' topic (for old PCBs)
       publishMessage('aarya', payloadWithSet);
+      publishMessage('aarya', payloadDirect);
 
       // 2. Publish to machine-specific topics (for new PCBs)
       publishMessage(`machine/${machine_id}/command`, payloadWithSet);
+      publishMessage(`machine/${machine_id}/command`, payloadDirect);
       publishMessage(`smartbuddy/${machine_id}/cmd`, payloadWithSet);
+      publishMessage(`smartbuddy/${machine_id}/cmd`, payloadDirect);
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
