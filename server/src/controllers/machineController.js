@@ -265,40 +265,19 @@ export const updateMachine = async (req, res) => {
         valWallTime
       ].join(',');
 
-      console.log(`Publishing settings for machine ${machine_id} (Background Queue Started)...`);
+      console.log(`Publishing settings for machine ${machine_id}...`);
 
-      const publishTasks = [];
-      const topics = [
-        `aarya`,
-        `machine/${machine_id}/command`,
-        `machines/${machine_id}/command`,
-        `smartbuddy/${machine_id}/cmd`,
-        `smartbuddy/devices/${machine_id}`,
-        `smartbuddy/${machine_id}`,
-        `smartbuddy`,
-        `machine/${machine_id}`
-      ];
-
-      topics.forEach(topic => {
-        publishTasks.push({ topic, payload: payloadWithSet, name: 'Format A (Legacy)' });
-        publishTasks.push({ topic, payload: payloadDirect, name: 'Format B (Direct)' });
-        publishTasks.push({ topic, payload: payloadNoIdWithSet, name: 'Format D (No ID + SET)' });
-        publishTasks.push({ topic, payload: payloadNoIdDirect, name: 'Format E (Raw Values Only)' });
-        publishTasks.push({ topic, payload: payloadJson, name: 'Format C (JSON)' });
-      });
-
-      let delayMs = 0;
-      publishTasks.forEach((task, index) => {
-        setTimeout(() => {
-          console.log(`\n▶️ [Test ${index + 1}/${publishTasks.length}] Sending ${task.name}`);
-          publishMessage(task.topic, task.payload);
-        }, delayMs);
-        delayMs += 5000; // 5 seconds gap between each message
-      });
+      // The 5-second delay test revealed that:
+      // 1. Old PCBs listen to 'aarya'
+      // 2. New PCBs listen to 'smartbuddy'
+      // 3. BOTH PCBs expect exactly the legacy Format A.
+      // We publish instantly to both to ensure 100% compatibility without crashing the module.
+      
+      publishMessage('aarya', payloadWithSet);
+      publishMessage('smartbuddy', payloadWithSet);
     }
 
-    // Send HTTP response immediately so the frontend doesn't hang
-    res.json({ success: true, message: 'Machine update sequence started! Check terminal logs.' });
+    res.json({ success: true, message: 'Machine updated successfully!' });
   } catch (error) {
     console.error('Update machine error:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
