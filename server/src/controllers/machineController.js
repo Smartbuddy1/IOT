@@ -253,19 +253,6 @@ export const updateMachine = async (req, res) => {
         valWallTime
       ].join(',');
 
-      // Format B: Direct (No SET_PARAMETERS, matches heartbeat exactly)
-      const payloadDirect = [
-        machine_id,
-        hardwareStatus,
-        modeStr,
-        usesAmt,
-        valWallClean,
-        valSeats,
-        flushTime,
-        floorTime,
-        valWallTime
-      ].join(',');
-
       console.log(`Publishing settings for machine ${machine_id}...`);
 
       // 1. For OLD PCBs (Format A on aarya)
