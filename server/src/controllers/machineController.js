@@ -265,17 +265,9 @@ export const updateMachine = async (req, res) => {
         valWallTime
       ].join(',');
 
-      console.log(`Publishing settings for machine ${machine_id}...`);
+      console.log(`Publishing settings for machine ${machine_id} (Background Queue Started)...`);
 
-      const allPayloads = [
-        payloadWithSet,
-        payloadDirect,
-        payloadNoIdWithSet,
-        payloadNoIdDirect,
-        payloadJson
-      ];
-
-      // Publish to all possible topics the new and old PCBs might be listening to
+      const publishTasks = [];
       const topics = [
         `aarya`,
         `machine/${machine_id}/command`,
@@ -288,13 +280,25 @@ export const updateMachine = async (req, res) => {
       ];
 
       topics.forEach(topic => {
-        allPayloads.forEach(payload => {
-          publishMessage(topic, payload);
-        });
+        publishTasks.push({ topic, payload: payloadWithSet, name: 'Format A (Legacy)' });
+        publishTasks.push({ topic, payload: payloadDirect, name: 'Format B (Direct)' });
+        publishTasks.push({ topic, payload: payloadNoIdWithSet, name: 'Format D (No ID + SET)' });
+        publishTasks.push({ topic, payload: payloadNoIdDirect, name: 'Format E (Raw Values Only)' });
+        publishTasks.push({ topic, payload: payloadJson, name: 'Format C (JSON)' });
+      });
+
+      let delayMs = 0;
+      publishTasks.forEach((task, index) => {
+        setTimeout(() => {
+          console.log(`\n▶️ [Test ${index + 1}/${publishTasks.length}] Sending ${task.name}`);
+          publishMessage(task.topic, task.payload);
+        }, delayMs);
+        delayMs += 5000; // 5 seconds gap between each message
       });
     }
 
-    res.json({ success: true, message: 'Machine updated successfully!' });
+    // Send HTTP response immediately so the frontend doesn't hang
+    res.json({ success: true, message: 'Machine update sequence started! Check terminal logs.' });
   } catch (error) {
     console.error('Update machine error:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
