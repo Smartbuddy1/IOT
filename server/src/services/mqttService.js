@@ -102,7 +102,7 @@ export const initializeMqtt = () => {
           pool.query(
             'UPDATE machines SET status = ? WHERE machine_id = ? AND status != ?',
             ['active', machineId, 'active']
-          ).catch(e => {});
+          ).catch(e => { console.error('DB Error:', e.message); });
         }
 
         // 4. Update device_live_status (Sensors and Heartbeat)
@@ -126,7 +126,7 @@ export const initializeMqtt = () => {
             pb_flush = VALUES(pb_flush), 
             last_updated = NOW()`,
             [machineId, water_level, pir_sensor, door_lock, pb_coin, pb_flush]
-          ).catch(e => {});
+          ).catch(e => { console.error('DB Error:', e.message); });
         } else {
           // Just update Heartbeat
           pool.query(
@@ -134,7 +134,7 @@ export const initializeMqtt = () => {
              VALUES (?, NOW()) 
              ON DUPLICATE KEY UPDATE last_updated = NOW()`,
             [machineId]
-          ).catch(e => {});
+          ).catch(e => { console.error('DB Error:', e.message); });
         }
       }
     } catch (err) {
