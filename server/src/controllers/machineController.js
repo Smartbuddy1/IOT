@@ -194,9 +194,9 @@ export const updateMachine = async (req, res) => {
       // Map status 'active' or 'online' to 'ready' which the hardware expects
       const hardwareStatus = (status === 'active' || status === 'online') ? 'ready' : (status || 'ready');
 
-      // Default any empty fields to '0' or 'En' to prevent consecutive commas (like ,,) which break strtok in firmware
-      const valSeats = seatsNum !== null ? seatsNum : 0;
-      const valWallTime = wallTime !== null ? wallTime : 0;
+      // Default any empty fields to 'NULL' or 'En' to match old PHP project MQTT payload format
+      const valSeats = seatsNum !== null ? seatsNum : 'NULL';
+      const valWallTime = wallTime !== null ? wallTime : 'NULL';
       const valWallClean = wall_clean || 'En';
 
       // Format A: Legacy format with SET_PARAMETERS
@@ -344,17 +344,19 @@ export const deleteMachine = async (req, res) => {
 export const getUnassignedMachines = async (req, res) => {
   try {
     const role = req.user.role;
-    let query = 'SELECT m.machine_id, m.status, m.state, m.city FROM machines m LEFT JOIN tech_allocations a ON m.machine_id = a.machine_id WHERE a.machine_id IS NULL';
+    let query = "SELECT * FROM machines WHERE client_name IS NULL OR client_name = ''";
     let params = [];
 
     if ((role === 'Maintenance_Head' || role === 'Field_Tech') && req.user.assigned_state) {
-      query += ' AND m.state = ?';
+      query += ' AND state = ?';
       params.push(req.user.assigned_state);
     }
     
-    query += ' ORDER BY m.machine_id DESC';
+    query += ' ORDER BY id DESC';
     const [machines] = await pool.query(query, params);
-    res.json({ success: true, data: machines }); // Frontend expects res.data.data
+    
+    // Return both 'data' and 'machines' fields to satisfy different frontend page parsers
+    res.json({ success: true, data: machines, machines: machines });
   } catch (error) {
     console.error('Fetch unassigned machines error:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
