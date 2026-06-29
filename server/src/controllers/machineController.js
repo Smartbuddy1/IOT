@@ -267,14 +267,22 @@ export const updateMachine = async (req, res) => {
 
       console.log(`Publishing settings for machine ${machine_id}...`);
 
-      // The 5-second delay test revealed that:
-      // 1. Old PCBs listen to 'aarya'
-      // 2. New PCBs listen to 'smartbuddy'
-      // 3. BOTH PCBs expect exactly the legacy Format A.
-      // We publish instantly to both to ensure 100% compatibility without crashing the module.
+      // The 5-second delay test proved the update happened between Test 21 and 30!
+      // This means the correct topic is either 'smartbuddy/SBE2T101' or 'smartbuddy/devices/SBE2T101'.
       
+      const payloadJson = JSON.stringify({
+        command: "SET_PARAMETERS", machine_id, status: hardwareStatus, mode: modeStr, uses_amt: usesAmt, wall_clean: valWallClean, seats: valSeats, flush_time: flushTime, floor_time: floorTime, wall_time: valWallTime
+      });
+
+      // 1. For OLD PCBs
       publishMessage('aarya', payloadWithSet);
-      publishMessage('smartbuddy', payloadWithSet);
+      
+      // 2. For NEW PCBs (Publishing to the specific device topics with a 1-second delay to avoid clash)
+      publishMessage(`smartbuddy/${machine_id}`, payloadWithSet);
+      
+      setTimeout(() => {
+        publishMessage(`smartbuddy/devices/${machine_id}`, payloadJson);
+      }, 1000);
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
