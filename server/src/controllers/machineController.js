@@ -270,10 +270,6 @@ export const updateMachine = async (req, res) => {
       // The 5-second delay test proved the update happened between Test 21 and 30!
       // This means the correct topic is either 'smartbuddy/SBE2T101' or 'smartbuddy/devices/SBE2T101'.
       
-      const payloadJson = JSON.stringify({
-        command: "SET_PARAMETERS", machine_id, status: hardwareStatus, mode: modeStr, uses_amt: usesAmt, wall_clean: valWallClean, seats: valSeats, flush_time: flushTime, floor_time: floorTime, wall_time: valWallTime
-      });
-
       // 1. For OLD PCBs
       publishMessage('aarya', payloadWithSet);
       
