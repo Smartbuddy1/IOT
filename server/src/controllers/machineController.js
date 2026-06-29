@@ -191,8 +191,8 @@ export const updateMachine = async (req, res) => {
     );
 
     if (isChanged) {
-      // Send status as-is (old PHP project sent status directly: 'active', 'ready', etc.)
-      const hardwareStatus = status || 'ready';
+      // Map status 'active' or 'online' to 'ready' which the hardware expects
+      const hardwareStatus = (status === 'active' || status === 'online') ? 'ready' : (status || 'ready');
 
       // Default any empty fields to 0 or 'En' to ensure numeric parsing succeeds on firmware
       const valSeats = seatsNum !== null ? seatsNum : 0;
@@ -213,7 +213,7 @@ export const updateMachine = async (req, res) => {
         valWallTime
       ].join(',');
 
-      // Format B: Direct configuration payload (expected by NEW PCB firmware)
+      // Format B: Direct configuration payload (matching status format)
       const payloadDirect = [
         machine_id,
         hardwareStatus,
@@ -226,32 +226,94 @@ export const updateMachine = async (req, res) => {
         valWallTime
       ].join(',');
 
+      // Format C: JSON payload
+      const payloadJson = JSON.stringify({
+        command: "SET_PARAMETERS",
+        machine_id,
+        status: hardwareStatus,
+        mode: modeStr,
+        uses_amt: usesAmt,
+        wall_clean: valWallClean,
+        seats: valSeats,
+        flush_time: flushTime,
+        floor_time: floorTime,
+        wall_time: valWallTime
+      });
+
+      // Format D: CSV WITH SET_PARAMETERS but WITHOUT machine_id prefix
+      const payloadNoIdWithSet = [
+        "SET_PARAMETERS",
+        hardwareStatus,
+        modeStr,
+        usesAmt,
+        valWallClean,
+        valSeats,
+        flushTime,
+        floorTime,
+        valWallTime
+      ].join(',');
+
+      // Format E: Raw CSV values ONLY (matching hardware reports) WITHOUT machine_id prefix
+      const payloadNoIdDirect = [
+        hardwareStatus,
+        modeStr,
+        usesAmt,
+        valWallClean,
+        valSeats,
+        flushTime,
+        floorTime,
+        valWallTime
+      ].join(',');
+
       console.log(`Publishing settings for machine ${machine_id}...`);
       
-      // Stagger publishes with 250ms delay to prevent IoT hardware buffer overflow
-      // Send payloadDirect FIRST (format that worked before crash), then payloadWithSet as backup
-      const allPublishes = [
-        // Round 1: payloadDirect (matches machine's own status format - more likely to be accepted)
-        { topic: 'aarya', msg: payloadDirect },
-        { topic: `machines/${machine_id}/command`, msg: payloadDirect },
-        { topic: `machine/${machine_id}/command`, msg: payloadDirect },
-        { topic: `smartbuddy/${machine_id}/cmd`, msg: payloadDirect },
-        { topic: `smartbuddy/${machine_id}`, msg: payloadDirect },
-        { topic: 'smartbuddy', msg: payloadDirect },
-        // Round 2: payloadWithSet (legacy SET_PARAMETERS format)
-        { topic: 'aarya', msg: payloadWithSet },
-        { topic: `machines/${machine_id}/command`, msg: payloadWithSet },
-        { topic: `machine/${machine_id}/command`, msg: payloadWithSet },
-        { topic: `smartbuddy/${machine_id}/cmd`, msg: payloadWithSet },
-        { topic: `smartbuddy/${machine_id}`, msg: payloadWithSet },
-        { topic: 'smartbuddy', msg: payloadWithSet },
-      ];
+      // 1. Publish to legacy 'aarya' topic
+      publishMessage('aarya', payloadWithSet);
+      publishMessage('aarya', payloadDirect);
 
-      allPublishes.forEach((pub, index) => {
-        setTimeout(() => {
-          publishMessage(pub.topic, pub.msg);
-        }, index * 250);
-      });
+      // 2. Publish to 'machine/{machine_id}/command' (as per IoT Guide)
+      publishMessage(`machine/${machine_id}/command`, payloadWithSet);
+      publishMessage(`machine/${machine_id}/command`, payloadDirect);
+      publishMessage(`machine/${machine_id}/command`, payloadNoIdWithSet);
+      publishMessage(`machine/${machine_id}/command`, payloadNoIdDirect);
+      publishMessage(`machine/${machine_id}/command`, payloadJson);
+
+      // 3. Publish to 'machines/{machine_id}/command' (with plural s)
+      publishMessage(`machines/${machine_id}/command`, payloadWithSet);
+      publishMessage(`machines/${machine_id}/command`, payloadDirect);
+      publishMessage(`machines/${machine_id}/command`, payloadNoIdWithSet);
+      publishMessage(`machines/${machine_id}/command`, payloadNoIdDirect);
+      publishMessage(`machines/${machine_id}/command`, payloadJson);
+
+      // 4. Publish to 'smartbuddy/{machine_id}/cmd' (as per maintenance controller)
+      publishMessage(`smartbuddy/${machine_id}/cmd`, payloadWithSet);
+      publishMessage(`smartbuddy/${machine_id}/cmd`, payloadDirect);
+      publishMessage(`smartbuddy/${machine_id}/cmd`, payloadNoIdWithSet);
+      publishMessage(`smartbuddy/${machine_id}/cmd`, payloadNoIdDirect);
+      publishMessage(`smartbuddy/${machine_id}/cmd`, payloadJson);
+
+      // 5. Publish to 'smartbuddy/devices/{machine_id}' (as per mqttService.js startsWith)
+      publishMessage(`smartbuddy/devices/${machine_id}`, payloadWithSet);
+      publishMessage(`smartbuddy/devices/${machine_id}`, payloadDirect);
+      publishMessage(`smartbuddy/devices/${machine_id}`, payloadJson);
+
+      // 6. Publish to 'smartbuddy/{machine_id}' (direct sub-topic)
+      publishMessage(`smartbuddy/${machine_id}`, payloadWithSet);
+      publishMessage(`smartbuddy/${machine_id}`, payloadDirect);
+      publishMessage(`smartbuddy/${machine_id}`, payloadNoIdWithSet);
+      publishMessage(`smartbuddy/${machine_id}`, payloadNoIdDirect);
+      publishMessage(`smartbuddy/${machine_id}`, payloadJson);
+
+      // 7. Publish to 'smartbuddy' (main status channel itself)
+      publishMessage('smartbuddy', payloadWithSet);
+      publishMessage('smartbuddy', payloadDirect);
+
+      // 8. Publish to 'machine/{machine_id}' (direct sub-topic)
+      publishMessage(`machine/${machine_id}`, payloadWithSet);
+      publishMessage(`machine/${machine_id}`, payloadDirect);
+      publishMessage(`machine/${machine_id}`, payloadNoIdWithSet);
+      publishMessage(`machine/${machine_id}`, payloadNoIdDirect);
+      publishMessage(`machine/${machine_id}`, payloadJson);
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
