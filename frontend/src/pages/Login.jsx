@@ -42,7 +42,7 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-split-container">
+    <div className="auth-split-container" style={{ flexDirection: 'column', gap: '2rem', padding: '2rem 1rem' }}>
       {/* Decorative Animated Mesh Blobs */}
       <div className="auth-bg-shape-1"></div>
       <div className="auth-bg-shape-2"></div>
@@ -58,95 +58,70 @@ const Login = () => {
       </button>
       
       {/* Centered Auth Card */}
-      <div className="auth-split-card animate-entrance" style={{ maxWidth: '480px', gridTemplateColumns: '1fr', minHeight: 'auto' }}>
-        
-        {/* Form Panel */}
-        <div className="auth-split-right" style={{ padding: '3rem 2.5rem' }}>
-          
-          <div className="auth-split-brand" style={{ display: 'flex', justifyContent: 'center', marginBottom: '2.5rem' }}>
-            <img 
-              src={logoImg} 
-              alt="Aarya Innovtech Logo" 
-              style={{ 
-                height: '100px', 
-                width: 'auto', 
-                maxWidth: '100%', 
-                objectFit: 'contain', 
-                display: 'block' 
-              }} 
-            />
-          </div>
+      <div className="auth-card glass-panel" style={{ width: '100%', maxWidth: '420px', borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', zIndex: 10 }}>
+        {/* Top Header Section */}
+        <div style={{ padding: '2.5rem 2.5rem 1rem 2.5rem', textAlign: 'center' }}>
+          <img src={logoImg} alt="Aarya Innovtech" style={{ height: '70px', margin: '0 auto 1.5rem auto' }} />
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Welcome</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Please enter your credentials to continue</p>
+        </div>
 
-          <div className="auth-split-right-header" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <h2>Welcome</h2>
-            <p>Please enter your credentials to continue</p>
-          </div>
-
-          {/* Error Notification Block */}
+        {/* Form Section */}
+        <div style={{ padding: '1rem 2.5rem 2.5rem 2.5rem' }}>
           {error && (
-            <div className="auth-error" style={{ marginBottom: '1.5rem' }}>
-              <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
-              <span>{error}</span>
+            <div style={{ backgroundColor: 'var(--bg-danger)', borderLeft: '4px solid var(--danger-color)', color: 'var(--danger-color)', padding: '0.75rem 1rem', borderRadius: '0 8px 8px 0', fontSize: '0.9rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <AlertCircle size={18} />
+              {error}
             </div>
           )}
-
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' }}>
-            {/* Username / Mobile Field */}
-            <div className="form-group">
-              <label className="form-label" htmlFor="username" style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
-                Mobile Number
-              </label>
-              <div className="auth-input-wrapper">
+          
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {/* Mobile Number Input */}
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--text-primary)' }}>Mobile Number</label>
+              <div className="input-with-icon" style={{ position: 'relative' }}>
+                <Smartphone size={18} className="input-icon" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                 <input
-                  id="username"
                   type="text"
-                  inputMode="numeric"
-                  maxLength={10}
-                  pattern="[0-9]{10}"
                   className="form-input"
+                  style={{ paddingLeft: '2.75rem', height: '3.5rem', fontSize: '1rem', backgroundColor: 'var(--surface-bg)' }}
+                  placeholder="Enter your registered mobile"
                   value={username}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '');
-                    if (val.length <= 10) setUsername(val);
-                  }}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
-                  autoFocus
-                  placeholder="Enter 10-digit mobile number"
-                  title="Mobile number must be exactly 10 digits"
                 />
-                <Smartphone size={18} className="auth-input-icon" />
               </div>
             </div>
-            
-            {/* Password Field */}
-            <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-              <label className="form-label" htmlFor="password" style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
-                Password
-              </label>
-              <div className="auth-input-wrapper">
+
+            {/* Password Input */}
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--text-primary)' }}>Password</label>
+              <div className="input-with-icon" style={{ position: 'relative' }}>
+                <Lock size={18} className="input-icon" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                 <input
-                  id="password"
                   type={showPassword ? 'text' : 'password'}
                   className="form-input"
+                  style={{ paddingLeft: '2.75rem', height: '3.5rem', fontSize: '1rem', backgroundColor: 'var(--surface-bg)' }}
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  placeholder="Enter your password"
                 />
-                <Lock size={18} className="auth-input-icon" />
                 <button
                   type="button"
-                  className="auth-password-toggle"
+                  style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}
                   onClick={() => setShowPassword(!showPassword)}
-                  title={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              
+            </div>
+
+            {/* Forgot Password */}
+            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
               <a 
-                href="#forgot" 
-                className="auth-forgot-link" 
+                href="#" 
+                style={{ color: 'var(--primary-color)', fontSize: '0.85rem', fontWeight: '500', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                 onClick={(e) => { 
                   e.preventDefault(); 
                   alert("Please contact your administrator to reset your password."); 
@@ -160,7 +135,7 @@ const Login = () => {
             <button 
               type="submit" 
               className="btn btn-primary btn-block"
-              style={{ display: 'flex', gap: '8px', height: '3.5rem', fontSize: '1.05rem', marginTop: '1.25rem' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', height: '3.5rem', fontSize: '1.05rem', marginTop: '0.5rem' }}
               disabled={loading}
             >
               {loading ? (
@@ -180,7 +155,7 @@ const Login = () => {
       </div>
 
       {/* Public Legal Links for Razorpay */}
-      <div style={{ position: 'absolute', bottom: '1.5rem', width: '100%', textAlign: 'center', color: '#64748b', fontSize: '0.85rem', display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0.75rem', zIndex: 10 }}>
+      <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.85rem', display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0.75rem', zIndex: 10, marginTop: '1rem' }}>
         <a href="/terms-conditions" style={{ color: 'inherit', textDecoration: 'underline' }}>Terms & Conditions</a>
         <span style={{ opacity: 0.5 }}>|</span>
         <a href="/privacy-policy" style={{ color: 'inherit', textDecoration: 'underline' }}>Privacy Policy</a>
