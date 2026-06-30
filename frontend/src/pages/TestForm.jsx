@@ -175,9 +175,9 @@ const TestForm = () => {
     <div className="page-container fade-in">
       <div className="page-header" style={{ marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--slate-800)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          Test Maintenance Form
+          Hardware Testing & Maintenance
         </h1>
-        <p style={{ color: 'var(--slate-500)', marginTop: '0.25rem' }}>Standalone form for testing field reports with live camera and GPS tags.</p>
+        <p style={{ color: 'var(--slate-500)', marginTop: '0.25rem' }}>Standalone form for testing field reports, executing hardware tests, with live camera and GPS tags.</p>
       </div>
 
       <div className="glass-panel" style={{ maxWidth: '800px', margin: '0 auto', padding: '2.5rem' }}>
@@ -198,6 +198,22 @@ const TestForm = () => {
             <label className="form-label">Machine ID <span style={{color:'var(--danger-color)'}}>*</span></label>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <input type="text" className="form-input" required value={formData.machine_id} onChange={e => setFormData({...formData, machine_id: e.target.value})} placeholder="Enter Machine ID" style={{ flex: '1 1 300px', height: '48px' }} />
+            </div>
+          </div>
+
+          {/* Hardware Testing Section */}
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(59, 130, 246, 0.05)' }}>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: 'bold' }}>
+              <Zap size={20} color="var(--primary-color)" /> Hardware Testing Commands
+            </h4>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Enter Machine ID and capture location above to enable these tests.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
+              <button type="button" onClick={() => handleTestHardware('TEST_DOOR')} className="btn btn-outline" style={{ padding: '0.75rem', height: 'auto', fontWeight: '600' }} disabled={!formData.machine_id}>🚪 Test Door</button>
+              <button type="button" onClick={() => handleTestHardware('TEST_FLUSH')} className="btn btn-outline" style={{ padding: '0.75rem', height: 'auto', fontWeight: '600' }} disabled={!formData.machine_id}>🚽 Test Flush</button>
+              <button type="button" onClick={() => handleTestHardware('TEST_FLOOR_VALVE')} className="btn btn-outline" style={{ padding: '0.75rem', height: 'auto', fontWeight: '600' }} disabled={!formData.machine_id}>💧 Floor Valve</button>
+              <button type="button" onClick={() => handleTestHardware('TEST_SPRINKLER')} className="btn btn-outline" style={{ padding: '0.75rem', height: 'auto', fontWeight: '600' }} disabled={!formData.machine_id}>🚿 Sprinkler</button>
+              <button type="button" onClick={() => handleTestHardware('TEST_LIGHT')} className="btn btn-outline" style={{ padding: '0.75rem', height: 'auto', fontWeight: '600' }} disabled={!formData.machine_id}>💡 Light On/Off</button>
+              <button type="button" onClick={() => handleTestHardware('REBOOT')} className="btn btn-secondary" style={{ padding: '0.75rem', height: 'auto', fontWeight: '600', backgroundColor: '#ef4444', color: 'white', border: 'none' }} disabled={!formData.machine_id}>🔄 Reboot</button>
             </div>
           </div>
 

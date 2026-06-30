@@ -136,8 +136,8 @@ const FieldTechView = () => {
 
   return (
     <div className="fade-in">
-      <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#1e293b' }}>Hardware Testing</h1>
-      <p style={{ color: '#64748b', marginTop: '0.5rem', marginBottom: '2rem' }}>Test Door, Flush, Payment, and view machine health.</p>
+      <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#1e293b' }}>My Assigned Tickets</h1>
+      <p style={{ color: '#64748b', marginTop: '0.5rem', marginBottom: '2rem' }}>View your assigned maintenance tickets and add worklogs.</p>
 
       {isLoading ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>

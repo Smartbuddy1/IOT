@@ -47,14 +47,14 @@ const Layout = () => {
     { name: 'User Management', href: '/users', icon: Users, roles: ['Admin', 'Field_Tech', 'Maintenance_Head'] },
     { name: 'Projects', href: '/projects', icon: Folder, roles: ['Admin', 'Client', 'Field_Tech'] },
     { name: 'Machines', href: '/machines', icon: Monitor, roles: ['Admin', 'Client', 'Field_Tech'] },
-    { name: 'Testing', href: '/field-tech', icon: Radio, roles: ['Field_Tech'] },
-    { name: 'Maintenance Form', href: '/test-form', icon: FileText, roles: ['Field_Tech'] },
+    { name: 'My Tickets', href: '/field-tech', icon: ClipboardList, roles: ['Field_Tech'] },
+    { name: 'Hardware Testing', href: '/test-form', icon: Radio, roles: ['Field_Tech'] },
     { name: 'Unassigned', href: '/unassigned-machines', icon: Tag, roles: ['Admin'] },
     { name: 'Allocations', href: '/allocations', icon: ClipboardList, roles: ['Maintenance_Head'] },
     { name: 'Transactions', href: '/transactions', icon: FileText, roles: ['Admin', 'Client'] },
     { name: 'Reports', href: '/reports', icon: Activity, roles: ['Admin', 'Client'] },
     { name: 'Analytics', href: '/analytics', icon: PieChart, roles: ['Admin', 'Client'] },
-    { name: 'Issue Tickets', href: '/tickets', icon: ClipboardList, roles: ['Admin', 'Maintenance_Head', 'Field_Tech'] },
+    { name: 'All Tickets', href: '/tickets', icon: ClipboardList, roles: ['Admin', 'Maintenance_Head'] },
     { name: 'Maintenance Logs', href: '/maintenance-logs', icon: FileText, roles: ['Admin', 'Maintenance_Head'] },
   ];
 
