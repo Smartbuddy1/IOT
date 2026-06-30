@@ -32,8 +32,10 @@ export const getTransactions = async (req, res) => {
     }
 
     if (machine_id) {
+      // Frontend might send 'SBE2T101 (Client Name)', so we extract just the ID part
+      const cleanMachineId = machine_id.split(' ')[0].trim();
       baseQuery += ' AND t.machin_id = ?';
-      params.push(machine_id);
+      params.push(cleanMachineId);
     }
 
     if (start_date) {

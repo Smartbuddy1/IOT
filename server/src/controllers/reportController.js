@@ -44,8 +44,10 @@ export const getReportData = async (req, res) => {
     }
 
     if (machine_id) {
+      // Frontend might send 'SBE2T101 (Client Name)', so we extract just the ID part
+      const cleanMachineId = machine_id.split(' ')[0].trim();
       filterCondition += ' AND m.machine_id = ?';
-      params.push(machine_id);
+      params.push(cleanMachineId);
     }
 
     // Date Filtering
@@ -154,8 +156,10 @@ export const getAnalyticsData = async (req, res) => {
     }
 
     if (machine_id) {
+      // Frontend might send 'SBE2T101 (Client Name)', so we extract just the ID part
+      const cleanMachineId = machine_id.split(' ')[0].trim();
       filterCondition += ' AND m.machine_id = ?';
-      params.push(machine_id);
+      params.push(cleanMachineId);
     }
 
     const { start_date, end_date } = req.query;
