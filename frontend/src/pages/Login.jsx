@@ -42,7 +42,7 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-split-container" style={{ flexDirection: 'column', gap: '2rem', padding: '2rem 1rem' }}>
+    <div className="auth-split-container" style={{ padding: '1rem', overflow: 'hidden' }}>
       {/* Decorative Animated Mesh Blobs */}
       <div className="auth-bg-shape-1"></div>
       <div className="auth-bg-shape-2"></div>
@@ -155,7 +155,7 @@ const Login = () => {
       </div>
 
       {/* Public Legal Links for Razorpay */}
-      <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.85rem', display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0.75rem', zIndex: 10, marginTop: '1rem' }}>
+      <div style={{ position: 'absolute', bottom: '1.5rem', width: '100%', textAlign: 'center', color: '#64748b', fontSize: '0.85rem', display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0.75rem', zIndex: 10 }}>
         <a href="/terms-conditions" style={{ color: 'inherit', textDecoration: 'underline' }}>Terms & Conditions</a>
         <span style={{ opacity: 0.5 }}>|</span>
         <a href="/privacy-policy" style={{ color: 'inherit', textDecoration: 'underline' }}>Privacy Policy</a>
