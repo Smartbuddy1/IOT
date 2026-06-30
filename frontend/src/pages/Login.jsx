@@ -42,7 +42,7 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-split-container" style={{ padding: '1rem', overflow: 'hidden' }}>
+    <div className="auth-split-container" style={{ padding: '1rem', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box', overflow: 'hidden' }}>
       {/* Decorative Animated Mesh Blobs */}
       <div className="auth-bg-shape-1"></div>
       <div className="auth-bg-shape-2"></div>
@@ -58,34 +58,34 @@ const Login = () => {
       </button>
       
       {/* Centered Auth Card */}
-      <div className="auth-card glass-panel" style={{ width: '100%', maxWidth: '420px', borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1)', zIndex: 10 }}>
+      <div className="auth-card glass-panel" style={{ width: '100%', maxWidth: '380px', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: '0 12px 30px -10px rgba(0,0,0,0.1)', zIndex: 10, padding: '1.75rem' }}>
         {/* Top Header Section */}
-        <div style={{ padding: '2.5rem 2.5rem 1rem 2.5rem', textAlign: 'center' }}>
-          <img src={logoImg} alt="Aarya Innovtech" style={{ height: '70px', margin: '0 auto 1.5rem auto' }} />
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Welcome</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Please enter your credentials to continue</p>
+        <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+          <img src={logoImg} alt="Aarya Innovtech" style={{ height: '48px', margin: '0 auto 0.75rem auto', display: 'block' }} />
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Welcome</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Please enter your credentials to continue</p>
         </div>
 
         {/* Form Section */}
-        <div style={{ padding: '1rem 2.5rem 2.5rem 2.5rem' }}>
+        <div>
           {error && (
-            <div style={{ backgroundColor: 'var(--bg-danger)', borderLeft: '4px solid var(--danger-color)', color: 'var(--danger-color)', padding: '0.75rem 1rem', borderRadius: '0 8px 8px 0', fontSize: '0.9rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <AlertCircle size={18} />
+            <div style={{ backgroundColor: 'var(--bg-danger)', borderLeft: '4px solid var(--danger-color)', color: 'var(--danger-color)', padding: '0.5rem 0.75rem', borderRadius: '0 6px 6px 0', fontSize: '0.8rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <AlertCircle size={16} />
               {error}
             </div>
           )}
           
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {/* Mobile Number Input */}
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--text-primary)' }}>Mobile Number</label>
+              <label className="form-label" style={{ fontWeight: '600', fontSize: '0.8rem', color: 'var(--text-primary)', marginBottom: '0.35rem' }}>Mobile Number</label>
               <div className="input-with-icon" style={{ position: 'relative' }}>
-                <Smartphone size={18} className="input-icon" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                <Smartphone size={16} className="input-icon" style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                 <input
                   type="text"
                   className="form-input"
-                  style={{ paddingLeft: '2.75rem', height: '3.5rem', fontSize: '1rem', backgroundColor: 'var(--surface-bg)' }}
-                  placeholder="Enter your registered mobile"
+                  style={{ paddingLeft: '2.5rem', height: '3rem', fontSize: '0.95rem', backgroundColor: 'var(--surface-bg)' }}
+                  placeholder="Registered mobile"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -95,24 +95,24 @@ const Login = () => {
 
             {/* Password Input */}
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--text-primary)' }}>Password</label>
+              <label className="form-label" style={{ fontWeight: '600', fontSize: '0.8rem', color: 'var(--text-primary)', marginBottom: '0.35rem' }}>Password</label>
               <div className="input-with-icon" style={{ position: 'relative' }}>
-                <Lock size={18} className="input-icon" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                <Lock size={16} className="input-icon" style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   className="form-input"
-                  style={{ paddingLeft: '2.75rem', height: '3.5rem', fontSize: '1rem', backgroundColor: 'var(--surface-bg)' }}
-                  placeholder="Enter your password"
+                  style={{ paddingLeft: '2.5rem', height: '3rem', fontSize: '0.95rem', backgroundColor: 'var(--surface-bg)' }}
+                  placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
                 <button
                   type="button"
-                  style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                  style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
@@ -121,13 +121,13 @@ const Login = () => {
             <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
               <a 
                 href="#" 
-                style={{ color: 'var(--primary-color)', fontSize: '0.85rem', fontWeight: '500', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                style={{ color: 'var(--primary-color)', fontSize: '0.8rem', fontWeight: '500', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                 onClick={(e) => { 
                   e.preventDefault(); 
                   alert("Please contact your administrator to reset your password."); 
                 }}
               >
-                <LockKeyhole size={14} /> Forgot Password?
+                <LockKeyhole size={12} /> Forgot Password?
               </a>
             </div>
             
@@ -135,7 +135,7 @@ const Login = () => {
             <button 
               type="submit" 
               className="btn btn-primary btn-block"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', height: '3.5rem', fontSize: '1.05rem', marginTop: '0.5rem' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', height: '3rem', fontSize: '0.95rem', marginTop: '0.25rem' }}
               disabled={loading}
             >
               {loading ? (
