@@ -39,7 +39,7 @@ export const handleHardwarePost = async (req, res) => {
       const status = req.body.status || 'success';
 
       await pool.query(
-        `INSERT INTO trans (machin_id, trans_amt, pay_id, status, date_time) 
+        `INSERT INTO trans (machin_id, trans_amt, trans_mode, status, date_time) 
          VALUES (?, ?, ?, ?, NOW())`,
         [machine_id, amount, payment_mode, status]
       );

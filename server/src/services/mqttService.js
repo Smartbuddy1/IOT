@@ -87,8 +87,8 @@ export const initializeMqtt = () => {
               
               if (!isNaN(amount) && amount > 0) {
                 pool.query(
-                  'INSERT INTO trans (machin_id, trans_amt, pay_id, status, date_time) VALUES (?, ?, ?, ?, NOW())',
-                  [machineId, amount, paymentMode, 'success']
+                  'INSERT INTO trans (machin_id, trans_amt, trans_mode, status, date_time) VALUES (?, ?, ?, ?, NOW())',
+                  [machineId, amount, paymentMode.toLowerCase(), 'busy']
                 ).then(() => {
                   console.log(`✅ Transaction saved for ${machineId}: ${amount} via ${paymentMode}`);
                 }).catch(e => { 
