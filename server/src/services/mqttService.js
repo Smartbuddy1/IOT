@@ -75,9 +75,27 @@ export const initializeMqtt = () => {
           if (payload.device_id) machineId = payload.device_id;
         } else if (msgStr.includes(',')) {
           // Hardware sends comma separated string like: SBE2T100,ready,Coin_UPI,5,En,5,5,11,11
+          // Or transactions like: SBE2T101,busy,Coin,5
           const parts = msgStr.split(',');
           if (parts.length > 0) {
             machineId = parts[0].trim(); // First part is usually the Machine ID
+            
+            // Handle Transactions: e.g. SBE2T101,busy,Coin,5
+            if (parts.length >= 4 && parts[1].trim().toLowerCase() === 'busy') {
+              const paymentMode = parts[2].trim();
+              const amount = parseFloat(parts[3].trim());
+              
+              if (!isNaN(amount) && amount > 0) {
+                pool.query(
+                  'INSERT INTO trans (machin_id, amount, payment_mode, status, date_time) VALUES (?, ?, ?, ?, NOW())',
+                  [machineId, amount, paymentMode, 'success']
+                ).then(() => {
+                  console.log(`✅ Transaction saved for ${machineId}: ${amount} via ${paymentMode}`);
+                }).catch(e => { 
+                  console.error('❌ Failed to insert trans:', e.message); 
+                });
+              }
+            }
           }
         } else if (msgStr.length > 0 && msgStr.length < 20) {
           machineId = msgStr.trim();
