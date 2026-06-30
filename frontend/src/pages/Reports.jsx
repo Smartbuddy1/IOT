@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import SkeletonTable from '../components/SkeletonTable';
 import PrintTemplate from '../components/PrintTemplate';
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 const logoImage = "/SB_Logo.jpg";
 
 const Reports = () => {
@@ -353,7 +353,7 @@ const Reports = () => {
         doc.line(14, 38, pageWidth - 14, 38);
 
         // 4. Draw Table
-        doc.autoTable({
+        autoTable(doc, {
           head: [headers],
           body: rows,
           startY: 42,
