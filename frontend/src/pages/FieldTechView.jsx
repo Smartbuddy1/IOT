@@ -256,19 +256,19 @@ const FieldTechView = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Before Photo</label>
-                <div style={{ position: 'relative' }}>
+                <div style={{ position: 'relative', marginTop: '0.5rem' }}>
                   <input type="file" id="before_photo" accept="image/*" capture="environment" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} onChange={e => setFormData({...formData, before_photo: e.target.files[0]})} />
-                  <label htmlFor="before_photo" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', backgroundColor: formData.before_photo ? '#ecfdf5' : 'white', borderColor: formData.before_photo ? '#10b981' : '#cbd5e1', color: formData.before_photo ? '#047857' : '#475569' }}>
-                    <Camera size={18} /> {formData.before_photo ? 'Photo Selected' : 'Tap to open Camera / Files'}
+                  <label htmlFor="before_photo" className={`btn ${formData.before_photo ? 'btn-primary' : 'btn-secondary'}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.75rem', fontWeight: '500', height: '48px', transition: 'all 0.2s' }}>
+                    <Camera size={20} /> {formData.before_photo ? 'Photo Added ✓' : 'Tap for Camera / Files'}
                   </label>
                 </div>
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">After Photo</label>
-                <div style={{ position: 'relative' }}>
+                <div style={{ position: 'relative', marginTop: '0.5rem' }}>
                   <input type="file" id="after_photo" accept="image/*" capture="environment" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} onChange={e => setFormData({...formData, after_photo: e.target.files[0]})} />
-                  <label htmlFor="after_photo" className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', backgroundColor: formData.after_photo ? '#ecfdf5' : 'white', borderColor: formData.after_photo ? '#10b981' : '#cbd5e1', color: formData.after_photo ? '#047857' : '#475569' }}>
-                    <Camera size={18} /> {formData.after_photo ? 'Photo Selected' : 'Tap to open Camera / Files'}
+                  <label htmlFor="after_photo" className={`btn ${formData.after_photo ? 'btn-primary' : 'btn-secondary'}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.75rem', fontWeight: '500', height: '48px', transition: 'all 0.2s' }}>
+                    <Camera size={20} /> {formData.after_photo ? 'Photo Added ✓' : 'Tap for Camera / Files'}
                   </label>
                 </div>
               </div>
