@@ -215,15 +215,8 @@ export const updateMachine = async (req, res) => {
 
       console.log(`Publishing settings for machine ${machine_id}...`);
 
-      // 1. Publish to 'aarya' (For OLD PCBs)
-      publishMessage('aarya', payloadString);
-      
-      // 2. Publish to 'smartbuddy' (For NEW PCBs) with a 3-second delay 
-      // This is CRITICAL to prevent UART buffer overflow (64 bytes) on the hardware
-      // since the payload itself is ~55 bytes. Sending both instantly corrupts the memory.
-      setTimeout(() => {
-        publishMessage('smartbuddy', payloadString);
-      }, 3000);
+      // Publish directly to 'smartbuddy' (For NEW PCBs only, as requested)
+      publishMessage('smartbuddy', payloadString);
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
