@@ -68,7 +68,7 @@ const Login = () => {
               src={logoImg} 
               alt="Aarya Innovtech Logo" 
               style={{ 
-                height: '75px', 
+                height: '120px', 
                 width: 'auto', 
                 maxWidth: '100%', 
                 objectFit: 'contain', 
