@@ -88,8 +88,8 @@ export const getReportData = async (req, res) => {
           COUNT(t.id) as total_uses, 
           SUM(t.trans_amt) as total_revenue,
           SUM(CASE WHEN t.trans_amt = 0 THEN 1 ELSE 0 END) as free_uses,
-          SUM(CASE WHEN t.trans_amt > 0 AND (t.pay_id IS NULL OR t.pay_id = '') THEN 1 ELSE 0 END) as coin_uses,
-          SUM(CASE WHEN t.trans_amt > 0 AND t.pay_id IS NOT NULL AND t.pay_id != '' THEN 1 ELSE 0 END) as upi_uses
+          SUM(CASE WHEN t.trans_amt > 0 AND (t.pay_id IS NULL OR t.pay_id = '' OR t.pay_id = 'coin') THEN 1 ELSE 0 END) as coin_uses,
+          SUM(CASE WHEN t.trans_amt > 0 AND t.pay_id IS NOT NULL AND t.pay_id != '' AND t.pay_id != 'coin' THEN 1 ELSE 0 END) as upi_uses
         FROM trans t
         LEFT JOIN machines m ON t.machin_id = m.machine_id
         ${filterCondition}
