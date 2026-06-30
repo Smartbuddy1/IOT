@@ -51,12 +51,12 @@ const PrintTemplate = ({ title, children, isTable = true }) => {
   );
 
   return (
-    <div className="print-template-wrapper print-only">
-      <img src={logo} alt="Watermark" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '500px', opacity: 0.06, zIndex: -1, pointerEvents: 'none' }} />
+    <div className="print-template-wrapper">
+      <img className="print-only" src={logo} alt="Watermark" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '500px', opacity: 0.06, zIndex: -1, pointerEvents: 'none' }} />
       
       {isTable ? (
         <table className="print-layout-table" style={{ width: '100%', borderCollapse: 'collapse', border: 'none' }}>
-          <thead>
+          <thead className="print-only">
             <tr>
               <td style={{ border: 'none', padding: 0 }}>
                 <Header />
@@ -72,7 +72,7 @@ const PrintTemplate = ({ title, children, isTable = true }) => {
               </td>
             </tr>
           </tbody>
-          <tfoot>
+          <tfoot className="print-only">
             <tr>
               <td style={{ border: 'none', padding: 0 }}>
                 <Footer />
@@ -82,11 +82,11 @@ const PrintTemplate = ({ title, children, isTable = true }) => {
         </table>
       ) : (
         <div style={{ width: '100%' }}>
-          <Header />
+          <div className="print-only"><Header /></div>
           <div className="print-body-content">
             {children}
           </div>
-          <Footer />
+          <div className="print-only"><Footer /></div>
         </div>
       )}
     </div>
