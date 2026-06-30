@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Smartphone, Lock, Eye, EyeOff, Sun, Moon, AlertCircle, Loader2, CheckCircle2, ArrowRight, LockKeyhole } from 'lucide-react';
-const logoImg = `${import.meta.env.VITE_API_BASE_URL.replace('/api', '')}/uploads/logos/new%20logo.png`;
+import logoImg from '../assets/logo.png';
 
 const Login = () => {
   const [username, setUsername] = useState('');
