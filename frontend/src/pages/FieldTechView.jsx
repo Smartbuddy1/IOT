@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { Power, Settings, ShieldAlert, CheckCircle, Camera, MapPin, Zap, Cpu, ToggleRight } from 'lucide-react';
+import { Power, Settings, ShieldAlert, CheckCircle, Camera, ImageIcon, MapPin, Zap, Cpu, ToggleRight } from 'lucide-react';
 import Modal from '../components/Modal';
 
 const FieldTechView = () => {
@@ -253,23 +253,39 @@ const FieldTechView = () => {
             <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: 'bold' }}>
               <Camera size={20} color="var(--primary-color)" /> Visual Evidence
             </h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Before Photo</label>
-                <div style={{ position: 'relative', marginTop: '0.5rem' }}>
-                  <input type="file" id="before_photo" accept="image/*" capture="environment" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} onChange={e => setFormData({...formData, before_photo: e.target.files[0]})} />
-                  <label htmlFor="before_photo" className={`btn ${formData.before_photo ? 'btn-primary' : 'btn-secondary'}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.75rem', fontWeight: '500', height: '48px', transition: 'all 0.2s' }}>
-                    <Camera size={20} /> {formData.before_photo ? 'Photo Added ✓' : 'Tap for Camera / Files'}
-                  </label>
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <input type="file" id="before_photo_cam" accept="image/*" capture="environment" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} onChange={e => setFormData({...formData, before_photo: e.target.files[0]})} />
+                    <label htmlFor="before_photo_cam" className={`btn ${formData.before_photo ? 'btn-primary' : 'btn-secondary'}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.75rem', fontWeight: '500', height: '48px', transition: 'all 0.2s' }}>
+                      <Camera size={20} /> {formData.before_photo ? 'Added' : 'Camera'}
+                    </label>
+                  </div>
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <input type="file" id="before_photo_gal" accept="image/*" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} onChange={e => setFormData({...formData, before_photo: e.target.files[0]})} />
+                    <label htmlFor="before_photo_gal" className={`btn ${formData.before_photo ? 'btn-primary' : 'btn-secondary'}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.75rem', fontWeight: '500', height: '48px', transition: 'all 0.2s' }}>
+                      <ImageIcon size={20} /> {formData.before_photo ? 'Added' : 'Files'}
+                    </label>
+                  </div>
                 </div>
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">After Photo</label>
-                <div style={{ position: 'relative', marginTop: '0.5rem' }}>
-                  <input type="file" id="after_photo" accept="image/*" capture="environment" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} onChange={e => setFormData({...formData, after_photo: e.target.files[0]})} />
-                  <label htmlFor="after_photo" className={`btn ${formData.after_photo ? 'btn-primary' : 'btn-secondary'}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.75rem', fontWeight: '500', height: '48px', transition: 'all 0.2s' }}>
-                    <Camera size={20} /> {formData.after_photo ? 'Photo Added ✓' : 'Tap for Camera / Files'}
-                  </label>
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <input type="file" id="after_photo_cam" accept="image/*" capture="environment" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} onChange={e => setFormData({...formData, after_photo: e.target.files[0]})} />
+                    <label htmlFor="after_photo_cam" className={`btn ${formData.after_photo ? 'btn-primary' : 'btn-secondary'}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.75rem', fontWeight: '500', height: '48px', transition: 'all 0.2s' }}>
+                      <Camera size={20} /> {formData.after_photo ? 'Added' : 'Camera'}
+                    </label>
+                  </div>
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <input type="file" id="after_photo_gal" accept="image/*" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} onChange={e => setFormData({...formData, after_photo: e.target.files[0]})} />
+                    <label htmlFor="after_photo_gal" className={`btn ${formData.after_photo ? 'btn-primary' : 'btn-secondary'}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.75rem', fontWeight: '500', height: '48px', transition: 'all 0.2s' }}>
+                      <ImageIcon size={20} /> {formData.after_photo ? 'Added' : 'Files'}
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
