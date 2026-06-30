@@ -140,37 +140,41 @@ const FieldTechView = () => {
       <p style={{ color: '#64748b', marginTop: '0.5rem', marginBottom: '2rem' }}>Test Door, Flush, Payment, and view machine health.</p>
 
       {isLoading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-          {[1, 2, 3].map(i => <div key={i} className="skeleton-box" style={{ height: '200px' }}></div>)}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+          {[1, 2, 3].map(i => <div key={i} className="skeleton-box" style={{ height: '220px', borderRadius: '12px' }}></div>)}
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
           {tickets.length > 0 ? tickets.map(ticket => (
-            <div key={ticket.ticket_id} className="card hover-float" style={{ padding: '1.5rem', background: 'var(--surface-bg)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
+            <div key={ticket.ticket_id} className="card hover-float glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                 <div>
-                  <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.25rem' }}>{ticket.machine_id}</h3>
-                  <p style={{ margin: 0, color: 'var(--slate-500)', fontSize: '0.875rem' }}>{ticket.client_name} - {ticket.project_name}</p>
+                  <h3 style={{ margin: '0 0 0.25rem 0', color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 'bold' }}>{ticket.machine_id}</h3>
+                  <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{ticket.client_name} - {ticket.project_name}</p>
                 </div>
-                <span className={`badge-glow ${ticket.status === 'Open' ? 'failed' : 'maintenance'}`}>{ticket.status}</span>
+                <span className={`badge-glow ${ticket.status === 'Open' ? 'badge-danger' : 'badge-warning'}`}>{ticket.status}</span>
               </div>
               
-              <div style={{ padding: '1rem', background: 'var(--slate-50)', borderRadius: '0.5rem', marginBottom: '1.5rem', borderLeft: `4px solid ${ticket.priority === 'High' ? '#ef4444' : '#f59e0b'}` }}>
-                <p style={{ margin: '0 0 0.5rem 0', fontWeight: 'bold' }}>{ticket.ticket_id} ({ticket.priority} Priority)</p>
-                <p style={{ margin: 0, fontSize: '0.9rem' }}>{ticket.title}</p>
+              <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px', marginBottom: '1.5rem', borderLeft: `4px solid ${ticket.priority === 'High' ? 'var(--danger-color)' : 'var(--warning-color)'}`, flexGrow: 1 }}>
+                <p style={{ margin: '0 0 0.5rem 0', fontWeight: '600', color: 'var(--text-primary)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {ticket.priority === 'High' && <ShieldAlert size={16} color="var(--danger-color)" />}
+                  {ticket.ticket_id}
+                </p>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{ticket.title}</p>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
-                <button className="btn" onClick={() => handleTestHardware(ticket.machine_id, 'REBOOT')} style={{ background: 'var(--slate-800)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem', borderRadius: '8px' }}>
-                  <Power size={16} /> Test
-                </button>
-                <button className="btn btn-outline" onClick={() => openMaintenanceForm(ticket)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem', borderRadius: '8px', color: 'var(--slate-700)', borderColor: 'var(--slate-300)' }}>
-                  <Settings size={16} /> Add Worklog
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <button className="btn btn-primary" onClick={() => openMaintenanceForm(ticket)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', fontWeight: '600', width: '100%', fontSize: '1rem' }}>
+                  <Settings size={18} /> Add Worklog
                 </button>
               </div>
             </div>
           )) : (
-            <p style={{ color: 'var(--slate-500)' }}>No open tickets assigned to you.</p>
+            <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center', gridColumn: '1 / -1' }}>
+              <CheckCircle size={48} color="var(--success-color)" style={{ marginBottom: '1rem', opacity: 0.5 }} />
+              <h3 style={{ color: 'var(--text-primary)', fontSize: '1.25rem', marginBottom: '0.5rem' }}>All Caught Up!</h3>
+              <p style={{ color: 'var(--text-secondary)' }}>No open maintenance tickets assigned to you right now.</p>
+            </div>
           )}
         </div>
       )}
@@ -189,32 +193,32 @@ const FieldTechView = () => {
             </div>
 
           {/* Section 1: General Info */}
-          <div style={{ padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
-            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#334155', fontSize: '1rem', fontWeight: 'bold' }}>
-              <Settings size={18} /> General Diagnostics
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: 'bold' }}>
+              <Settings size={20} color="var(--primary-color)" /> General Diagnostics
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Reported Issue <span style={{color:'red'}}>*</span></label>
+                <label className="form-label">Reported Issue <span style={{color:'var(--danger-color)'}}>*</span></label>
                 <input type="text" className="form-input" required value={formData.reported_issue} onChange={e => setFormData({...formData, reported_issue: e.target.value})} placeholder="e.g. Door was jammed" />
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Root Cause Analysis <span style={{color:'red'}}>*</span></label>
+                <label className="form-label">Root Cause Analysis <span style={{color:'var(--danger-color)'}}>*</span></label>
                 <input type="text" className="form-input" required value={formData.root_cause} onChange={e => setFormData({...formData, root_cause: e.target.value})} placeholder="e.g. 12V Relay short circuit" />
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Action Taken <span style={{color:'red'}}>*</span></label>
+                <label className="form-label">Action Taken <span style={{color:'var(--danger-color)'}}>*</span></label>
                 <input type="text" className="form-input" required value={formData.action_taken} onChange={e => setFormData({...formData, action_taken: e.target.value})} placeholder="e.g. Replaced relay and tested" />
               </div>
             </div>
           </div>
 
           {/* Section 2: PCB & Hardware Check */}
-          <div style={{ padding: '1rem', border: '1px solid #e0e7ff', borderRadius: '8px', backgroundColor: '#eef2ff' }}>
-            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#4338ca', fontSize: '1rem', fontWeight: 'bold' }}>
-              <Cpu size={18} /> PCB & Hardware Checks
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: 'bold' }}>
+              <Cpu size={20} color="var(--primary-color)" /> PCB & Hardware Checks
             </h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
               
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">PCB Condition</label>
@@ -231,25 +235,25 @@ const FieldTechView = () => {
                 <input type="text" className="form-input" value={formData.voltage_reading} onChange={e => setFormData({...formData, voltage_reading: e.target.value})} placeholder="e.g. 12.4V" />
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <input type="checkbox" id="relays" checked={formData.relays_checked} onChange={e => setFormData({...formData, relays_checked: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: '#4338ca' }} />
-                <label htmlFor="relays" style={{ fontSize: '0.9rem', fontWeight: '500', color: '#334155', cursor: 'pointer' }}>Relays Tested OK</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem', background: 'var(--surface-bg)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <input type="checkbox" id="relays" checked={formData.relays_checked} onChange={e => setFormData({...formData, relays_checked: e.target.checked})} style={{ width: '20px', height: '20px', accentColor: 'var(--primary-color)' }} />
+                <label htmlFor="relays" style={{ fontSize: '0.95rem', fontWeight: '500', color: 'var(--text-primary)', cursor: 'pointer', flexGrow: 1 }}>Relays Tested OK</label>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <input type="checkbox" id="sensors" checked={formData.sensors_checked} onChange={e => setFormData({...formData, sensors_checked: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: '#4338ca' }} />
-                <label htmlFor="sensors" style={{ fontSize: '0.9rem', fontWeight: '500', color: '#334155', cursor: 'pointer' }}>Sensors Checked</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem', background: 'var(--surface-bg)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <input type="checkbox" id="sensors" checked={formData.sensors_checked} onChange={e => setFormData({...formData, sensors_checked: e.target.checked})} style={{ width: '20px', height: '20px', accentColor: 'var(--primary-color)' }} />
+                <label htmlFor="sensors" style={{ fontSize: '0.95rem', fontWeight: '500', color: 'var(--text-primary)', cursor: 'pointer', flexGrow: 1 }}>Sensors Checked</label>
               </div>
 
             </div>
           </div>
 
           {/* Section 3: Visual Evidence */}
-          <div style={{ padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
-            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#334155', fontSize: '1rem', fontWeight: 'bold' }}>
-              <Camera size={18} /> Visual Evidence
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: 'bold' }}>
+              <Camera size={20} color="var(--primary-color)" /> Visual Evidence
             </h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Before Photo</label>
                 <div style={{ position: 'relative' }}>

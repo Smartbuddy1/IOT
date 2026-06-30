@@ -180,56 +180,54 @@ const TestForm = () => {
         <p style={{ color: 'var(--slate-500)', marginTop: '0.25rem' }}>Standalone form for testing field reports with live camera and GPS tags.</p>
       </div>
 
-      <div className="glass-panel" style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem' }}>
-        <form onSubmit={handleLogSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div className="glass-panel" style={{ maxWidth: '800px', margin: '0 auto', padding: '2.5rem' }}>
+        <form onSubmit={handleLogSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
           {/* Location Verification Section */}
-          <div style={{ backgroundColor: formData.gps_lat ? '#ecfdf5' : '#fef2f2', padding: '1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem', color: formData.gps_lat ? '#065f46' : '#991b1b', border: `1px solid ${formData.gps_lat ? '#a7f3d0' : '#fecaca'}` }}>
-            <MapPin size={24} />
+          <div style={{ backgroundColor: formData.gps_lat ? 'var(--bg-success)' : 'var(--bg-danger)', padding: '1.25rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '1rem', color: formData.gps_lat ? 'var(--success-color)' : 'var(--danger-color)', border: `1px solid ${formData.gps_lat ? 'var(--success-color)' : 'var(--danger-color)'}33` }}>
+            <MapPin size={28} />
             <div>
-              <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{locationStatus}</div>
+              <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>{locationStatus}</div>
               {formData.gps_lat && (
-                <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>{formData.gps_lat}, {formData.gps_lng}</div>
+                <div style={{ fontSize: '0.85rem', opacity: 0.9, marginTop: '0.25rem' }}>{formData.gps_lat}, {formData.gps_lng}</div>
               )}
             </div>
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Machine ID <span style={{color:'red'}}>*</span></label>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <input type="text" className="form-input" required value={formData.machine_id} onChange={e => setFormData({...formData, machine_id: e.target.value})} placeholder="Enter Machine ID" style={{ flex: 1 }} />
-              <button type="button" onClick={() => handleTestHardware('TEST_DOOR')} className="btn" style={{ backgroundColor: '#e0e7ff', color: '#4338ca', padding: '0.5rem 1rem', height: '42px', fontWeight: 'bold' }}>Test Door</button>
-              <button type="button" onClick={() => handleTestHardware('TEST_FLUSH')} className="btn" style={{ backgroundColor: '#e0e7ff', color: '#4338ca', padding: '0.5rem 1rem', height: '42px', fontWeight: 'bold' }}>Test Flush</button>
+            <label className="form-label">Machine ID <span style={{color:'var(--danger-color)'}}>*</span></label>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <input type="text" className="form-input" required value={formData.machine_id} onChange={e => setFormData({...formData, machine_id: e.target.value})} placeholder="Enter Machine ID" style={{ flex: '1 1 300px', height: '48px' }} />
             </div>
           </div>
 
           {/* Section 1: General Info */}
-          <div style={{ padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
-            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#334155', fontSize: '1rem', fontWeight: 'bold' }}>
-              <Settings size={18} /> General Diagnostics
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: 'bold' }}>
+              <Settings size={20} color="var(--primary-color)" /> General Diagnostics
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Reported Issue <span style={{color:'red'}}>*</span></label>
+                <label className="form-label">Reported Issue <span style={{color:'var(--danger-color)'}}>*</span></label>
                 <input type="text" className="form-input" required value={formData.reported_issue} onChange={e => setFormData({...formData, reported_issue: e.target.value})} placeholder="e.g. Door was jammed" />
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Root Cause Analysis <span style={{color:'red'}}>*</span></label>
+                <label className="form-label">Root Cause Analysis <span style={{color:'var(--danger-color)'}}>*</span></label>
                 <input type="text" className="form-input" required value={formData.root_cause} onChange={e => setFormData({...formData, root_cause: e.target.value})} placeholder="e.g. 12V Relay short circuit" />
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Action Taken <span style={{color:'red'}}>*</span></label>
+                <label className="form-label">Action Taken <span style={{color:'var(--danger-color)'}}>*</span></label>
                 <input type="text" className="form-input" required value={formData.action_taken} onChange={e => setFormData({...formData, action_taken: e.target.value})} placeholder="e.g. Replaced relay and tested" />
               </div>
             </div>
           </div>
 
           {/* Section 2: PCB & Hardware Check */}
-          <div style={{ padding: '1rem', border: '1px solid #e0e7ff', borderRadius: '8px', backgroundColor: '#eef2ff' }}>
-            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#4338ca', fontSize: '1rem', fontWeight: 'bold' }}>
-              <Cpu size={18} /> PCB & Hardware Checks
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: 'bold' }}>
+              <Cpu size={20} color="var(--primary-color)" /> PCB & Hardware Checks
             </h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.25rem' }}>
               
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">PCB Condition</label>
@@ -246,50 +244,50 @@ const TestForm = () => {
                 <input type="text" className="form-input" value={formData.voltage_reading} onChange={e => setFormData({...formData, voltage_reading: e.target.value})} placeholder="e.g. 12.4V" />
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <input type="checkbox" id="relays" checked={formData.relays_checked} onChange={e => setFormData({...formData, relays_checked: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: '#4338ca' }} />
-                <label htmlFor="relays" style={{ fontSize: '0.9rem', fontWeight: '500', color: '#334155', cursor: 'pointer' }}>Relays Tested OK</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem', background: 'var(--surface-bg)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <input type="checkbox" id="relays" checked={formData.relays_checked} onChange={e => setFormData({...formData, relays_checked: e.target.checked})} style={{ width: '20px', height: '20px', accentColor: 'var(--primary-color)' }} />
+                <label htmlFor="relays" style={{ fontSize: '0.95rem', fontWeight: '500', color: 'var(--text-primary)', cursor: 'pointer', flexGrow: 1 }}>Relays Tested OK</label>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                <input type="checkbox" id="sensors" checked={formData.sensors_checked} onChange={e => setFormData({...formData, sensors_checked: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: '#4338ca' }} />
-                <label htmlFor="sensors" style={{ fontSize: '0.9rem', fontWeight: '500', color: '#334155', cursor: 'pointer' }}>Sensors Checked</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem', background: 'var(--surface-bg)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <input type="checkbox" id="sensors" checked={formData.sensors_checked} onChange={e => setFormData({...formData, sensors_checked: e.target.checked})} style={{ width: '20px', height: '20px', accentColor: 'var(--primary-color)' }} />
+                <label htmlFor="sensors" style={{ fontSize: '0.95rem', fontWeight: '500', color: 'var(--text-primary)', cursor: 'pointer', flexGrow: 1 }}>Sensors Checked</label>
               </div>
 
             </div>
           </div>
 
           {/* Section 3: Visual Evidence */}
-          <div style={{ padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
-            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#334155', fontSize: '1rem', fontWeight: 'bold' }}>
-              <Camera size={18} /> Visual Evidence (Live Camera)
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: 'bold' }}>
+              <Camera size={20} color="var(--primary-color)" /> Visual Evidence (Live Camera)
             </h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Before Photo</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button type="button" onClick={() => startCamera('before_photo')} className="btn btn-secondary" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.5rem', border: '1px solid #cbd5e1', backgroundColor: '#fff', color: '#475569' }}>
-                    <Camera size={16} /> Camera
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button type="button" onClick={() => startCamera('before_photo')} className="btn btn-secondary" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', fontWeight: '500', height: '42px' }}>
+                    <Camera size={18} /> Camera
                   </button>
-                  <label className="btn btn-secondary" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.5rem', border: '1px solid #cbd5e1', backgroundColor: '#fff', color: '#475569' }}>
-                    <ImageIcon size={16} /> Gallery
+                  <label className="btn btn-secondary" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: '500', height: '42px' }}>
+                    <ImageIcon size={18} /> Gallery
                     <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleImageCapture(e, 'before_photo')} />
                   </label>
                 </div>
-                {formData.before_photo && <img src={formData.before_photo} alt="Before" style={{ marginTop: '0.75rem', width: '100%', height: '120px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }} />}
+                {formData.before_photo && <img src={formData.before_photo} alt="Before" style={{ marginTop: '1rem', width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)' }} />}
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">After Photo</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button type="button" onClick={() => startCamera('after_photo')} className="btn btn-secondary" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.5rem', border: '1px solid #cbd5e1', backgroundColor: '#fff', color: '#475569' }}>
-                    <Camera size={16} /> Camera
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button type="button" onClick={() => startCamera('after_photo')} className="btn btn-secondary" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', fontWeight: '500', height: '42px' }}>
+                    <Camera size={18} /> Camera
                   </button>
-                  <label className="btn btn-secondary" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '0.5rem', border: '1px solid #cbd5e1', backgroundColor: '#fff', color: '#475569' }}>
-                    <ImageIcon size={16} /> Gallery
+                  <label className="btn btn-secondary" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: '500', height: '42px' }}>
+                    <ImageIcon size={18} /> Gallery
                     <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleImageCapture(e, 'after_photo')} />
                   </label>
                 </div>
-                {formData.after_photo && <img src={formData.after_photo} alt="After" style={{ marginTop: '0.75rem', width: '100%', height: '120px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }} />}
+                {formData.after_photo && <img src={formData.after_photo} alt="After" style={{ marginTop: '1rem', width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-color)' }} />}
               </div>
             </div>
           </div>
