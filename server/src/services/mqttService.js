@@ -80,17 +80,22 @@ export const initializeMqtt = () => {
           if (parts.length > 0) {
             machineId = parts[0].trim(); // First part is usually the Machine ID
             
-            // Handle Transactions: e.g. SBE2T101,busy,Coin,5
-            if (parts.length >= 4 && parts[1].trim().toLowerCase() === 'busy') {
+            // Handle Transactions: e.g. SBE2T101,busy,Coin,5 or SBE2T101,busy,Button
+            if (parts.length >= 3 && parts[1].trim().toLowerCase() === 'busy') {
               const paymentMode = parts[2].trim();
-              const amount = parseFloat(parts[3].trim());
+              const isFree = paymentMode.toLowerCase() === 'button' || paymentMode.toLowerCase() === 'free';
+              const amount = parts.length >= 4 ? parseFloat(parts[3].trim()) : 0;
               
-              if (!isNaN(amount) && amount > 0) {
+              if (isFree || (!isNaN(amount) && amount > 0)) {
+                const transAmt = isFree ? 0 : amount;
+                const transMode = isFree ? 'free' : paymentMode.toLowerCase();
+                const payId = isFree ? 'free' : paymentMode.toLowerCase();
+                
                 pool.query(
-                  'INSERT INTO trans (machin_id, trans_amt, trans_mode, status, date_time) VALUES (?, ?, ?, ?, NOW())',
-                  [machineId, amount, paymentMode.toLowerCase(), 'success']
+                  'INSERT INTO trans (machin_id, trans_amt, trans_mode, pay_id, status, date_time) VALUES (?, ?, ?, ?, ?, NOW())',
+                  [machineId, transAmt, transMode, payId, 'success']
                 ).then(() => {
-                  console.log(`✅ Transaction saved for ${machineId}: ${amount} via ${paymentMode}`);
+                  console.log(`✅ Transaction saved for ${machineId}: ${transAmt} via ${transMode}`);
                 }).catch(e => { 
                   console.error('❌ Failed to insert trans:', e.message); 
                 });

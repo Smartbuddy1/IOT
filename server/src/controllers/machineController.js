@@ -75,7 +75,7 @@ export const createMachine = async (req, res) => {
   const installationDate = installation_date ? installation_date : null;
   
   // Convert ints
-  const usesAmt = uses_amt ? parseInt(uses_amt) : 5;
+  const usesAmt = (free === 'Yes') ? 0 : ((uses_amt !== undefined && uses_amt !== null && uses_amt !== '') ? parseInt(uses_amt) : 5);
   const seatsNum = seats ? parseInt(seats) : null;
   const flushTime = flush_time ? parseInt(flush_time) : 5;
   const floorTime = floor_time ? parseInt(floor_time) : 5;
@@ -120,7 +120,7 @@ export const updateMachine = async (req, res) => {
   const installationDate = installation_date ? installation_date : null;
 
   // Convert ints
-  const usesAmt = uses_amt ? parseInt(uses_amt) : 5;
+  const usesAmt = (free === 'Yes') ? 0 : ((uses_amt !== undefined && uses_amt !== null && uses_amt !== '') ? parseInt(uses_amt) : 5);
   const seatsNum = seats ? parseInt(seats) : null;
   const flushTime = flush_time ? parseInt(flush_time) : 5;
   const floorTime = floor_time ? parseInt(floor_time) : 5;
