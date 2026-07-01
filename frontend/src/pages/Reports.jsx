@@ -228,9 +228,17 @@ const Reports = () => {
 
       rows.push(footerRow);
     } else if (reportType === 'maintenance') {
-      title = 'Machine Maintenance Status Report';
-      headers = ['Machine ID', 'Client', 'Project', 'Status', 'Last Active', 'Address'];
-      rows = data.map(r => [r.machine_id, r.client_name, r.project_name || '-', r.status || 'Offline', formatDateTime(r.last_update), r.address || '-']);
+      title = 'Machine Maintenance Logs Report';
+      headers = ['Date', 'Machine ID', 'Client', 'Tech Name', 'Reported Issue', 'Action Taken', 'Status'];
+      rows = data.map(r => [
+        formatDate(r.log_date || r.last_update),
+        r.machine_id,
+        r.client_name || '-',
+        r.tech_name || '-',
+        r.reported_issue || 'General Checkup',
+        r.action_taken || '-',
+        r.status || 'Resolved'
+      ]);
     }
 
     if (format === 'csv') {
@@ -721,7 +729,7 @@ const Reports = () => {
                     </>
                   )}
                   {reportType === 'maintenance' && (
-                    <><th>Machine ID</th><th>Client</th><th>Project</th><th>Status</th><th>Last Active</th><th>Address</th></>
+                    <><th>Date</th><th>Machine ID</th><th>Client</th><th>Tech Name</th><th>Reported Issue</th><th>Action Taken</th><th>Status</th></>
                   )}
                 </tr>
               </thead>
@@ -756,19 +764,16 @@ const Reports = () => {
                       )}
                       {reportType === 'maintenance' && (
                         <>
+                          <td style={{ color: 'var(--slate-600)' }}>{formatDate(row.log_date || row.last_update)}</td>
                           <td style={{ fontWeight: '600', color: 'var(--primary-color)' }}>{row.machine_id}</td>
-                          <td style={{ fontWeight: '500' }}>{row.client_name}</td>
-                          <td style={{ color: 'var(--slate-600)' }}>{row.project_name || '-'}</td>
+                          <td style={{ fontWeight: '500' }}>{row.client_name || '-'}</td>
+                          <td style={{ fontWeight: '600' }}>{row.tech_name || '-'}</td>
+                          <td style={{ color: 'var(--slate-700)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.reported_issue}>{row.reported_issue || 'General Checkup'}</td>
+                          <td style={{ color: 'var(--slate-600)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.action_taken}>{row.action_taken || '-'}</td>
                           <td>
-                            <span className={`badge-glow ${row.status?.toLowerCase() === 'active' ? 'badge-success' : 'badge-warning'}`}>
-                              {row.status || 'Unknown'}
+                            <span className={`badge-glow ${row.status?.toLowerCase() === 'fixed' || row.status?.toLowerCase() === 'resolved' ? 'badge-success' : 'badge-warning'}`}>
+                              {row.status || 'Resolved'}
                             </span>
-                          </td>
-                          <td style={{ color: 'var(--slate-500)', fontSize: '0.9rem' }}>
-                            {formatDateTime(row.last_update)}
-                          </td>
-                          <td style={{ fontSize: '0.85rem', color: 'var(--slate-600)', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={row.address}>
-                            {row.address || '-'}
                           </td>
                         </>
                       )}

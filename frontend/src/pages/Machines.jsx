@@ -264,7 +264,8 @@ const Machines = () => {
                       {machine.status === 'active' ? 'Active' : 
                        machine.status === 'ready' ? 'Ready' : 
                        machine.status === 'maintenance' ? 'Maintenance' : 
-                       machine.status === 'busy' ? 'Busy' : 'Failed'}
+                       machine.status === 'busy' ? 'Busy' : 
+                       machine.status === 'offline' || machine.status === 'inactive' || machine.status === 'failed' ? 'Inactive' : 'Inactive'}
                     </span>
                   </td>
                   <td style={{ fontWeight: '700', color: 'var(--slate-800)' }}>

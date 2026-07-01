@@ -222,7 +222,7 @@ const Dashboard = () => {
           <div className="glass-panel chart-card hover-float">
             <h3 className="chart-title">7-Day Daily Revenue (₹)</h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem', marginTop: '-0.5rem' }}>
-              गेल्या ७ दिवसांचे रोजचे कलेक्शन (Daily Collection Trend)
+              Daily collection trend over the last 7 days
             </p>
             <div style={{ height: '300px', width: '100%' }}>
               {finalChartData.length > 0 ? (
@@ -258,20 +258,20 @@ const Dashboard = () => {
 
         {/* Machine Health Distribution (Donut Chart + Clear Status Cards) */}
         <div className="glass-panel chart-card hover-float">
-          <h3 className="chart-title">Machine Status (मशीन स्थिती)</h3>
+          <h3 className="chart-title">Machine Status Distribution</h3>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', marginTop: '-0.5rem' }}>
-            एकूण मशीन्सपैकी किती चालू आणि बंद आहेत (Live Status)
+            Live operational status of all registered machines
           </p>
           <div style={{ height: '310px', width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             {(() => {
               const activeCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'active' || s.name?.toLowerCase() === 'ready')?.value || 0;
-              const failedCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'failed' || s.name?.toLowerCase() === 'busy')?.value || 0;
+              const inactiveCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'failed' || s.name?.toLowerCase() === 'inactive' || s.name?.toLowerCase() === 'offline' || s.name?.toLowerCase() === 'busy')?.value || 0;
               const maintCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'maintenance')?.value || 0;
-              const totalCount = activeCount + failedCount + maintCount;
+              const totalCount = activeCount + inactiveCount + maintCount;
 
               const healthData = [
-                { name: 'Active (चालू)', value: activeCount, color: '#10b981' },
-                { name: 'Failed (बंद)', value: failedCount, color: '#ef4444' },
+                { name: 'Active', value: activeCount, color: '#10b981' },
+                { name: 'Inactive', value: inactiveCount, color: '#ef4444' },
                 { name: 'Maintenance', value: maintCount, color: '#f59e0b' }
               ];
 
@@ -320,7 +320,7 @@ const Dashboard = () => {
                     <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', textAlign: 'center' }}>
                       <div style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                         <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }}></span>
-                        चालू (Active)
+                        Active
                       </div>
                       <div style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.15rem' }}>{activeCount}</div>
                     </div>
@@ -328,15 +328,15 @@ const Dashboard = () => {
                     <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', textAlign: 'center' }}>
                       <div style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                         <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ef4444' }}></span>
-                        बंद (Failed)
+                        Inactive
                       </div>
-                      <div style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.15rem' }}>{failedCount}</div>
+                      <div style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.15rem' }}>{inactiveCount}</div>
                     </div>
 
                     <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)', textAlign: 'center' }}>
                       <div style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                         <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f59e0b' }}></span>
-                        दुरूस्ती (Maint.)
+                        Maintenance
                       </div>
                       <div style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.15rem' }}>{maintCount}</div>
                     </div>

@@ -51,20 +51,18 @@ export const getReportData = async (req, res) => {
     }
 
     // Date Filtering
-    let dateField = type === 'maintenance' ? 'm.installation_date' : 't.date_time';
+    let dateField = type === 'maintenance' ? 'l.created_at' : 't.date_time';
     
     if (fy && fy !== 'custom' && fy !== '') {
       const { fyStart, fyEnd } = getFinancialYearDates(fy);
-      if (type !== 'maintenance') {
-        filterCondition += ` AND DATE(${dateField}) >= ? AND DATE(${dateField}) <= ?`;
-        params.push(fyStart, fyEnd);
-      }
+      filterCondition += ` AND DATE(${dateField}) >= ? AND DATE(${dateField}) <= ?`;
+      params.push(fyStart, fyEnd);
     } else {
-      if (start_date && type !== 'maintenance') {
+      if (start_date) {
         filterCondition += ` AND DATE(${dateField}) >= ?`;
         params.push(start_date);
       }
-      if (end_date && type !== 'maintenance') {
+      if (end_date) {
         filterCondition += ` AND DATE(${dateField}) <= ?`;
         params.push(end_date);
       }
@@ -98,10 +96,24 @@ export const getReportData = async (req, res) => {
       `;
     } else if (type === 'maintenance') {
       query = `
-        SELECT m.machine_id, m.client_name, m.project_name, m.status, m.address 
-        FROM machines m
+        SELECT 
+          l.log_id,
+          l.machine_id,
+          m.client_name,
+          m.project_name,
+          m.address,
+          l.status as status,
+          l.reported_issue,
+          l.root_cause,
+          l.action_taken,
+          l.created_at as log_date,
+          l.created_at as last_update,
+          COALESCE(u.name, 'Field Tech') as tech_name
+        FROM maintenance_logs l
+        LEFT JOIN machines m ON l.machine_id = m.machine_id
+        LEFT JOIN tblusers u ON l.tech_id = u.id
         ${filterCondition}
-        ORDER BY m.machine_id ASC
+        ORDER BY l.created_at DESC LIMIT 1000
       `;
     } else {
       return res.status(400).json({ success: false, message: 'Invalid report type' });
