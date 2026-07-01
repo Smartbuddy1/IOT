@@ -70,12 +70,12 @@ const Login = () => {
               margin: '0 auto 1.25rem auto', 
               display: 'block',
               objectFit: 'contain',
-              backgroundColor: '#ffffff',
+              backgroundColor: theme === 'dark' ? '#ffffff' : 'transparent',
               padding: theme === 'dark' ? '8px 16px' : '0',
               borderRadius: theme === 'dark' ? '12px' : '0'
             }} 
           />
-          <h1 style={{ fontSize: '1.65rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '0.3rem', letterSpacing: '-0.02em' }}>Welcome Back</h1>
+          <h1 style={{ fontSize: '1.65rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '0.3rem', letterSpacing: '-0.02em' }}>Welcome</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '500' }}>Please enter your credentials to access your portal</p>
         </div>
 
