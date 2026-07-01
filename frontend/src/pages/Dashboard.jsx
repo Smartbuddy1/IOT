@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Activity, Users, Monitor, IndianRupee, FolderPlus, Wrench, CheckCircle, XCircle, Tag, PlusCircle, UserPlus, ArrowRight, TrendingUp, TrendingDown } from 'lucide-react';
-import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import InstallationsMap from '../components/InstallationsMap';
 
@@ -217,77 +217,131 @@ const Dashboard = () => {
 
       {/* CHARTS & ACTIVITY */}
       <div className="charts-grid animate-entrance delay-300" style={{ marginTop: '2rem' }}>
-        {/* 7-Day Revenue Trend (Area Chart) */}
+        {/* 7-Day Revenue Trend (Bar Chart with Clear Labels) */}
         {user?.role !== 'Maintenance_Head' && (
           <div className="glass-panel chart-card hover-float">
-            <h3 className="chart-title">7-Day Revenue Trend</h3>
+            <h3 className="chart-title">7-Day Daily Revenue (₹)</h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem', marginTop: '-0.5rem' }}>
+              गेल्या ७ दिवसांचे रोजचे कलेक्शन (Daily Collection Trend)
+            </p>
             <div style={{ height: '300px', width: '100%' }}>
               {finalChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={finalChartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                  <BarChart data={finalChartData} margin={{ top: 25, right: 10, left: -10, bottom: 5 }}>
                     <defs>
-                      <linearGradient id="colorTrend" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.85}/>
-                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.15}/>
+                      <linearGradient id="colorRevenueBar" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={1}/>
+                        <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.8}/>
                       </linearGradient>
-                      <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="0" dy="8" stdDeviation="8" floodColor="#8b5cf6" floodOpacity="0.4"/>
-                      </filter>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--text-secondary)', fontSize: 12}} dy={10} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--text-primary)', fontSize: 13, fontWeight: 600}} dy={8} />
                     <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--text-secondary)', fontSize: 12}} tickFormatter={(value) => `₹${value}`} />
                     <Tooltip 
-                      cursor={{ stroke: '#8b5cf6', strokeWidth: 1, strokeDasharray: '3 3' }}
-                      contentStyle={{backgroundColor: 'var(--surface-bg)', color: 'var(--text-primary)', borderRadius: '1rem', border: '1px solid var(--border-color)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)', padding: '12px'}}
+                      cursor={{fill: 'rgba(59, 130, 246, 0.08)'}}
+                      contentStyle={{backgroundColor: 'var(--surface-bg)', color: 'var(--text-primary)', borderRadius: '0.75rem', border: '1px solid var(--border-color)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)', padding: '12px'}}
+                      formatter={(value) => [`₹${value}`, 'Revenue']}
                     />
-                    <Area type="monotone" dataKey="total" stroke="#8b5cf6" strokeWidth={4} fillOpacity={1} fill="url(#colorTrend)" style={{ filter: 'url(#glow)' }} />
-                  </AreaChart>
+                    <Bar dataKey="total" fill="url(#colorRevenueBar)" radius={[8, 8, 0, 0]} maxBarSize={50}>
+                      <LabelList dataKey="total" position="top" formatter={(val) => `₹${val}`} style={{ fill: 'var(--text-primary)', fontWeight: 'bold', fontSize: '13px' }} />
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
               ) : (
                 <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--slate-400)' }}>
-                  No trend data available.
+                  No revenue data available.
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* Machine Health Distribution (Donut Chart) */}
+        {/* Machine Health Distribution (Donut Chart + Clear Status Cards) */}
         <div className="glass-panel chart-card hover-float">
-          <h3 className="chart-title">Machine Health Distribution</h3>
-          <div style={{ height: '300px', width: '100%' }}>
+          <h3 className="chart-title">Machine Status (मशीन स्थिती)</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', marginTop: '-0.5rem' }}>
+            एकूण मशीन्सपैकी किती चालू आणि बंद आहेत (Live Status)
+          </p>
+          <div style={{ height: '310px', width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             {(() => {
-              // Normalize data for UI consistency
+              const activeCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'active' || s.name?.toLowerCase() === 'ready')?.value || 0;
+              const failedCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'failed' || s.name?.toLowerCase() === 'busy')?.value || 0;
+              const maintCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'maintenance')?.value || 0;
+              const totalCount = activeCount + failedCount + maintCount;
+
               const healthData = [
-                { name: 'Active', value: finalMachineHealth.find(s => s.name?.toLowerCase() === 'active' || s.name?.toLowerCase() === 'ready')?.value || 0, color: '#10b981' }, // Emerald Green
-                { name: 'Failed', value: finalMachineHealth.find(s => s.name?.toLowerCase() === 'failed' || s.name?.toLowerCase() === 'busy')?.value || 0, color: '#ef4444' }, // Rose Red
-                { name: 'Maintenance', value: finalMachineHealth.find(s => s.name?.toLowerCase() === 'maintenance')?.value || 0, color: '#f59e0b' } // Amber Orange
+                { name: 'Active (चालू)', value: activeCount, color: '#10b981' },
+                { name: 'Failed (बंद)', value: failedCount, color: '#ef4444' },
+                { name: 'Maintenance', value: maintCount, color: '#f59e0b' }
               ];
 
               return (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={healthData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      dataKey="value"
-                      stroke="none"
-                      label={({ name, percent }) => percent > 0 ? `${name} ${(percent * 100).toFixed(0)}%` : null}
-                      labelLine={({ percent }) => percent > 0}
-                    >
-                      {healthData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{backgroundColor: 'var(--card-bg)', color: 'var(--text-primary)', borderRadius: '0.75rem', border: '1px solid var(--border-color)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
-                    />
-                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                  </PieChart>
-                </ResponsiveContainer>
+                <>
+                  {/* Donut Chart Ring */}
+                  <div style={{ height: '190px', width: '100%', position: 'relative' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={healthData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={55}
+                          outerRadius={80}
+                          dataKey="value"
+                          stroke="none"
+                          paddingAngle={totalCount > 1 ? 4 : 0}
+                        >
+                          {healthData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{backgroundColor: 'var(--card-bg)', color: 'var(--text-primary)', borderRadius: '0.75rem', border: '1px solid var(--border-color)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
+                          formatter={(value, name) => [`${value} Machines`, name]}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    {/* Center Text Showing Total Machines */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      textAlign: 'center',
+                      pointerEvents: 'none'
+                    }}>
+                      <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)', lineHeight: '1' }}>{totalCount}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600', marginTop: '2px' }}>Total Machines</div>
+                    </div>
+                  </div>
+
+                  {/* 3 Clear Stat Boxes below the Donut Ring */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem', marginTop: '0.5rem' }}>
+                    <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', textAlign: 'center' }}>
+                      <div style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                        <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }}></span>
+                        चालू (Active)
+                      </div>
+                      <div style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.15rem' }}>{activeCount}</div>
+                    </div>
+
+                    <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', textAlign: 'center' }}>
+                      <div style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                        <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ef4444' }}></span>
+                        बंद (Failed)
+                      </div>
+                      <div style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.15rem' }}>{failedCount}</div>
+                    </div>
+
+                    <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)', textAlign: 'center' }}>
+                      <div style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                        <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f59e0b' }}></span>
+                        दुरूस्ती (Maint.)
+                      </div>
+                      <div style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.15rem' }}>{maintCount}</div>
+                    </div>
+                  </div>
+                </>
               );
             })()}
           </div>
