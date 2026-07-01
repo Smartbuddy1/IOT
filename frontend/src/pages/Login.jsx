@@ -60,10 +60,48 @@ const Login = () => {
       {/* Centered Auth Card */}
       <div className="auth-card glass-panel" style={{ width: '100%', maxWidth: '400px', borderRadius: '20px', overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: '0 16px 36px -10px rgba(0,0,0,0.1)', zIndex: 10, padding: '2rem' }}>
         {/* Top Header Section */}
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <img src={logoImg} alt="Aarya Innovtech" style={{ height: '58px', margin: '0 auto 1rem auto', display: 'block' }} />
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Welcome</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Please enter your credentials to continue</p>
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+          {/* Premium Branded Emblem Container */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0.75rem 1.75rem',
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.88) 100%)',
+            borderRadius: '24px',
+            boxShadow: '0 12px 28px -6px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.8), inset 0 2px 6px rgba(255, 255, 255, 0.9), 0 0 20px rgba(59, 130, 246, 0.12)',
+            marginBottom: '1.25rem',
+            position: 'relative',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}>
+            {/* Subtle radial glow behind logo */}
+            <div style={{
+              position: 'absolute',
+              width: '70%',
+              height: '70%',
+              background: 'radial-gradient(circle, var(--primary-color) 0%, transparent 70%)',
+              opacity: 0.15,
+              filter: 'blur(8px)',
+              pointerEvents: 'none'
+            }} />
+            <img 
+              src={logoImg} 
+              alt="Aarya Innovtech" 
+              style={{ 
+                height: '52px', 
+                width: 'auto',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 3px 6px rgba(0, 0, 0, 0.08))',
+                position: 'relative',
+                zIndex: 1,
+                transition: 'transform 0.3s ease'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            />
+          </div>
+          <h1 style={{ fontSize: '1.65rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '0.3rem', letterSpacing: '-0.02em' }}>Welcome Back</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: '500' }}>Please enter your credentials to access your portal</p>
         </div>
 
         {/* Form Section */}
