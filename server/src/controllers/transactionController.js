@@ -195,8 +195,11 @@ export const saveTransaction = async (req, res) => {
       notifyMachineBusy(machine_id);
 
       console.log(`Triggering machine activation for ${machine_id} on topic [smartbuddy]...`);
-      // Publish to 'smartbuddy' topic ONLY (For NEW PCB as requested; old PCB used 'aarya')
+      // Publish start commands on smartbuddy topic (New PCB requires comma command like "SBE2T101,start")
+      publishMessage('smartbuddy', `${machine_id},start`);
       publishMessage('smartbuddy', machine_id);
+      publishMessage(`smartbuddy/${machine_id}`, "start");
+      publishMessage(`smartbuddy/${machine_id}/cmd`, "start");
     }
 
     res.json({ success: true, message: 'Transaction saved and machine triggered successfully!' });
