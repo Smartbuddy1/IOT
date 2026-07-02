@@ -195,11 +195,8 @@ export const saveTransaction = async (req, res) => {
       notifyMachineBusy(machine_id);
 
       console.log(`Triggering machine activation for ${machine_id} on topic [smartbuddy]...`);
-      // Publish ONLY to 'smartbuddy' topic and subtopics for New PCB (as requested, no 'aarya')
-      publishMessage('smartbuddy', `${machine_id},start`);
+      // Send EXACTLY ONE SINGLE command line to smartbuddy topic (just like old PHP sent to aarya) so PCB doesn't reject multiple messages
       publishMessage('smartbuddy', machine_id);
-      publishMessage(`smartbuddy/${machine_id}`, "start");
-      publishMessage(`smartbuddy/${machine_id}/cmd`, "start");
     }
 
     res.json({ success: true, message: 'Transaction saved and machine triggered successfully!' });
