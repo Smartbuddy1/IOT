@@ -166,31 +166,37 @@ export const saveTransaction = async (req, res) => {
   }
 
   try {
-    // 1. Insert into database
+    // 1. STRICT CHECK: Verify machine status before saving transaction or triggering door
+    const [machines] = await pool.query('SELECT status FROM machines WHERE machine_id = ? LIMIT 1', [machine_id]);
+    if (machines.length === 0) {
+      return res.status(404).json({ success: false, message: 'Machine not found' });
+    }
+
+    const currentStatus = machines[0].status?.toLowerCase()?.trim();
+    if (currentStatus === 'busy') {
+      return res.status(400).json({ success: false, message: '❌ Machine is currently busy. Cannot trigger door.' });
+    } else if (currentStatus === 'maintenance' || currentStatus === 'in maintenance' || currentStatus === 'under maintenance') {
+      return res.status(400).json({ success: false, message: '⚠️ Machine is in maintenance. Cannot trigger door.' });
+    } else if (currentStatus !== 'ready' && currentStatus !== 'active' && currentStatus !== 'idle' && currentStatus !== 'online') {
+      return res.status(400).json({ success: false, message: '⚠️ Machine is offline or unavailable. Cannot trigger door.' });
+    }
+
+    // 2. Insert into database
     await pool.query(
       `INSERT INTO trans (machin_id, trans_amt, pay_id, trans_id, mobile, status, date_time) 
        VALUES (?, ?, ?, ?, ?, ?, NOW())`,
       [machine_id, amount, pay_id || '', order_id || '', mobile || '9999999999', status]
     );
 
-    // 2. If status is success, trigger MQTT activation signal and set machine status to busy
+    // 3. If status is success, trigger MQTT activation signal and set machine status to busy
     if (status === 'success') {
       // Set machine status to 'busy' in DB immediately so new payment attempts are blocked
       await pool.query('UPDATE machines SET status = ? WHERE machine_id = ?', ['busy', machine_id]);
       notifyMachineBusy(machine_id);
 
-      console.log(`Triggering machine activation for ${machine_id} across all topics...`);
-      // Publish to broker: trigger machine relay across all hardware iterations (Legacy, Modern, and Sub-topics)
-      publishMessage('aarya', machine_id);
-      publishMessage('aarya', `${machine_id},start`);
+      console.log(`Triggering machine activation for ${machine_id} on topic [smartbuddy]...`);
+      // Publish to 'smartbuddy' topic ONLY (For NEW PCB as requested; old PCB used 'aarya')
       publishMessage('smartbuddy', machine_id);
-      publishMessage('smartbuddy', `${machine_id},start`);
-      publishMessage(`smartbuddy/${machine_id}/cmd`, JSON.stringify({ command: "start", timestamp: Date.now() }));
-      publishMessage(`smartbuddy/${machine_id}/cmd`, "start");
-      publishMessage(`machine/${machine_id}/command`, "start");
-      publishMessage(`machines/${machine_id}/command`, "start");
-      publishMessage(`smartbuddy/devices/${machine_id}`, "start");
-      publishMessage(`smartbuddy/${machine_id}`, "start");
     }
 
     res.json({ success: true, message: 'Transaction saved and machine triggered successfully!' });
