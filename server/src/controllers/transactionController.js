@@ -194,12 +194,12 @@ export const saveTransaction = async (req, res) => {
       await pool.query('UPDATE machines SET status = ? WHERE machine_id = ?', ['busy', machine_id]);
       notifyMachineBusy(machine_id);
 
-      console.log(`Triggering machine activation for ${machine_id} on topic [smartbuddy]...`);
-      // Publish start commands on smartbuddy topic (New PCB requires comma command like "SBE2T101,start")
-      publishMessage('smartbuddy', `${machine_id},start`);
+      console.log(`Triggering machine activation for ${machine_id}...`);
+      // 1. Exactly as old PHP project (Admin/send_mqtt.php) does: publish machine_id on 'aarya' topic
+      publishMessage('aarya', machine_id);
+      // 2. For new PCBs subscribing to 'smartbuddy' topic: publish machine_id and comma start command
       publishMessage('smartbuddy', machine_id);
-      publishMessage(`smartbuddy/${machine_id}`, "start");
-      publishMessage(`smartbuddy/${machine_id}/cmd`, "start");
+      publishMessage('smartbuddy', `${machine_id},start`);
     }
 
     res.json({ success: true, message: 'Transaction saved and machine triggered successfully!' });
