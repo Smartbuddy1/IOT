@@ -62,6 +62,7 @@ export const initializeMqtt = () => {
       // 2. Extract machine ID and payload
       let machineId = null;
       let payload = {};
+      let reportedStatus = null;
 
       if (topic.startsWith('machines/') || topic.startsWith('smartbuddy/devices/')) {
         machineId = topic.split('/').pop(); // Extract from topic
@@ -73,12 +74,25 @@ export const initializeMqtt = () => {
           payload = JSON.parse(msgStr);
           if (payload.machine_id) machineId = payload.machine_id;
           if (payload.device_id) machineId = payload.device_id;
+          if (payload.status || payload.state) {
+            const s = String(payload.status || payload.state).trim().toLowerCase();
+            if (['ready', 'busy', 'maintenance', 'active', 'idle', 'offline', 'error', 'failed', 'online'].includes(s)) {
+              reportedStatus = (s === 'active' || s === 'idle' || s === 'online') ? 'ready' : s;
+            }
+          }
         } else if (msgStr.includes(',')) {
           // Hardware sends comma separated string like: SBE2T100,ready,Coin_UPI,5,En,5,5,11,11
           // Or transactions like: SBE2T101,busy,Coin,5
           const parts = msgStr.split(',');
           if (parts.length > 0) {
             machineId = parts[0].trim(); // First part is usually the Machine ID
+            
+            if (parts.length > 1) {
+              const s = parts[1].trim().toLowerCase();
+              if (['ready', 'busy', 'maintenance', 'active', 'idle', 'offline', 'error', 'failed', 'online'].includes(s)) {
+                reportedStatus = (s === 'active' || s === 'idle' || s === 'online') ? 'ready' : s;
+              }
+            }
             
             // Handle Transactions: e.g. SBE2T101,busy,Coin,5 or SBE2T101,busy,Button
             if (parts.length >= 3 && parts[1].trim().toLowerCase() === 'busy') {
@@ -118,13 +132,20 @@ export const initializeMqtt = () => {
           return; // Stop processing this message
         }
 
-        // OPTIMIZATION: Only update machines table if we haven't updated it in the last 60 seconds
+        // OPTIMIZATION: Update DB immediately if a specific status is reported, otherwise throttle to once per minute
         const now = Date.now();
-        if (!activeMachineCache[machineId] || (now - activeMachineCache[machineId]) > 60000) {
+        if (reportedStatus) {
           activeMachineCache[machineId] = now;
           pool.query(
             'UPDATE machines SET status = ? WHERE machine_id = ? AND status != ?',
-            ['active', machineId, 'active']
+            [reportedStatus, machineId, reportedStatus]
+          ).catch(e => { console.error('DB Error:', e.message); });
+        } else if (!activeMachineCache[machineId] || (now - activeMachineCache[machineId]) > 60000) {
+          activeMachineCache[machineId] = now;
+          // If no specific status was reported in this message, only mark ready if it was previously offline or failed
+          pool.query(
+            "UPDATE machines SET status = 'ready' WHERE machine_id = ? AND status IN ('offline', 'failed', 'inactive')",
+            [machineId]
           ).catch(e => { console.error('DB Error:', e.message); });
         }
 
@@ -197,3 +218,10 @@ export const publishMessage = (topic, message) => {
   });
   return true;
 };
+
+export const notifyMachineBusy = (machineId) => {
+  if (machineId) {
+    activeMachineCache[machineId] = Date.now();
+  }
+};
+

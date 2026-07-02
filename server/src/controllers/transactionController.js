@@ -1,7 +1,8 @@
 import pool from '../config/db.js';
 import Razorpay from 'razorpay';
-import { publishMessage } from '../services/mqttService.js';
+import { publishMessage, notifyMachineBusy } from '../services/mqttService.js';
 import dotenv from 'dotenv';
+
 
 dotenv.config();
 
@@ -104,13 +105,14 @@ export const createRazorpayOrder = async (req, res) => {
 
     const status = machines[0].status?.toLowerCase()?.trim();
     // Block payment if machine is not in a ready/active/idle state (Whitelist approach)
-    if (status === 'ready' || status === 'active' || status === 'idle') {
+    if (status === 'ready' || status === 'active' || status === 'idle' || status === 'online') {
       // Machine is safe, allow order creation
     } else if (status === 'busy') {
-      return res.status(400).json({ success: false, message: '❌ Machine is busy, please wait for some time.' });
+      return res.status(400).json({ success: false, message: '❌ Machine is busy, try after some time.' });
+    } else if (status === 'maintenance' || status === 'in maintenance' || status === 'under maintenance') {
+      return res.status(400).json({ success: false, message: '⚠️ Machine is in maintenance. Payment cannot be processed.' });
     } else {
-      // Blocks 'failed', 'maintenance', 'offline', and ANY unknown status!
-      return res.status(400).json({ success: false, message: '⚠️ Machine is under maintenance or offline. Payment disabled.' });
+      return res.status(400).json({ success: false, message: '⚠️ Machine is offline or unavailable. Payment disabled.' });
     }
 
     // 2. Create Razorpay order
@@ -171,11 +173,24 @@ export const saveTransaction = async (req, res) => {
       [machine_id, amount, pay_id || '', order_id || '', mobile || '9999999999', status]
     );
 
-    // 2. If status is success, trigger MQTT activation signal
+    // 2. If status is success, trigger MQTT activation signal and set machine status to busy
     if (status === 'success') {
-      // Publish to broker: "start" trigger to activate machine relay
-      // Note: legacy published the raw machine_id string to the "aarya" topic.
+      // Set machine status to 'busy' in DB immediately so new payment attempts are blocked
+      await pool.query('UPDATE machines SET status = ? WHERE machine_id = ?', ['busy', machine_id]);
+      notifyMachineBusy(machine_id);
+
+      console.log(`Triggering machine activation for ${machine_id} across all topics...`);
+      // Publish to broker: trigger machine relay across all hardware iterations (Legacy, Modern, and Sub-topics)
       publishMessage('aarya', machine_id);
+      publishMessage('aarya', `${machine_id},start`);
+      publishMessage('smartbuddy', machine_id);
+      publishMessage('smartbuddy', `${machine_id},start`);
+      publishMessage(`smartbuddy/${machine_id}/cmd`, JSON.stringify({ command: "start", timestamp: Date.now() }));
+      publishMessage(`smartbuddy/${machine_id}/cmd`, "start");
+      publishMessage(`machine/${machine_id}/command`, "start");
+      publishMessage(`machines/${machine_id}/command`, "start");
+      publishMessage(`smartbuddy/devices/${machine_id}`, "start");
+      publishMessage(`smartbuddy/${machine_id}`, "start");
     }
 
     res.json({ success: true, message: 'Transaction saved and machine triggered successfully!' });
@@ -184,3 +199,4 @@ export const saveTransaction = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
+

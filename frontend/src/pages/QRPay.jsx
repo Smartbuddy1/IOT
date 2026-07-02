@@ -41,14 +41,16 @@ const QRPay = () => {
         if (fetchedMachine) {
           const status = fetchedMachine.status?.toLowerCase()?.trim();
           
-          if (status === 'ready' || status === 'active' || status === 'idle') {
+          if (status === 'ready' || status === 'active' || status === 'idle' || status === 'online') {
             // Machine is safe to use
             setMachine(fetchedMachine);
           } else if (status === 'busy') {
-            setError('❌ Machine is currently busy. Please wait for a moment.');
+            setError('❌ Machine is busy, try after some time.');
+          } else if (status === 'maintenance' || status === 'in maintenance' || status === 'under maintenance') {
+            setError('⚠️ Machine is in maintenance. Payment cannot be processed.');
           } else {
-            // Blocks 'failed', 'maintenance', 'offline', and ANY unknown status!
-            setError('⚠️ Machine is under maintenance or offline. Apologies for the inconvenience.');
+            // Blocks 'failed', 'offline', and ANY unknown status!
+            setError('⚠️ Machine is offline or unavailable. Payment disabled.');
           }
         } else {
           setError('Machine not found in our records.');
@@ -133,7 +135,7 @@ const QRPay = () => {
       console.error('Payment initialization error:', err);
       // Extract the actual error message sent by the backend if it exists
       const errorMessage = err.response?.data?.message || err.message || "Failed to initiate payment. Please check your connection.";
-      setError("Error: " + errorMessage);
+      setError(errorMessage);
     } finally {
       setProcessing(false);
     }
