@@ -63,7 +63,7 @@ export const getMachineById = async (req, res) => {
 };
 
 export const createMachine = async (req, res) => {
-  const { machine_id, client_name, state, district, city, address, inst_address, project_name, po_date, dispatch_date, installation_date, status, wall_clean, seats, flush_time, floor_time, wall_time, uses_amt, free, coin, upi, smart_card, digital_token, gps_lat, gps_lng } = req.body;
+  const { machine_id, client_name, state, district, city, address, inst_address, project_name, po_date, dispatch_date, installation_date, status, wall_clean, seats, flush_time, floor_time, wall_time, uses_amt, free, coin, upi, smart_card, digital_token, gps_lat, gps_lng, toilet_type } = req.body;
 
   if (!machine_id) {
     return res.status(400).json({ success: false, message: 'Machine ID is required' });
@@ -83,13 +83,13 @@ export const createMachine = async (req, res) => {
 
   try {
     const [result] = await pool.query(
-      `INSERT INTO machines (machine_id, client_name, state, district, city, address, inst_address, project_name, po_date, dispatch_date, installation_date, status, wall_clean, seats, flush_time, floor_time, wall_time, uses_amt, free, coin, upi, smart_card, digital_token, gps_lat, gps_lng) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO machines (machine_id, client_name, state, district, city, address, inst_address, project_name, po_date, dispatch_date, installation_date, status, wall_clean, seats, flush_time, floor_time, wall_time, uses_amt, free, coin, upi, smart_card, digital_token, gps_lat, gps_lng, toilet_type) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         machine_id, client_name || null, state || '', district || '', city || '', address || '', inst_address || null, project_name || null, 
         poDate, dispatchDate, installationDate, status || 'ready', wall_clean || 'En', seatsNum, 
         flushTime, floorTime, wallTime, usesAmt, free || 'No', coin || 'Yes', upi || 'Yes', smart_card || 'No', digital_token || 'No',
-        gps_lat || null, gps_lng || null
+        gps_lat || null, gps_lng || null, toilet_type || 'Unisex'
       ]
     );
 
@@ -111,7 +111,7 @@ export const updateMachine = async (req, res) => {
   const {
     machine_id, client_name, state, district, city, address, inst_address, project_name,
     po_date, dispatch_date, installation_date, status, wall_clean, seats, flush_time,
-    floor_time, wall_time, uses_amt, free, coin, upi, smart_card, digital_token, gps_lat, gps_lng
+    floor_time, wall_time, uses_amt, free, coin, upi, smart_card, digital_token, gps_lat, gps_lng, toilet_type
   } = req.body;
 
   // Convert empty strings to NULL for dates
@@ -140,13 +140,13 @@ export const updateMachine = async (req, res) => {
         machine_id = ?, client_name = ?, state = ?, district = ?, city = ?, address = ?, inst_address = ?, project_name = ?, 
         po_date = ?, dispatch_date = ?, installation_date = ?, status = ?, wall_clean = ?, seats = ?, flush_time = ?, 
         floor_time = ?, wall_time = ?, uses_amt = ?, free = ?, coin = ?, upi = ?, smart_card = ?, digital_token = ?,
-        gps_lat = ?, gps_lng = ? 
+        gps_lat = ?, gps_lng = ?, toilet_type = ? 
        WHERE id = ?`,
       [
         machine_id, client_name || null, state || '', district || '', city || '', address || '', inst_address || null, project_name || null,
         poDate, dispatchDate, installationDate, status || 'ready', wall_clean || 'En', seatsNum, flushTime,
         floorTime, wallTime, usesAmt, free || 'No', coin || 'Yes', upi || 'Yes', smart_card || 'No', digital_token || 'No', 
-        gps_lat || null, gps_lng || null, id
+        gps_lat || null, gps_lng || null, toilet_type || 'Unisex', id
       ]
     );
 

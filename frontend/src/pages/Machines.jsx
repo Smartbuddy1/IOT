@@ -23,7 +23,7 @@ const Machines = () => {
     machine_id: '', client_name: '', state: '', district: '', city: '', address: '', inst_address: '',
     project_name: '', po_date: '', dispatch_date: '', installation_date: '', status: 'ready',
     wall_clean: 'En', seats: '', flush_time: '5', floor_time: '5', wall_time: '', uses_amt: '5',
-    free: 'No', coin: 'Yes', upi: 'Yes', smart_card: 'No', digital_token: 'No', gps_lat: '', gps_lng: ''
+    free: 'No', coin: 'Yes', upi: 'Yes', smart_card: 'No', digital_token: 'No', gps_lat: '', gps_lng: '', toilet_type: 'Unisex'
   });
   const [formLoading, setFormLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -108,7 +108,7 @@ const Machines = () => {
       machine_id: '', client_name: '', state: (user.role === 'Operation' && user.assigned_state) ? user.assigned_state : '', district: '', city: '', address: '', inst_address: '',
       project_name: '', po_date: '', dispatch_date: '', installation_date: '', status: 'ready',
       wall_clean: 'En', seats: '', flush_time: '5', floor_time: '5', wall_time: '', uses_amt: '5',
-      free: 'No', coin: 'Yes', upi: 'Yes', smart_card: 'No', digital_token: 'No', gps_lat: '', gps_lng: ''
+      free: 'No', coin: 'Yes', upi: 'Yes', smart_card: 'No', digital_token: 'No', gps_lat: '', gps_lng: '', toilet_type: 'Unisex'
     });
     setErrors({});
     setIsModalOpen(true);
@@ -125,7 +125,8 @@ const Machines = () => {
       flush_time: machine.flush_time || '',
       floor_time: machine.floor_time || '',
       gps_lat: machine.gps_lat || '',
-      gps_lng: machine.gps_lng || ''
+      gps_lng: machine.gps_lng || '',
+      toilet_type: machine.toilet_type || 'Unisex'
     });
     setEditingId(machine.id);
     setErrors({});
@@ -351,6 +352,14 @@ const Machines = () => {
               {projects.map(p => <option key={p.id} value={p.project_name}>{p.project_name}</option>)}
             </select>
           </div>
+          <div className="form-group">
+            <label className="form-label">Toilet Type</label>
+            <select name="toilet_type" value={formData.toilet_type || 'Unisex'} onChange={handleInputChange} className="form-input">
+              <option value="Unisex">Unisex</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
 
           {/* Section: Location */}
           <div className="full-width" style={{ fontWeight: '600', color: 'var(--slate-800)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginTop: '1rem' }}>Location Details</div>
@@ -541,6 +550,7 @@ const Machines = () => {
                   { label: 'Address', value: viewMachine.address },
                   { label: 'GPS Location', value: viewMachine.gps_lat ? `${viewMachine.gps_lat}, ${viewMachine.gps_lng}` : 'Not Set' },
                   { label: 'Project Name', value: viewMachine.project_name },
+                  { label: 'Toilet Type', value: viewMachine.toilet_type || 'Unisex' },
                   { label: 'PO Date', value: viewMachine.po_date ? new Date(viewMachine.po_date).toLocaleDateString() : '' },
                   { label: 'Installation Date', value: viewMachine.installation_date ? new Date(viewMachine.installation_date).toLocaleDateString() : '' },
                   { label: 'Uses Amount(Rs.)', value: viewMachine.uses_amt },

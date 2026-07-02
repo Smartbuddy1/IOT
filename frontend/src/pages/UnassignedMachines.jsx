@@ -20,7 +20,7 @@ const UnassignedMachines = () => {
   const [clients, setClients] = useState([]);
   const [projects, setProjects] = useState([]);
   const [formData, setFormData] = useState({
-    machine_id: '', client_name: '', project_name: '', status: 'ready', uses_amt: '5'
+    machine_id: '', client_name: '', project_name: '', status: 'ready', uses_amt: '5', toilet_type: 'Unisex'
   });
   const [formLoading, setFormLoading] = useState(false);
 
@@ -54,7 +54,8 @@ const UnassignedMachines = () => {
       uses_amt: machine.uses_amt || '5',
       client_name: machine.client_name || '',
       project_name: machine.project_name || '',
-      status: machine.status || 'ready'
+      status: machine.status || 'ready',
+      toilet_type: machine.toilet_type || 'Unisex'
     });
     setEditingId(machine.id);
     setIsModalOpen(true);
@@ -202,6 +203,15 @@ const UnassignedMachines = () => {
             <select name="project_name" value={formData.project_name} onChange={handleInputChange} className="form-input">
               <option value="">-- Select Project --</option>
               {projects.map(p => <option key={p.id} value={p.project_name}>{p.project_name}</option>)}
+            </select>
+          </div>
+
+          <div className="form-group full-width">
+            <label className="form-label">Toilet Type</label>
+            <select name="toilet_type" value={formData.toilet_type || 'Unisex'} onChange={handleInputChange} className="form-input">
+              <option value="Unisex">Unisex</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
             </select>
           </div>
 

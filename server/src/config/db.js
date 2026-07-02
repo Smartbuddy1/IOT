@@ -34,6 +34,12 @@ try {
       await connection.query('ALTER TABLE machines ADD COLUMN gps_lng VARCHAR(50)');
       console.log('✅ Added gps_lng column to machines table.');
     }
+
+    if (!columnNames.includes('toilet_type')) {
+      console.log('Adding toilet_type column to machines table...');
+      await connection.query("ALTER TABLE machines ADD COLUMN toilet_type VARCHAR(20) DEFAULT 'Unisex'");
+      console.log('✅ Added toilet_type column to machines table.');
+    }
   } catch (migError) {
     console.error('⚠️ Migration helper for machines table failed:', migError.message);
   }
