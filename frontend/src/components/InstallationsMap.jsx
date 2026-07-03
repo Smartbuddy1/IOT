@@ -185,14 +185,14 @@ const InstallationsMap = () => {
 
       const popupContent = `
         <div style="padding: 0.2rem; min-width: 180px;">
-          <h4 style="margin: 0 0 0.5rem 0; font-weight: bold; color: #1e293b; font-size: 1.1rem; font-family: sans-serif;">${loc.name}</h4>
-          <p style="margin: 0 0 0.2rem 0; font-size: 0.9rem; color: #64748b; font-family: sans-serif;">
+          <h4 style="margin: 0 0 0.5rem 0; font-weight: bold; color: #1e293b; font-size: 1.1rem; font-family: Cambria, Georgia, serif;">${loc.name}</h4>
+          <p style="margin: 0 0 0.2rem 0; font-size: 0.9rem; color: #64748b; font-family: Cambria, Georgia, serif;">
             <strong>District/State:</strong> ${loc.district}, ${loc.state}
           </p>
-          <p style="margin: 0 0 0.2rem 0; font-size: 0.9rem; color: #64748b; font-family: sans-serif;">
+          <p style="margin: 0 0 0.2rem 0; font-size: 0.9rem; color: #64748b; font-family: Cambria, Georgia, serif;">
             <strong>Organization:</strong> ${loc.org}
           </p>
-          <div style="margin-top: 0.5rem; display: inline-block; background-color: ${isOngoing ? '#fef3c7' : '#e0e7ff'}; color: ${isOngoing ? '#d97706' : '#4f46e5'}; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: bold; font-family: sans-serif;">
+          <div style="margin-top: 0.5rem; display: inline-block; background-color: ${isOngoing ? '#fef3c7' : '#e0e7ff'}; color: ${isOngoing ? '#d97706' : '#4f46e5'}; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: bold; font-family: Cambria, Georgia, serif;">
             Units: ${loc.units}
           </div>
         </div>

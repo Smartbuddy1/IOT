@@ -1,6 +1,6 @@
 :root {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-heading: 'Outfit', 'Inter', system-ui, sans-serif;
+  --font-sans: 'Cambria', 'Georgia', serif;
+  --font-heading: 'Cambria', 'Georgia', serif;
 
   --slate-50: #f8fafc;
   --slate-100: #f1f5f9;
