@@ -140,6 +140,9 @@ export const initializeMqtt = () => {
           return; // Stop processing this message
         }
 
+        // Auto-register machine if it doesn't exist so JOINs in live status always work
+        pool.query("INSERT IGNORE INTO machines (machine_id, status) VALUES (?, 'ready')", [machineId]).catch(() => {});
+
         // OPTIMIZATION: Update DB immediately when status changes, without delay or heavy throttling
         const now = Date.now();
         if (reportedStatus) {
