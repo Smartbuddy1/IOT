@@ -76,8 +76,8 @@ export const initializeMqtt = () => {
           if (payload.device_id) machineId = payload.device_id;
           if (payload.status || payload.state) {
             const s = String(payload.status || payload.state).trim().toLowerCase();
-            if (['ready', 'busy', 'maintenance', 'active', 'idle', 'offline', 'error', 'failed', 'online', 'water_low', 'water low', 'waterlow', 'low_water', 'low water', 'water_normal', 'waternormal', 'water_ok', 'waterok', 'water_full', 'waterfull', 'normal'].includes(s)) {
-              reportedStatus = (s === 'active' || s === 'idle' || s === 'online') ? 'ready' : (s === 'waterlow' || s === 'water low' || s === 'low_water' || s === 'low water') ? 'water_low' : (s === 'water_normal' || s === 'waternormal' || s === 'water_ok' || s === 'waterok' || s === 'water_full' || s === 'waterfull' || s === 'normal') ? 'water_normal' : s;
+            if (['ready', 'busy', 'maintenance', 'active', 'idle', 'offline', 'error', 'failed', 'online', 'water_low', 'water low', 'waterlow', 'low_water', 'low water', 'water_normal', 'waternormal', 'water_ok', 'waterok', 'water_full', 'waterfull', 'normal', 'wl', 'low', 'empty'].includes(s)) {
+              reportedStatus = (s === 'active' || s === 'idle' || s === 'online') ? 'ready' : (s === 'waterlow' || s === 'water low' || s === 'low_water' || s === 'low water' || s === 'wl' || s === 'low' || s === 'empty') ? 'water_low' : (s === 'water_normal' || s === 'waternormal' || s === 'water_ok' || s === 'waterok' || s === 'water_full' || s === 'waterfull' || s === 'normal') ? 'water_normal' : s;
             }
           }
         } else if (msgStr.includes(',')) {
@@ -87,10 +87,18 @@ export const initializeMqtt = () => {
           if (parts.length > 0) {
             machineId = parts[0].trim(); // First part is usually the Machine ID
             
-            if (parts.length > 1) {
-              const s = parts[1].trim().toLowerCase();
-              if (['ready', 'busy', 'maintenance', 'active', 'idle', 'offline', 'error', 'failed', 'online', 'water_low', 'water low', 'waterlow', 'low_water', 'low water', 'water_normal', 'waternormal', 'water_ok', 'waterok', 'water_full', 'waterfull', 'normal'].includes(s)) {
-                reportedStatus = (s === 'active' || s === 'idle' || s === 'online') ? 'ready' : (s === 'waterlow' || s === 'water low' || s === 'low_water' || s === 'low water') ? 'water_low' : (s === 'water_normal' || s === 'waternormal' || s === 'water_ok' || s === 'waterok' || s === 'water_full' || s === 'waterfull' || s === 'normal') ? 'water_normal' : s;
+            // Scan all parts of the comma-separated string for status and water level keywords
+            for (let i = 1; i < parts.length; i++) {
+              const s = parts[i].trim().toLowerCase();
+              if (['ready', 'busy', 'maintenance', 'active', 'idle', 'offline', 'error', 'failed', 'online', 'water_low', 'water low', 'waterlow', 'low_water', 'low water', 'water_normal', 'waternormal', 'water_ok', 'waterok', 'water_full', 'waterfull', 'normal', 'wl', 'low', 'empty'].includes(s)) {
+                if (s === 'waterlow' || s === 'water low' || s === 'low_water' || s === 'low water' || s === 'wl' || s === 'low' || s === 'empty') {
+                  reportedStatus = 'water_low';
+                  break; // Prioritize water_low alert if present anywhere in the message!
+                } else if (s === 'water_normal' || s === 'waternormal' || s === 'water_ok' || s === 'waterok' || s === 'water_full' || s === 'waterfull' || s === 'normal') {
+                  reportedStatus = 'water_normal';
+                } else if (!reportedStatus) {
+                  reportedStatus = (s === 'active' || s === 'idle' || s === 'online') ? 'ready' : s;
+                }
               }
             }
             
