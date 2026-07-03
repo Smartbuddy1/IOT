@@ -7,7 +7,7 @@ export const startHeartbeatMonitor = () => {
   setInterval(async () => {
     try {
       // Find machines that are currently NOT 'inactive' and NOT 'offline'
-      // But haven't sent a heartbeat in the last 15 seconds.
+      // But haven't sent a heartbeat in the last 90 seconds (1.5 mins).
       // This includes machines in ANY state (ready, busy, maintenance, water_low) whose SIM lost range!
       const [offlineMachines] = await pool.query(`
         SELECT m.machine_id 
@@ -16,7 +16,7 @@ export const startHeartbeatMonitor = () => {
         WHERE m.status NOT IN ('inactive', 'offline')
         AND (
           d.last_updated IS NULL 
-          OR d.last_updated < NOW() - INTERVAL 15 SECOND
+          OR d.last_updated < NOW() - INTERVAL 90 SECOND
         )
       `);
 
