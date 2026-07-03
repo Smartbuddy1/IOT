@@ -140,8 +140,14 @@ export const initializeMqtt = () => {
           return; // Stop processing this message
         }
 
-        // Auto-register machine if it doesn't exist so JOINs in live status always work
-        pool.query("INSERT IGNORE INTO machines (machine_id, status) VALUES (?, 'ready')", [machineId]).catch(() => {});
+        // Auto-register machine ONLY if not seen before and not in DB (prevents duplicates when machine_id lacks UNIQUE index)
+        if (!activeMachineCache[machineId]) {
+          pool.query("SELECT id FROM machines WHERE machine_id = ? LIMIT 1", [machineId]).then(([rows]) => {
+            if (rows && rows.length === 0) {
+              pool.query("INSERT INTO machines (machine_id, status) VALUES (?, 'ready')", [machineId]).catch(() => {});
+            }
+          }).catch(() => {});
+        }
 
         // OPTIMIZATION: Update DB immediately when status changes, without delay or heavy throttling
         const now = Date.now();
