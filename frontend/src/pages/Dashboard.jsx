@@ -274,10 +274,24 @@ const Dashboard = () => {
           </p>
           <div style={{ height: '310px', width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             {(() => {
-              const activeCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'active' || s.name?.toLowerCase() === 'ready' || s.name?.toLowerCase() === 'busy')?.value || 0;
-              const inactiveCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'failed' || s.name?.toLowerCase() === 'inactive' || s.name?.toLowerCase() === 'offline')?.value || 0;
-              const maintCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'maintenance')?.value || 0;
-              const waterLowCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'water_low')?.value || 0;
+              const activeCount = finalMachineHealth
+                .filter(s => ['active', 'ready', 'busy', 'online', 'idle'].includes(String(s.name || '').toLowerCase()))
+                .reduce((sum, s) => sum + Number(s.value || 0), 0);
+
+              const maintCount = finalMachineHealth
+                .filter(s => ['maintenance', 'maint'].includes(String(s.name || '').toLowerCase()))
+                .reduce((sum, s) => sum + Number(s.value || 0), 0);
+
+              const waterLowCount = finalMachineHealth
+                .filter(s => ['water_low', 'waterlow', 'low_water', 'low water', 'empty'].includes(String(s.name || '').toLowerCase()))
+                .reduce((sum, s) => sum + Number(s.value || 0), 0);
+
+              const explicitInactive = finalMachineHealth
+                .filter(s => ['failed', 'inactive', 'offline', 'error', 'disconnected', 'stop', 'stopped'].includes(String(s.name || '').toLowerCase()))
+                .reduce((sum, s) => sum + Number(s.value || 0), 0);
+
+              const totalMachinesCard = Number(stats?.totalMachines || 0);
+              const inactiveCount = Math.max(explicitInactive, totalMachinesCard - activeCount - maintCount - waterLowCount);
               const totalCount = activeCount + inactiveCount + maintCount + waterLowCount;
 
               const healthData = [
