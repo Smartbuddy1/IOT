@@ -195,8 +195,8 @@ export const saveTransaction = async (req, res) => {
       notifyMachineBusy(machine_id);
 
       console.log(`Triggering machine activation for ${machine_id} on topic [smartbuddy]...`);
-      // Send EXACTLY ONE SINGLE command line to smartbuddy topic with ',start' command so PCB opens the door without rejecting
-      publishMessage('smartbuddy', `${machine_id},start`);
+      // Send EXACTLY ONE SINGLE command line to smartbuddy topic with ',pay_success' command as specified by IoT Sir so PCB opens door instantly
+      publishMessage('smartbuddy', `${machine_id},pay_success`);
     }
 
     res.json({ success: true, message: 'Transaction saved and machine triggered successfully!' });

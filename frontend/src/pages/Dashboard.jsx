@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Activity, Users, Monitor, IndianRupee, FolderPlus, Wrench, CheckCircle, XCircle, Tag, PlusCircle, UserPlus, ArrowRight, TrendingUp, TrendingDown } from 'lucide-react';
+import { Activity, Users, Monitor, IndianRupee, FolderPlus, Wrench, CheckCircle, XCircle, Tag, PlusCircle, UserPlus, ArrowRight, TrendingUp, TrendingDown, Droplet, AlertTriangle } from 'lucide-react';
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import InstallationsMap from '../components/InstallationsMap';
@@ -37,21 +37,27 @@ const Dashboard = () => {
     fetchDashboard();
   }, []);
 
-  // Poll IoT Live Data every 15 seconds (optimized for performance)
+  // Poll IoT Live Data and Dashboard Stats every 3 seconds for instant real-time status updates
   useEffect(() => {
-    const fetchLiveStatus = async () => {
+    const fetchLiveData = async () => {
       if (document.hidden) return; // Skip polling if tab is in background
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/iot/live-status`);
-        if (response.data.success) {
-          setLiveStatus(response.data.data);
+        const [liveRes, statsRes] = await Promise.all([
+          axios.get(`${import.meta.env.VITE_API_BASE_URL}/iot/live-status`),
+          axios.get(`${import.meta.env.VITE_API_BASE_URL}/dashboard/stats`)
+        ]);
+        if (liveRes.data.success) {
+          setLiveStatus(liveRes.data.data);
+        }
+        if (statsRes.data.success && statsRes.data.stats) {
+          setStats(statsRes.data.stats);
         }
       } catch (error) {
         // Silently fail to avoid console spam
       }
     };
-    fetchLiveStatus();
-    const interval = setInterval(fetchLiveStatus, 15000);
+    fetchLiveData();
+    const interval = setInterval(fetchLiveData, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -63,6 +69,10 @@ const Dashboard = () => {
   const finalMachineHealth = stats?.machineHealth || [];
   const finalTopProjects = stats?.topProjectsList || [];
   const finalRecentActivity = stats?.recentTransactions || [];
+
+  const lowWaterMachines = Object.entries(liveStatus || {})
+    .filter(([id, data]) => String(data?.water_level).toUpperCase() === 'LOW' || String(data?.water_level) === '1' || String(data?.status || '').toLowerCase() === 'water_low' || String(data?.water_level).toLowerCase() === 'water_low')
+    .map(([id, data]) => ({ id, ...data }));
 
   const StatCard = ({ title, value, icon: Icon, colorClass, trend, trendValue, onClick }) => (
     <div className={`glass-panel stat-card hover-float ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
@@ -446,6 +456,43 @@ const Dashboard = () => {
             </div>
           </div>
         )}
+
+        {/* Water Level Low Alerts Card (Fills empty dashboard space as requested) */}
+        <div className="glass-panel chart-card hover-float" style={{ border: lowWaterMachines.length > 0 ? '1px solid rgba(239, 68, 68, 0.4)' : undefined }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h3 className="chart-title" style={{ margin: 0, display:'flex', alignItems:'center', gap:'0.5rem', color: lowWaterMachines.length > 0 ? '#ef4444' : 'var(--text-primary)' }}>
+              <Droplet size={18} color={lowWaterMachines.length > 0 ? '#ef4444' : '#3b82f6'} /> Water Level Alerts
+            </h3>
+            <button onClick={() => navigate('/machines')} className="btn btn-secondary" style={{ padding: '0.35rem 0.85rem', fontSize: '0.85rem', borderRadius: '0.5rem' }}>View Machines</button>
+          </div>
+          <div className="activity-list" style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+            {lowWaterMachines.length > 0 ? (
+              lowWaterMachines.map((m) => (
+                <div key={m.id} className="activity-item" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', marginBottom: '0.75rem', backgroundColor: 'rgba(239, 68, 68, 0.05)', padding: '0.75rem', borderRadius: '8px' }}>
+                  <div className="activity-icon bg-rose" style={{ color: 'white', opacity: 0.9 }}>
+                    <AlertTriangle size={18} />
+                  </div>
+                  <div className="activity-details">
+                    <p className="title" style={{ color: '#ef4444', fontWeight: '700' }}>Machine {m.id}</p>
+                    <p className="desc" style={{ color: 'var(--slate-600)' }}>Water Level Low - Refill Required Immediately</p>
+                  </div>
+                  <div className="activity-meta">
+                    <span style={{ padding: '0.2rem 0.6rem', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700' }}>LOW WATER</span>
+                    <p className="time" style={{ fontSize: '0.75rem', marginTop: '4px' }}>{m.last_updated ? new Date(m.last_updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--slate-400)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6', marginBottom: '0.5rem' }}>
+                  <Droplet size={24} />
+                </div>
+                <div style={{ fontWeight: '600', color: 'var(--slate-700)' }}>All Water Levels Normal</div>
+                <div style={{ fontSize: '0.85rem' }}>No low water alerts detected across any active IoT machines.</div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* NATIONWIDE INSTALLATIONS MAP */}

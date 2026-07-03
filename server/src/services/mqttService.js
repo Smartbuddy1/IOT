@@ -76,8 +76,8 @@ export const initializeMqtt = () => {
           if (payload.device_id) machineId = payload.device_id;
           if (payload.status || payload.state) {
             const s = String(payload.status || payload.state).trim().toLowerCase();
-            if (['ready', 'busy', 'maintenance', 'active', 'idle', 'offline', 'error', 'failed', 'online'].includes(s)) {
-              reportedStatus = (s === 'active' || s === 'idle' || s === 'online') ? 'ready' : s;
+            if (['ready', 'busy', 'maintenance', 'active', 'idle', 'offline', 'error', 'failed', 'online', 'water_low', 'water low', 'waterlow', 'low_water', 'low water'].includes(s)) {
+              reportedStatus = (s === 'active' || s === 'idle' || s === 'online') ? 'ready' : (s === 'waterlow' || s === 'water low' || s === 'low_water' || s === 'low water') ? 'water_low' : s;
             }
           }
         } else if (msgStr.includes(',')) {
@@ -89,8 +89,8 @@ export const initializeMqtt = () => {
             
             if (parts.length > 1) {
               const s = parts[1].trim().toLowerCase();
-              if (['ready', 'busy', 'maintenance', 'active', 'idle', 'offline', 'error', 'failed', 'online'].includes(s)) {
-                reportedStatus = (s === 'active' || s === 'idle' || s === 'online') ? 'ready' : s;
+              if (['ready', 'busy', 'maintenance', 'active', 'idle', 'offline', 'error', 'failed', 'online', 'water_low', 'water low', 'waterlow', 'low_water', 'low water'].includes(s)) {
+                reportedStatus = (s === 'active' || s === 'idle' || s === 'online') ? 'ready' : (s === 'waterlow' || s === 'water low' || s === 'low_water' || s === 'low water') ? 'water_low' : s;
               }
             }
             
@@ -132,17 +132,30 @@ export const initializeMqtt = () => {
           return; // Stop processing this message
         }
 
-        // OPTIMIZATION: Update DB immediately if a specific status is reported, otherwise throttle to once per minute
+        // OPTIMIZATION: Update DB immediately when status changes, without delay or heavy throttling
         const now = Date.now();
         if (reportedStatus) {
           activeMachineCache[machineId] = now;
           pool.query(
-            'UPDATE machines SET status = ? WHERE machine_id = ? AND status != ?',
-            [reportedStatus, machineId, reportedStatus]
+            'UPDATE machines SET status = ? WHERE machine_id = ?',
+            [reportedStatus, machineId]
           ).catch(e => { console.error('DB Error:', e.message); });
-        } else if (!activeMachineCache[machineId] || (now - activeMachineCache[machineId]) > 60000) {
+
+          // Also sync device_live_status water_level if water_low is reported
+          if (reportedStatus === 'water_low') {
+            pool.query(
+              `INSERT INTO device_live_status (machine_id, water_level, last_updated) VALUES (?, 'LOW', NOW()) ON DUPLICATE KEY UPDATE water_level = 'LOW', last_updated = NOW()`,
+              [machineId]
+            ).catch(e => { console.error('DB Error:', e.message); });
+          } else if (reportedStatus === 'ready' || reportedStatus === 'busy') {
+            pool.query(
+              `INSERT INTO device_live_status (machine_id, water_level, last_updated) VALUES (?, 'NORMAL', NOW()) ON DUPLICATE KEY UPDATE water_level = 'NORMAL', last_updated = NOW()`,
+              [machineId]
+            ).catch(e => { console.error('DB Error:', e.message); });
+          }
+        } else if (!activeMachineCache[machineId] || (now - activeMachineCache[machineId]) > 5000) {
           activeMachineCache[machineId] = now;
-          // If no specific status was reported in this message, only mark ready if it was previously offline or failed
+          // If no specific status was reported in this message, mark ready if it was previously offline or failed
           pool.query(
             "UPDATE machines SET status = 'ready' WHERE machine_id = ? AND status IN ('offline', 'failed', 'inactive')",
             [machineId]

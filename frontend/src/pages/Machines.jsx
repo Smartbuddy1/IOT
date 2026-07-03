@@ -53,6 +53,18 @@ const Machines = () => {
     axios.get(`${import.meta.env.VITE_API_BASE_URL}/clients`).then(res => setClients(res.data.clients || [])).catch(console.error);
     axios.get(`${import.meta.env.VITE_API_BASE_URL}/projects`).then(res => setProjects(res.data.projects || [])).catch(console.error);
     axios.get(`${import.meta.env.VITE_API_BASE_URL}/locations/states`).then(res => setStatesList(res.data.data || [])).catch(console.error);
+    
+    // Auto-refresh machines list every 3 seconds for instant real-time IoT status updates
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        axios.get(`${import.meta.env.VITE_API_BASE_URL}/machines`).then(response => {
+          if (response.data && response.data.machines) {
+            setMachines(response.data.machines);
+          }
+        }).catch(() => {});
+      }
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
