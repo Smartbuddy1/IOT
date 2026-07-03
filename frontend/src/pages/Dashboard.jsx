@@ -274,44 +274,43 @@ const Dashboard = () => {
           </p>
           <div style={{ height: '310px', width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             {(() => {
-              const activeCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'active' || s.name?.toLowerCase() === 'ready')?.value || 0;
-              const inactiveCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'failed' || s.name?.toLowerCase() === 'inactive' || s.name?.toLowerCase() === 'offline' || s.name?.toLowerCase() === 'busy')?.value || 0;
+              const activeCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'active' || s.name?.toLowerCase() === 'ready' || s.name?.toLowerCase() === 'busy')?.value || 0;
+              const inactiveCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'failed' || s.name?.toLowerCase() === 'inactive' || s.name?.toLowerCase() === 'offline')?.value || 0;
               const maintCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'maintenance')?.value || 0;
-              const totalCount = activeCount + inactiveCount + maintCount;
+              const waterLowCount = finalMachineHealth.find(s => s.name?.toLowerCase() === 'water_low')?.value || 0;
+              const totalCount = activeCount + inactiveCount + maintCount + waterLowCount;
 
               const healthData = [
                 { name: 'Active', value: activeCount, color: '#10b981' },
                 { name: 'Inactive', value: inactiveCount, color: '#ef4444' },
-                { name: 'Maintenance', value: maintCount, color: '#f59e0b' }
-              ];
+                { name: 'Maintenance', value: maintCount, color: '#f59e0b' },
+                { name: 'Water Low', value: waterLowCount, color: '#0284c7' }
+              ].filter(d => d.value > 0);
 
               return (
                 <>
                   {/* Donut Chart Ring */}
-                  <div style={{ height: '190px', width: '100%', position: 'relative' }}>
+                  <div style={{ flex: 1, position: 'relative', minHeight: '190px' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={healthData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={55}
+                          data={healthData.length > 0 ? healthData : [{ name: 'None', value: 1, color: '#cbd5e1' }]}
+                          innerRadius={60}
                           outerRadius={80}
+                          paddingAngle={5}
                           dataKey="value"
-                          stroke="none"
-                          paddingAngle={totalCount > 1 ? 4 : 0}
                         >
-                          {healthData.map((entry, index) => (
+                          {(healthData.length > 0 ? healthData : [{ name: 'None', value: 1, color: '#cbd5e1' }]).map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
                         <Tooltip 
-                          contentStyle={{backgroundColor: 'var(--card-bg)', color: 'var(--text-primary)', borderRadius: '0.75rem', border: '1px solid var(--border-color)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
-                          formatter={(value, name) => [`${value} Machines`, name]}
+                          formatter={(value) => [`${value} Machines`, 'Count']}
+                          contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', borderRadius: '0.75rem', color: 'var(--text-primary)' }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
-                    {/* Center Text Showing Total Machines */}
+                    {/* Centered Total Count */}
                     <div style={{
                       position: 'absolute',
                       top: '50%',
@@ -325,30 +324,38 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* 3 Clear Stat Boxes below the Donut Ring */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem', marginTop: '0.5rem' }}>
-                    <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', textAlign: 'center' }}>
-                      <div style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                        <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }}></span>
+                  {/* 4 Clear Stat Boxes below the Donut Ring */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <div style={{ padding: '0.5rem 0.2rem', borderRadius: '8px', backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', textAlign: 'center' }}>
+                      <div style={{ color: '#10b981', fontSize: '0.7rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }}></span>
                         Active
                       </div>
-                      <div style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.15rem' }}>{activeCount}</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.1rem' }}>{activeCount}</div>
                     </div>
 
-                    <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', textAlign: 'center' }}>
-                      <div style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                        <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ef4444' }}></span>
+                    <div style={{ padding: '0.5rem 0.2rem', borderRadius: '8px', backgroundColor: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', textAlign: 'center' }}>
+                      <div style={{ color: '#ef4444', fontSize: '0.7rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }}></span>
                         Inactive
                       </div>
-                      <div style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.15rem' }}>{inactiveCount}</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.1rem' }}>{inactiveCount}</div>
                     </div>
 
-                    <div style={{ padding: '0.6rem', borderRadius: '10px', backgroundColor: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)', textAlign: 'center' }}>
-                      <div style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                        <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f59e0b' }}></span>
-                        Maintenance
+                    <div style={{ padding: '0.5rem 0.2rem', borderRadius: '8px', backgroundColor: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)', textAlign: 'center' }}>
+                      <div style={{ color: '#f59e0b', fontSize: '0.7rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#f59e0b' }}></span>
+                        Maint.
                       </div>
-                      <div style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.15rem' }}>{maintCount}</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.1rem' }}>{maintCount}</div>
+                    </div>
+
+                    <div style={{ padding: '0.5rem 0.2rem', borderRadius: '8px', backgroundColor: 'rgba(2, 132, 199, 0.12)', border: '1px solid rgba(2, 132, 199, 0.3)', textAlign: 'center' }}>
+                      <div style={{ color: '#0284c7', fontSize: '0.7rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#0284c7' }}></span>
+                        Water Low
+                      </div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.1rem' }}>{waterLowCount}</div>
                     </div>
                   </div>
                 </>

@@ -81,11 +81,15 @@ export const handleHardwarePost = async (req, res) => {
 export const getLiveStatus = async (req, res) => {
   try {
     const { machineId } = req.query;
-    let query = 'SELECT * FROM device_live_status';
+    let query = `
+      SELECT m.machine_id, m.status, d.water_level, d.pir_sensor, d.door_lock, d.pb_coin, d.pb_flush, d.last_updated
+      FROM machines m
+      LEFT JOIN device_live_status d ON m.machine_id = d.machine_id
+    `;
     let params = [];
 
     if (machineId) {
-      query += ' WHERE machine_id = ?';
+      query += ' WHERE m.machine_id = ?';
       params.push(machineId);
     }
 
@@ -95,11 +99,12 @@ export const getLiveStatus = async (req, res) => {
     const statuses = {};
     rows.forEach(row => {
       statuses[row.machine_id] = {
-        water_level: row.water_level,
-        pir_sensor: row.pir_sensor,
-        door_lock: row.door_lock,
-        pb_coin: row.pb_coin,
-        pb_flush: row.pb_flush,
+        status: row.status,
+        water_level: row.water_level || (row.status === 'water_low' ? 'LOW' : 'NORMAL'),
+        pir_sensor: row.pir_sensor || '0',
+        door_lock: row.door_lock || '0',
+        pb_coin: row.pb_coin || '0',
+        pb_flush: row.pb_flush || '0',
         last_updated: row.last_updated
       };
     });
