@@ -76,8 +76,8 @@ export const initializeMqtt = () => {
           if (payload.device_id) machineId = payload.device_id;
           if (payload.status || payload.state) {
             const s = String(payload.status || payload.state).trim().toLowerCase();
-            if (['ready', 'busy', 'maintenance', 'active', 'idle', 'offline', 'error', 'failed', 'online', 'water_low', 'water low', 'waterlow', 'low_water', 'low water'].includes(s)) {
-              reportedStatus = (s === 'active' || s === 'idle' || s === 'online') ? 'ready' : (s === 'waterlow' || s === 'water low' || s === 'low_water' || s === 'low water') ? 'water_low' : s;
+            if (['ready', 'busy', 'maintenance', 'active', 'idle', 'offline', 'error', 'failed', 'online', 'water_low', 'water low', 'waterlow', 'low_water', 'low water', 'water_normal', 'waternormal', 'water_ok', 'waterok', 'water_full', 'waterfull', 'normal'].includes(s)) {
+              reportedStatus = (s === 'active' || s === 'idle' || s === 'online') ? 'ready' : (s === 'waterlow' || s === 'water low' || s === 'low_water' || s === 'low water') ? 'water_low' : (s === 'water_normal' || s === 'waternormal' || s === 'water_ok' || s === 'waterok' || s === 'water_full' || s === 'waterfull' || s === 'normal') ? 'water_normal' : s;
             }
           }
         } else if (msgStr.includes(',')) {
@@ -89,8 +89,8 @@ export const initializeMqtt = () => {
             
             if (parts.length > 1) {
               const s = parts[1].trim().toLowerCase();
-              if (['ready', 'busy', 'maintenance', 'active', 'idle', 'offline', 'error', 'failed', 'online', 'water_low', 'water low', 'waterlow', 'low_water', 'low water'].includes(s)) {
-                reportedStatus = (s === 'active' || s === 'idle' || s === 'online') ? 'ready' : (s === 'waterlow' || s === 'water low' || s === 'low_water' || s === 'low water') ? 'water_low' : s;
+              if (['ready', 'busy', 'maintenance', 'active', 'idle', 'offline', 'error', 'failed', 'online', 'water_low', 'water low', 'waterlow', 'low_water', 'low water', 'water_normal', 'waternormal', 'water_ok', 'waterok', 'water_full', 'waterfull', 'normal'].includes(s)) {
+                reportedStatus = (s === 'active' || s === 'idle' || s === 'online') ? 'ready' : (s === 'waterlow' || s === 'water low' || s === 'low_water' || s === 'low water') ? 'water_low' : (s === 'water_normal' || s === 'waternormal' || s === 'water_ok' || s === 'waterok' || s === 'water_full' || s === 'waterfull' || s === 'normal') ? 'water_normal' : s;
               }
             }
             
@@ -136,21 +136,23 @@ export const initializeMqtt = () => {
         const now = Date.now();
         if (reportedStatus) {
           activeMachineCache[machineId] = now;
-          pool.query(
-            'UPDATE machines SET status = ? WHERE machine_id = ?',
-            [reportedStatus, machineId]
-          ).catch(e => { console.error('DB Error:', e.message); });
-
-          // Also sync device_live_status water_level if water_low is reported
           if (reportedStatus === 'water_low') {
+            pool.query("UPDATE machines SET status = 'water_low' WHERE machine_id = ?", [machineId]).catch(e => { console.error('DB Error:', e.message); });
             pool.query(
               `INSERT INTO device_live_status (machine_id, water_level, last_updated) VALUES (?, 'LOW', NOW()) ON DUPLICATE KEY UPDATE water_level = 'LOW', last_updated = NOW()`,
               [machineId]
             ).catch(e => { console.error('DB Error:', e.message); });
-          } else if (reportedStatus === 'ready' || reportedStatus === 'busy') {
+          } else if (reportedStatus === 'water_normal') {
+            pool.query("UPDATE machines SET status = 'ready' WHERE machine_id = ?", [machineId]).catch(e => { console.error('DB Error:', e.message); });
             pool.query(
               `INSERT INTO device_live_status (machine_id, water_level, last_updated) VALUES (?, 'NORMAL', NOW()) ON DUPLICATE KEY UPDATE water_level = 'NORMAL', last_updated = NOW()`,
               [machineId]
+            ).catch(e => { console.error('DB Error:', e.message); });
+          } else {
+            // For regular heartbeats (ready/busy/maintenance), do NOT overwrite if machine is currently in water_low alert!
+            pool.query(
+              "UPDATE machines SET status = ? WHERE machine_id = ? AND status != 'water_low'",
+              [reportedStatus, machineId]
             ).catch(e => { console.error('DB Error:', e.message); });
           }
         } else if (!activeMachineCache[machineId] || (now - activeMachineCache[machineId]) > 5000) {

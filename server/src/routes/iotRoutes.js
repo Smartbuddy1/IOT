@@ -1,5 +1,5 @@
 import express from 'express';
-import { handleHardwarePost, getLiveStatus } from '../controllers/iotController.js';
+import { handleHardwarePost, getLiveStatus, resetWaterLevel } from '../controllers/iotController.js';
 
 const router = express.Router();
 
@@ -8,5 +8,8 @@ router.post('/post', handleHardwarePost);
 
 // Route for dashboard to fetch live status
 router.get('/live-status', getLiveStatus);
+
+// Route to reset water level alert after refilling
+router.post('/reset-water/:machineId', resetWaterLevel);
 
 export default router;

@@ -110,3 +110,15 @@ export const getLiveStatus = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
+
+export const resetWaterLevel = async (req, res) => {
+  try {
+    const { machineId } = req.params;
+    await pool.query("UPDATE device_live_status SET water_level = 'NORMAL', last_updated = NOW() WHERE machine_id = ?", [machineId]);
+    await pool.query("UPDATE machines SET status = 'ready' WHERE machine_id = ? AND status = 'water_low'", [machineId]);
+    res.json({ success: true, message: `Water level alert reset for ${machineId}` });
+  } catch (error) {
+    console.error('Reset water level error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};

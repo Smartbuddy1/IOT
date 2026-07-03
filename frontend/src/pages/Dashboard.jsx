@@ -468,17 +468,31 @@ const Dashboard = () => {
           <div className="activity-list" style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }}>
             {lowWaterMachines.length > 0 ? (
               lowWaterMachines.map((m) => (
-                <div key={m.id} className="activity-item" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', marginBottom: '0.75rem', backgroundColor: 'rgba(239, 68, 68, 0.05)', padding: '0.75rem', borderRadius: '8px' }}>
-                  <div className="activity-icon bg-rose" style={{ color: 'white', opacity: 0.9 }}>
-                    <AlertTriangle size={18} />
+                <div key={m.id} className="activity-item" style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', marginBottom: '0.75rem', backgroundColor: 'rgba(239, 68, 68, 0.05)', padding: '0.75rem', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div className="activity-icon bg-rose" style={{ color: 'white', opacity: 0.9 }}>
+                      <AlertTriangle size={18} />
+                    </div>
+                    <div className="activity-details">
+                      <p className="title" style={{ color: '#ef4444', fontWeight: '700', margin: 0 }}>Machine {m.id}</p>
+                      <p className="desc" style={{ color: 'var(--slate-600)', margin: '2px 0 0 0', fontSize: '0.8rem' }}>Water Level Low - Refill Required Immediately</p>
+                    </div>
                   </div>
-                  <div className="activity-details">
-                    <p className="title" style={{ color: '#ef4444', fontWeight: '700' }}>Machine {m.id}</p>
-                    <p className="desc" style={{ color: 'var(--slate-600)' }}>Water Level Low - Refill Required Immediately</p>
-                  </div>
-                  <div className="activity-meta">
+                  <div className="activity-meta" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.35rem' }}>
                     <span style={{ padding: '0.2rem 0.6rem', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700' }}>LOW WATER</span>
-                    <p className="time" style={{ fontSize: '0.75rem', marginTop: '4px' }}>{m.last_updated ? new Date(m.last_updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}</p>
+                    <button 
+                      onClick={async () => {
+                        try {
+                          await axios.post(`${import.meta.env.VITE_API_BASE_URL}/iot/reset-water/${m.id}`);
+                          setLiveStatus(prev => ({ ...prev, [m.id]: { ...prev[m.id], water_level: 'NORMAL' } }));
+                        } catch(e) {}
+                      }} 
+                      className="btn btn-secondary" 
+                      style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem', borderRadius: '0.3rem', backgroundColor: '#10b981', color: 'white', border: 'none', cursor: 'pointer' }}
+                      title="Click when water tank is refilled"
+                    >
+                      ✓ Mark Refilled
+                    </button>
                   </div>
                 </div>
               ))
