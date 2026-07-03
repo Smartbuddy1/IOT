@@ -75,7 +75,7 @@ const Dashboard = () => {
     .map(([id, data]) => ({ id, ...data }));
 
   const StatCard = ({ title, value, icon: Icon, colorClass, trend, trendValue, onClick }) => (
-    <div className={`glass-panel stat-card hover-float ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
+    <div className={`glass-panel stat-card hover-float ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default', transition: 'all 0.3s ease' }}>
       <Icon className="stat-bg-icon" />
       <div className="stat-info" style={{ position: 'relative', zIndex: 2 }}>
         <p>{title}</p>
@@ -113,6 +113,7 @@ const Dashboard = () => {
             colorClass="bg-blue" 
             trend="up"
             trendValue="+12% new"
+            onClick={() => navigate('/users')}
           />
         )}
         <StatCard 
@@ -122,6 +123,7 @@ const Dashboard = () => {
           colorClass="bg-amber" 
           trend="up"
           trendValue="+5% active"
+          onClick={() => navigate('/projects')}
         />
         <StatCard 
           title="Total Machines" 
@@ -130,6 +132,7 @@ const Dashboard = () => {
           colorClass="bg-violet" 
           trend="up"
           trendValue="+2 added"
+          onClick={() => navigate('/machines')}
         />
         {user?.role === 'Admin' && (
           <StatCard 
@@ -153,6 +156,7 @@ const Dashboard = () => {
           colorClass="bg-cyan" 
           trend="up"
           trendValue="High Usage"
+          onClick={() => navigate('/transactions')}
         />
         {user?.role !== 'Maintenance_Head' && (
           <>
@@ -163,6 +167,7 @@ const Dashboard = () => {
               colorClass="bg-emerald" 
               trend="up"
               trendValue="98% Success"
+              onClick={() => navigate('/transactions')}
             />
             <StatCard 
               title="Failed (Today)" 
@@ -171,6 +176,7 @@ const Dashboard = () => {
               colorClass="bg-rose" 
               trend="down"
               trendValue="Needs check"
+              onClick={() => navigate('/transactions')}
             />
           </>
         )}
@@ -181,6 +187,7 @@ const Dashboard = () => {
           colorClass="bg-rose" 
           trend="down"
           trendValue="2 Critical"
+          onClick={() => navigate('/machines')}
         />
       </div>
 
@@ -340,7 +347,7 @@ const Dashboard = () => {
 
                   {/* 4 Clear Stat Boxes below the Donut Ring */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    <div style={{ padding: '0.5rem 0.2rem', borderRadius: '8px', backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', textAlign: 'center' }}>
+                    <div onClick={() => navigate('/machines')} className="hover-float" style={{ padding: '0.5rem 0.2rem', borderRadius: '8px', backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s ease' }}>
                       <div style={{ color: '#10b981', fontSize: '0.7rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
                         <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }}></span>
                         Active
@@ -348,7 +355,7 @@ const Dashboard = () => {
                       <div style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.1rem' }}>{activeCount}</div>
                     </div>
 
-                    <div style={{ padding: '0.5rem 0.2rem', borderRadius: '8px', backgroundColor: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', textAlign: 'center' }}>
+                    <div onClick={() => navigate('/machines')} className="hover-float" style={{ padding: '0.5rem 0.2rem', borderRadius: '8px', backgroundColor: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s ease' }}>
                       <div style={{ color: '#ef4444', fontSize: '0.7rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
                         <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }}></span>
                         Inactive
@@ -356,7 +363,7 @@ const Dashboard = () => {
                       <div style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.1rem' }}>{inactiveCount}</div>
                     </div>
 
-                    <div style={{ padding: '0.5rem 0.2rem', borderRadius: '8px', backgroundColor: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)', textAlign: 'center' }}>
+                    <div onClick={() => navigate('/machines')} className="hover-float" style={{ padding: '0.5rem 0.2rem', borderRadius: '8px', backgroundColor: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s ease' }}>
                       <div style={{ color: '#f59e0b', fontSize: '0.7rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
                         <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#f59e0b' }}></span>
                         Maint.
@@ -364,7 +371,7 @@ const Dashboard = () => {
                       <div style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)', marginTop: '0.1rem' }}>{maintCount}</div>
                     </div>
 
-                    <div style={{ padding: '0.5rem 0.2rem', borderRadius: '8px', backgroundColor: 'rgba(2, 132, 199, 0.12)', border: '1px solid rgba(2, 132, 199, 0.3)', textAlign: 'center' }}>
+                    <div onClick={() => navigate('/machines')} className="hover-float" style={{ padding: '0.5rem 0.2rem', borderRadius: '8px', backgroundColor: 'rgba(2, 132, 199, 0.12)', border: '1px solid rgba(2, 132, 199, 0.3)', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s ease' }}>
                       <div style={{ color: '#0284c7', fontSize: '0.7rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
                         <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#0284c7' }}></span>
                         Water Low
