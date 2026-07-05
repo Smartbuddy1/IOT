@@ -258,7 +258,7 @@ const Reports = () => {
       document.body.removeChild(a);
       toast.success('Excel Report Downloaded');
     } else if (format === 'pdf') {
-      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       
       // Determine Client and Machine details for Header
       let finalClientName = clientName;

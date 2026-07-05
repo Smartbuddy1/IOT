@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Activity, Search, MapPin, Camera, Zap, Cpu, Settings, Calendar, User } from 'lucide-react';
+import { Activity, Search, MapPin, Camera, Zap, Cpu, Settings, Calendar, User, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import SkeletonTable from '../components/SkeletonTable';
 import Modal from '../components/Modal';
+import PrintTemplate from '../components/PrintTemplate';
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
@@ -101,7 +102,7 @@ const MaintenanceLogs = () => {
       return;
     }
 
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     
     // Header Data
     const title = 'Maintenance Logs Report';
@@ -244,6 +245,9 @@ const MaintenanceLogs = () => {
           <p style={{ color: 'var(--slate-500)', marginTop: '0.25rem' }}>Review hardware diagnostics and field tech reports.</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button onClick={() => window.print()} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--surface-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '20px' }}>
+            <Printer size={18} /> Print
+          </button>
           <button onClick={handleExportPDF} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#8b5cf6', borderColor: '#8b5cf6', borderRadius: '20px' }}>
             Download PDF
           </button>
@@ -294,59 +298,61 @@ const MaintenanceLogs = () => {
         <SkeletonTable columns={6} />
       ) : (
         <div className="table-container glass-panel">
-          <table className="premium-table">
-            <thead>
-              <tr>
-                <th>Date & Time</th>
-                <th>Machine ID</th>
-                <th>Client</th>
-                <th>Technician</th>
-                <th>Issue Reported</th>
-                <th>PCB Condition</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredLogs.length === 0 ? (
+          <PrintTemplate title="MAINTENANCE LOGS REPORT" isTable={true}>
+            <table className="premium-table">
+              <thead>
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--slate-500)' }}>
-                    No maintenance logs found.
-                  </td>
+                  <th>Date & Time</th>
+                  <th>Machine ID</th>
+                  <th>Client</th>
+                  <th>Technician</th>
+                  <th>Issue Reported</th>
+                  <th>PCB Condition</th>
+                  <th>Action</th>
                 </tr>
-              ) : (
-                filteredLogs.map(log => (
-                  <tr key={log.log_id} className="premium-row">
-                    <td style={{ color: 'var(--slate-600)', fontSize: '0.9rem' }}>{formatDate(log.created_at)}</td>
-                    <td style={{ fontWeight: '600', color: 'var(--primary-color)' }}>{log.machine_id}</td>
-                    <td>{log.client_name || '-'}</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#e0e7ff', color: '#4338ca', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.8rem' }}>
-                          {log.tech_name?.charAt(0).toUpperCase() || 'T'}
-                        </div>
-                        {log.tech_name}
-                      </div>
-                    </td>
-                    <td style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{log.reported_issue}</td>
-                    <td>
-                      <span className={`badge-glow ${log.pcb_condition === 'Good' ? 'badge-success' : 'badge-warning'}`}>
-                        {log.pcb_condition || 'N/A'}
-                      </span>
-                    </td>
-                    <td>
-                      <button 
-                        onClick={() => handleViewDetails(log)}
-                        className="btn btn-secondary" 
-                        style={{ fontSize: '0.85rem', padding: '0.4rem 0.75rem', backgroundColor: '#f1f5f9', color: '#334155' }}
-                      >
-                        View Details
-                      </button>
+              </thead>
+              <tbody>
+                {filteredLogs.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--slate-500)' }}>
+                      No maintenance logs found.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredLogs.map(log => (
+                    <tr key={log.log_id} className="premium-row">
+                      <td style={{ color: 'var(--slate-600)', fontSize: '0.9rem' }}>{formatDate(log.created_at)}</td>
+                      <td style={{ fontWeight: '600', color: 'var(--primary-color)' }}>{log.machine_id}</td>
+                      <td>{log.client_name || '-'}</td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#e0e7ff', color: '#4338ca', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.8rem' }}>
+                            {log.tech_name?.charAt(0).toUpperCase() || 'T'}
+                          </div>
+                          {log.tech_name}
+                        </div>
+                      </td>
+                      <td style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{log.reported_issue}</td>
+                      <td>
+                        <span className={`badge-glow ${log.pcb_condition === 'Good' ? 'badge-success' : 'badge-warning'}`}>
+                          {log.pcb_condition || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="no-print">
+                        <button 
+                          onClick={() => handleViewDetails(log)}
+                          className="btn btn-secondary" 
+                          style={{ fontSize: '0.85rem', padding: '0.4rem 0.75rem', backgroundColor: '#f1f5f9', color: '#334155' }}
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </PrintTemplate>
         </div>
       )}
 
