@@ -42,6 +42,15 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
+// Prevent browser and proxy caching of real-time API endpoints so dashboard numbers update instantly
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
+
 // Global Rate Limiting for APIs
 app.set('trust proxy', 1); // Trust first proxy for correct IP parsing in production
 const apiLimiter = rateLimit({

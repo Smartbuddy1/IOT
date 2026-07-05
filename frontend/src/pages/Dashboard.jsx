@@ -17,12 +17,16 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/dashboard/stats`);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/dashboard/stats`, {
+          params: { _t: Date.now() },
+          headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+        });
         setStats(response.data.stats);
 
         if (user?.role === 'Admin' || user?.role === 'Maintenance_Head') {
           const logsResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/maintenance/logs`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            params: { _t: Date.now() },
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Cache-Control': 'no-cache' }
           });
           if (logsResponse.data.success) {
             setRecentLogs(logsResponse.data.logs.slice(0, 5));
@@ -37,14 +41,20 @@ const Dashboard = () => {
     fetchDashboard();
   }, []);
 
-  // Poll IoT Live Data and Dashboard Stats every 3 seconds for instant real-time status updates
+  // Poll IoT Live Data and Dashboard Stats every 2 seconds with cache-busting for instant real-time updates
   useEffect(() => {
     const fetchLiveData = async () => {
       if (document.hidden) return; // Skip polling if tab is in background
       try {
         const [liveRes, statsRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_BASE_URL}/iot/live-status`),
-          axios.get(`${import.meta.env.VITE_API_BASE_URL}/dashboard/stats`)
+          axios.get(`${import.meta.env.VITE_API_BASE_URL}/iot/live-status`, {
+            params: { _t: Date.now() },
+            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+          }),
+          axios.get(`${import.meta.env.VITE_API_BASE_URL}/dashboard/stats`, {
+            params: { _t: Date.now() },
+            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+          })
         ]);
         if (liveRes.data.success) {
           setLiveStatus(liveRes.data.data);
@@ -57,7 +67,7 @@ const Dashboard = () => {
       }
     };
     fetchLiveData();
-    const interval = setInterval(fetchLiveData, 3000);
+    const interval = setInterval(fetchLiveData, 2000);
     return () => clearInterval(interval);
   }, []);
 

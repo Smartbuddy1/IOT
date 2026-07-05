@@ -52,6 +52,28 @@ const Transactions = () => {
     setPage(1);
   }, [searchTerm]);
 
+  // Silent auto-refresh live transactions every 3 seconds for instant payment updates
+  useEffect(() => {
+    const pollTransactions = async () => {
+      if (document.hidden || page !== 1) return;
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/transactions`, {
+          params: { page: 1, limit: 50, search: searchTerm, _t: Date.now() },
+          headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+        });
+        if (response.data && response.data.transactions) {
+          setTransactions(response.data.transactions);
+          if (response.data.pagination) {
+            setTotalPages(response.data.pagination.totalPages);
+            setTotalRecords(response.data.pagination.total);
+          }
+        }
+      } catch (err) {}
+    };
+    const interval = setInterval(pollTransactions, 3000);
+    return () => clearInterval(interval);
+  }, [page, searchTerm]);
+
   // Helper to format date cleanly without text clipping
   const formatDate = (dateVal) => {
     if (!dateVal) return '-';
