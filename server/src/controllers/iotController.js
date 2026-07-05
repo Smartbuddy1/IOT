@@ -1,4 +1,5 @@
 import pool from '../config/db.js';
+import jwt from 'jsonwebtoken';
 
 export const handleHardwarePost = async (req, res) => {
   try {
@@ -87,10 +88,59 @@ export const getLiveStatus = async (req, res) => {
       LEFT JOIN device_live_status d ON m.machine_id = d.machine_id
     `;
     let params = [];
+    let conditions = [];
 
     if (machineId) {
-      query += ' WHERE m.machine_id = ?';
+      conditions.push('m.machine_id = ?');
       params.push(machineId);
+    }
+
+    let user = req.user;
+    if (!user && req.headers['authorization']) {
+      try {
+        const token = req.headers['authorization'].split(' ')[1];
+        if (token) {
+          user = jwt.verify(token, process.env.JWT_SECRET || 'smartbuddy_super_secret_jwt_key_2026');
+        }
+      } catch (e) {
+        // Ignore token error if unauthenticated
+      }
+    }
+
+    if (user) {
+      const { role, name, id } = user;
+      let assignedProject = user.assigned_project;
+      let assignedClient = user.assigned_client;
+
+      if (role === 'Field_Tech' && (!assignedProject || !assignedClient)) {
+        const [[tech]] = await pool.query('SELECT assigned_project, assigned_client FROM tblusers WHERE id = ?', [id]);
+        if (tech) {
+          assignedProject = tech.assigned_project || assignedProject;
+          assignedClient = tech.assigned_client || assignedClient;
+        }
+      }
+
+      if (role === 'Client') {
+        conditions.push('m.client_name = ?');
+        params.push(name);
+      } else if (role === 'Field_Tech') {
+        if (assignedProject) {
+          conditions.push('m.project_name = ?');
+          params.push(assignedProject);
+        } else if (assignedClient) {
+          conditions.push('m.client_name = ?');
+          params.push(assignedClient);
+        } else {
+          conditions.push('1=0');
+        }
+      } else if (role === 'Maintenance_Head' && user.assigned_state) {
+        conditions.push('m.state = ?');
+        params.push(user.assigned_state);
+      }
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
     }
 
     const [rows] = await pool.query(query, params);
@@ -119,6 +169,21 @@ export const getLiveStatus = async (req, res) => {
 export const resetWaterLevel = async (req, res) => {
   try {
     const { machineId } = req.params;
+    let user = req.user;
+    if (!user && req.headers['authorization']) {
+      try {
+        const token = req.headers['authorization'].split(' ')[1];
+        if (token) {
+          user = jwt.verify(token, process.env.JWT_SECRET || 'smartbuddy_super_secret_jwt_key_2026');
+        }
+      } catch (e) {}
+    }
+    if (user && user.role === 'Client') {
+      const [[mach]] = await pool.query("SELECT client_name FROM machines WHERE machine_id = ?", [machineId]);
+      if (mach && mach.client_name !== user.name) {
+        return res.status(403).json({ success: false, message: "Forbidden: You do not own this machine" });
+      }
+    }
     await pool.query("UPDATE device_live_status SET water_level = 'NORMAL', last_updated = NOW() WHERE machine_id = ?", [machineId]);
     await pool.query("UPDATE machines SET status = 'ready' WHERE machine_id = ? AND status = 'water_low'", [machineId]);
     res.json({ success: true, message: `Water level alert reset for ${machineId}` });
