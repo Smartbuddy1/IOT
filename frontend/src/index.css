@@ -1705,26 +1705,43 @@ button {
   }
 
   .premium-table th, .print-body-content th {
-    background-color: #10b981 !important;
+    background-color: #059669 !important;
     color: white !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    box-shadow: inset 0 0 0 1000px #10b981 !important;
-    border: 1px solid #059669 !important;
-    padding: 10px !important;
+    box-shadow: inset 0 0 0 1000px #059669 !important;
+    border: 1px solid #047857 !important;
+    padding: 11px 14px !important;
     text-align: center !important;
-    font-size: 11pt !important;
+    font-size: 10.5pt !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
     white-space: nowrap !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
   }
 
   .premium-table td, .print-body-content td {
     border: 1px solid #cbd5e1 !important;
-    padding: 8px !important;
+    padding: 10px 14px !important;
     text-align: center !important;
-    color: #000 !important;
+    color: #1e293b !important;
     font-size: 10pt !important;
+    font-weight: 500 !important;
     word-break: break-word !important;
     white-space: normal !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  }
+
+  .premium-table tfoot td, .print-body-content tfoot td, .premium-table tfoot th, .print-body-content tfoot th {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    font-size: 10.5pt !important;
+    border: 1.5px solid #94a3b8 !important;
+    padding: 11px 14px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
   }
 
   /* Adjust Recharts for print */

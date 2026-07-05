@@ -15,12 +15,12 @@ const PrintTemplate = ({
   const reportId = `RPT-${Math.floor(Math.random() * 100000000)}`;
 
   const Header = () => (
-    <div className="print-header-content" style={{ display: 'flex', flexDirection: 'column', width: '100%', marginBottom: '15px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', width: '100%' }}>
+    <div className="print-header-content" style={{ display: 'flex', flexDirection: 'column', width: '100%', marginBottom: '20px', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', width: '100%' }}>
         {/* Left Side: Client Logo */}
-        <div style={{ width: '150px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+        <div style={{ width: '160px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
           {clientLogo ? (
-            <img src={clientLogo} alt="Client Logo" style={{ maxHeight: '60px', maxWidth: '140px', objectFit: 'contain' }} />
+            <img src={clientLogo} alt="Client Logo" style={{ maxHeight: '65px', maxWidth: '150px', objectFit: 'contain' }} />
           ) : (
             <div style={{ border: '1.5px solid #2563eb', padding: '8px 14px', color: '#64748b', fontSize: '11px', fontWeight: 'bold', borderRadius: '4px', textAlign: 'center' }}>
               Client Logo
@@ -29,57 +29,54 @@ const PrintTemplate = ({
         </div>
 
         {/* Center: Title & Details exactly matching HD PDF */}
-        <div style={{ textAlign: 'center', flexGrow: 1, padding: '0 10px' }}>
-          <h2 style={{ margin: '0 0 6px 0', color: '#10b981', fontSize: '18pt', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        <div style={{ textAlign: 'center', flexGrow: 1, padding: '0 15px' }}>
+          <h2 style={{ margin: '0 0 6px 0', color: '#059669', fontSize: '17pt', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             {title}
           </h2>
           {clientName && (
-            <div style={{ color: '#2563eb', fontSize: '11pt', fontWeight: '700', marginBottom: '4px' }}>
+            <div style={{ color: '#1d4ed8', fontSize: '11pt', fontWeight: '700', marginBottom: '6px' }}>
               Client Name: {clientName}
             </div>
           )}
-          {toiletId && (
-            <div style={{ color: '#64748b', fontSize: '10pt', fontWeight: '500', marginBottom: '2px' }}>
-              Toilet ID: {toiletId}
+          {(toiletId || location) && (
+            <div style={{ color: '#334155', fontSize: '10pt', fontWeight: '600', marginBottom: '6px' }}>
+              {toiletId && <span>Toilet ID: <strong style={{ color: '#0f172a' }}>{toiletId}</strong></span>}
+              {toiletId && location && <span style={{ margin: '0 10px', color: '#cbd5e1' }}>|</span>}
+              {location && <span>Location: <strong style={{ color: '#0f172a' }}>{location}</strong></span>}
             </div>
           )}
-          {location && (
-            <div style={{ color: '#64748b', fontSize: '10pt', fontWeight: '500', marginBottom: '4px' }}>
-              Location: {location}
-            </div>
-          )}
-          <div style={{ fontSize: '8pt', color: '#888', marginTop: '4px' }}>
-            Report ID: {reportId} &nbsp;|&nbsp; Date: {dateStr}, {timeStr}
+          <div style={{ fontSize: '8.5pt', color: '#64748b', marginTop: '4px', fontWeight: '500' }}>
+            Report ID: <span style={{ fontFamily: 'monospace' }}>{reportId}</span> &nbsp;|&nbsp; Generated Date: {dateStr}, {timeStr}
           </div>
         </div>
 
-        {/* Right Side: SmartBuddy HD Logo */}
-        <div style={{ width: '150px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-          <img src="/SB_Logo.jpg" alt="SmartBuddy Logo" style={{ maxHeight: '60px', maxWidth: '140px', objectFit: 'contain' }} />
+        {/* Right Side: SmartBuddy Modern HD Logo */}
+        <div style={{ width: '160px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+          <img src="/logo_new.jpeg" alt="SmartBuddy Logo" style={{ maxHeight: '65px', maxWidth: '150px', objectFit: 'contain' }} />
         </div>
       </div>
-      <div style={{ borderBottom: '2px solid #2563eb' }}></div>
+      <div style={{ borderBottom: '2.5px solid #1d4ed8' }}></div>
     </div>
   );
 
   const Footer = () => (
-    <div className="print-footer-content" style={{ width: '100%', marginTop: '30px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+    <div className="print-footer-content" style={{ width: '100%', marginTop: '40px', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '25px', padding: '0 20px' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '150px', borderTop: '1px solid #94a3b8', marginBottom: '5px' }}></div>
-          <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#475569' }}>System Administrator</span>
+          <div style={{ width: '160px', borderTop: '1.5px solid #475569', marginBottom: '6px' }}></div>
+          <span style={{ fontSize: '10pt', fontWeight: '700', color: '#334155' }}>System Administrator</span>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '150px', borderTop: '1px solid #94a3b8', marginBottom: '5px' }}></div>
-          <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#475569' }}>Authorized Signatory</span>
+          <div style={{ width: '160px', borderTop: '1.5px solid #475569', marginBottom: '6px' }}></div>
+          <span style={{ fontSize: '10pt', fontWeight: '700', color: '#334155' }}>Authorized Signatory</span>
         </div>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '9px', color: '#64748b', borderTop: '1px solid #e2e8f0', paddingTop: '5px' }}>
-        <div>
-          AARYA INNOVTECH PVT. LTD. CIN: U29305MH2019PTC327551 | +91 8806796868<br/>
-          Nashik Office: Flat No. 4A, Sayali Darshan A-Wing, Makhamalabad Road, Nashik-422003.
+      <div style={{ borderTop: '1.5px solid #cbd5e1', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', fontSize: '8.5pt', color: '#475569', lineHeight: '1.5' }}>
+        <div style={{ textAlign: 'left', flex: 1, paddingRight: '15px' }}>
+          <div style={{ fontWeight: '700', color: '#1e293b' }}>AARYA INNOVTECH PVT. LTD. &nbsp;|&nbsp; CIN: U29305MH2019PTC327551 &nbsp;|&nbsp; Ph: +91 8806796868</div>
+          <div style={{ color: '#64748b' }}>Nashik Office: Flat No. 4A, Sayali Darshan A-Wing, Makhamalabad Road, Nashik-422003.</div>
         </div>
-        <div style={{ textAlign: 'right' }}>
+        <div style={{ textAlign: 'right', fontWeight: '600', color: '#475569', whiteSpace: 'nowrap' }}>
           Generated by System
         </div>
       </div>
@@ -87,8 +84,8 @@ const PrintTemplate = ({
   );
 
   return (
-    <div className="print-template-wrapper">
-      <img className="print-only" src="/SB_Logo.jpg" alt="Watermark" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '450px', opacity: 0.05, zIndex: -1, pointerEvents: 'none' }} />
+    <div className="print-template-wrapper" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+      <img className="print-only" src="/logo_new.jpeg" alt="Watermark" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '420px', opacity: 0.04, zIndex: -1, pointerEvents: 'none' }} />
       
       {isTable ? (
         <table className="print-layout-table" style={{ width: '100%', borderCollapse: 'collapse', border: 'none' }}>
