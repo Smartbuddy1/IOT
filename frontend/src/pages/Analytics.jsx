@@ -436,7 +436,7 @@ const Analytics = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
               
               {/* Revenue Chart */}
-              <div className="glass-panel" style={{ borderRadius: '12px', padding: '2rem', pageBreakInside: 'avoid' }}>
+              <div id="analytics-chart-1" className="glass-panel" style={{ borderRadius: '12px', padding: '2rem', pageBreakInside: 'avoid' }}>
                 <h3 style={{ textAlign: 'center', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '2rem' }}>💰 Yearly Transaction Revenue (₹)</h3>
                 <div style={{ width: '100%', height: 400 }}>
                   <ResponsiveContainer>
@@ -454,7 +454,7 @@ const Analytics = () => {
               </div>
 
               {/* Usage Chart */}
-              <div className="glass-panel" style={{ borderRadius: '12px', padding: '2rem', pageBreakInside: 'avoid' }}>
+              <div id="analytics-chart-2" className="glass-panel" style={{ borderRadius: '12px', padding: '2rem', pageBreakInside: 'avoid' }}>
                 <h3 style={{ textAlign: 'center', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '2rem' }}>⚙️ Yearly Usage Count</h3>
                 <div style={{ width: '100%', height: 400 }}>
                   <ResponsiveContainer>
