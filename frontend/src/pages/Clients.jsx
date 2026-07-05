@@ -160,7 +160,15 @@ const Clients = ({ isTab = false }) => {
 
     const submitData = new FormData();
     for (const key in formData) {
-      submitData.append(key, formData[key] === null ? '' : formData[key]);
+      let val = formData[key] === null ? '' : formData[key];
+      if (key === 'contact_mobile' && !val) val = formData.client_phone || '';
+      if (key === 'contact_person' && !val) val = formData.client_name || '';
+      if (key === 'client_address' && !val) val = 'India';
+      if (key === 'client_type' && !val) val = 'Private';
+      if (key === 'client_state' && !val) val = 'Maharashtra';
+      if (key === 'clinet_district' && !val) val = 'Pune';
+      if (key === 'client_city' && !val) val = 'Pune';
+      submitData.append(key, val);
     }
     if (logoFile) {
       submitData.append('client_logo_file', logoFile);
@@ -190,7 +198,7 @@ const Clients = ({ isTab = false }) => {
 
   const isFormValid = () => {
     if (Object.keys(errors).length > 0) return false;
-    if (!formData.client_name || !formData.client_phone || !formData.client_address || !formData.client_type || !formData.client_state || !formData.clinet_district || !formData.client_city || !formData.contact_mobile) return false;
+    if (!formData.client_name || !formData.client_phone) return false;
     if (!editingId && !formData.password) return false;
     if (!editingId && !logoFile) return false;
     return true;
@@ -393,14 +401,14 @@ const Clients = ({ isTab = false }) => {
           </div>
           <div className="form-group">
             <label className="form-label">District *</label>
-            <select name="clinet_district" value={formData.clinet_district || ''} onChange={handleInputChange} className="form-input" required disabled={!formData.client_state}>
+            <select name="clinet_district" value={formData.clinet_district || ''} onChange={handleInputChange} className="form-input" disabled={!formData.client_state}>
               <option value="">-- Select District --</option>
               {districts.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
           <div className="form-group">
             <label className="form-label">City *</label>
-            <select name="client_city" value={formData.client_city || ''} onChange={handleInputChange} className="form-input" required disabled={!formData.clinet_district}>
+            <select name="client_city" value={formData.client_city || ''} onChange={handleInputChange} className="form-input" disabled={!formData.clinet_district}>
               <option value="">-- Select City --</option>
               {cities.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -415,8 +423,8 @@ const Clients = ({ isTab = false }) => {
             <input type="text" name="contact_person" value={formData.contact_person || ''} onChange={handleInputChange} className="form-input" />
           </div>
           <div className="form-group">
-            <label className="form-label">Contact Mobile *</label>
-            <input type="text" name="contact_mobile" value={formData.contact_mobile || ''} onChange={handleInputChange} className={`form-input ${errors.contact_mobile ? 'error' : ''}`} maxLength="10" required />
+            <label className="form-label">Contact Mobile</label>
+            <input type="text" name="contact_mobile" value={formData.contact_mobile || ''} onChange={handleInputChange} className={`form-input ${errors.contact_mobile ? 'error' : ''}`} maxLength="10" placeholder="Optional (Defaults to Client Phone)" />
             {errors.contact_mobile && <small style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>{errors.contact_mobile}</small>}
           </div>
           <div className="form-group">
@@ -431,7 +439,7 @@ const Clients = ({ isTab = false }) => {
 
           <div className="full-width" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
             <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={formLoading || !isFormValid()}>
+            <button type="submit" className="btn btn-primary" disabled={formLoading}>
               {formLoading ? 'Submitting...' : 'Submit'}
             </button>
           </div>

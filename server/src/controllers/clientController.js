@@ -50,7 +50,7 @@ export const createClient = async (req, res) => {
 
   let client_logo = req.body.client_logo || '';
   if (req.file) {
-    client_logo = req.file.location; // S3 full URL provided by multer-s3
+    client_logo = req.file.location || req.file.url || (req.file.key ? `https://${process.env.S3_BUCKET_NAME || 'smartbuddyiot'}.s3.${process.env.AWS_REGION || 'ap-south-1'}.amazonaws.com/${req.file.key}` : `/uploads/logos/${req.file.filename}`);
   }
 
   if (!client_name || !client_phone || !password || !client_logo) {
@@ -95,7 +95,7 @@ export const updateClient = async (req, res) => {
     // Determine final logo: use new upload if provided, else keep existing from DB
     let client_logo;
     if (req.file) {
-      client_logo = req.file.location; // S3 full URL provided by multer-s3
+      client_logo = req.file.location || req.file.url || (req.file.key ? `https://${process.env.S3_BUCKET_NAME || 'smartbuddyiot'}.s3.${process.env.AWS_REGION || 'ap-south-1'}.amazonaws.com/${req.file.key}` : `/uploads/logos/${req.file.filename}`);
     } else {
       // Fetch existing logo URL from DB to avoid overwriting with empty string
       const [rows] = await pool.query('SELECT client_logo FROM clients WHERE id = ?', [id]);
