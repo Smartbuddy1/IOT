@@ -10,6 +10,16 @@ let client = null;
 // Every time a machine sends a message, we only update the DB once per minute.
 const activeMachineCache = {};
 
+// Memory leak prevention: Clean up old inactive cache entries every 6 hours
+setInterval(() => {
+  const now = Date.now();
+  for (const key in activeMachineCache) {
+    if (now - activeMachineCache[key] > 24 * 60 * 60 * 1000) {
+      delete activeMachineCache[key];
+    }
+  }
+}, 6 * 60 * 60 * 1000);
+
 export const initializeMqtt = () => {
   const brokerUrl = process.env.MQTT_BROKER_URL || 'mqtt://127.0.0.1:1883';
   const options = {
@@ -142,6 +152,7 @@ export const initializeMqtt = () => {
 
         // Auto-register machine ONLY if not seen before and not in DB (prevents duplicates when machine_id lacks UNIQUE index)
         if (!activeMachineCache[machineId]) {
+          activeMachineCache[machineId] = Date.now(); // Synchronous lock to prevent concurrent race conditions
           pool.query("SELECT id FROM machines WHERE machine_id = ? LIMIT 1", [machineId]).then(([rows]) => {
             if (rows && rows.length === 0) {
               pool.query("INSERT INTO machines (machine_id, status) VALUES (?, 'ready')", [machineId]).catch(() => {});
@@ -184,7 +195,8 @@ export const initializeMqtt = () => {
         // 4. Update device_live_status (Sensors and Heartbeat)
         if (Object.keys(payload).length > 0) {
           // Insert or Update the live status with sensors
-          const water_level = payload.water_level || payload.waterLevel || '0';
+          // Preserve explicit LOW or NORMAL alert status if reportedStatus was just set!
+          const water_level = reportedStatus === 'water_low' ? 'LOW' : reportedStatus === 'water_normal' ? 'NORMAL' : (payload.water_level || payload.waterLevel || '0');
           const pir_sensor = payload.pir || payload.pir_sensor || '0';
           const door_lock = payload.door || payload.door_lock || '0';
           const pb_coin = payload.pb_coin || payload.coin || '0';
