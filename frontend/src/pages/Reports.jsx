@@ -545,6 +545,27 @@ const Reports = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = data.slice(startIndex, startIndex + itemsPerPage);
 
+  // Determine Client and Machine details for Print header (matching PDF exactly)
+  let headerClientName = clientName;
+  let headerToiletId = machineId ? machineId : "All Machines";
+  let headerLocation = "Various Locations";
+  
+  if (machineId) {
+    const selectedMachine = machinesOptions.find(m => m.machine_id === machineId);
+    if (selectedMachine) {
+      headerLocation = selectedMachine.inst_address || selectedMachine.address || selectedMachine.city || "Location details not available";
+      if (!headerClientName && selectedMachine.client_name) {
+        headerClientName = selectedMachine.client_name;
+      }
+    }
+  }
+
+  const headerSelectedClient = clientsOptions.find(c => c.client_name === headerClientName);
+  let headerClientLogo = headerSelectedClient && headerSelectedClient.client_logo ? headerSelectedClient.client_logo : null;
+  if (headerClientLogo && !headerClientLogo.startsWith('http')) {
+    headerClientLogo = window.location.origin + (headerClientLogo.startsWith('/') ? '' : '/') + headerClientLogo;
+  }
+
   return (
     <div className="page-container">
       <div className="page-header no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -712,7 +733,14 @@ const Reports = () => {
         <SkeletonTable columns={6} />
       ) : (
         <div className="table-container glass-panel">
-          <PrintTemplate title={reportType === 'revenue' ? 'REVENUE REPORT' : reportType === 'footfall' ? 'FOOTFALL & USAGE REPORT' : 'MACHINE MAINTENANCE STATUS REPORT'} isTable={true}>
+          <PrintTemplate 
+            title={reportType === 'revenue' ? 'REVENUE REPORT' : reportType === 'footfall' ? 'FOOTFALL & USAGE REPORT' : 'MACHINE MAINTENANCE STATUS REPORT'} 
+            isTable={true}
+            clientName={headerClientName || 'All Clients'}
+            toiletId={headerToiletId}
+            location={headerLocation}
+            clientLogo={headerClientLogo}
+          >
             <table className="premium-table">
               <thead>
                 <tr>

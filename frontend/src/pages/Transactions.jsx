@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { IndianRupee, CheckCircle, XCircle, Download, FileText, Printer, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { exportToPDF, exportToExcel, handlePrint } from '../utils/exportUtils';
+import PrintTemplate from '../components/PrintTemplate';
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
@@ -280,49 +281,51 @@ const Transactions = () => {
       </div>
 
       <div className="table-container glass-panel">
-        <table className="premium-table print-table">
-          <thead>
-            <tr>
-              <th>Trans ID</th>
-              <th>Machine ID</th>
-              <th>Project Name</th>
-              <th>Amount</th>
-              <th>Date & Time</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.length === 0 ? (
-              <tr className="premium-row">
-                <td colSpan="6" style={{ padding: '2rem', textAlign: 'center', color: 'var(--slate-500)' }}>
-                  No transactions found.
-                </td>
+        <PrintTemplate title="TRANSACTION LOGS REPORT" isTable={true}>
+          <table className="premium-table print-table">
+            <thead>
+              <tr>
+                <th>Trans ID</th>
+                <th>Machine ID</th>
+                <th>Project Name</th>
+                <th>Amount</th>
+                <th>Date & Time</th>
+                <th>Status</th>
               </tr>
-            ) : (
-              transactions.map((t) => (
-                <tr key={t.id} className="premium-row">
-                  <td style={{ color: 'var(--slate-500)', fontSize: '0.875rem' }}>{t.trans_id || '-'}</td>
-                  <td style={{ fontWeight: '700', color: 'var(--slate-800)' }}>{t.machin_id}</td>
-                  <td style={{ color: 'var(--slate-600)' }}>{t.project_name || '-'}</td>
-                  <td style={{ fontWeight: '700', color: 'var(--slate-800)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <IndianRupee size={14} /> {t.trans_amt}
-                    </div>
-                  </td>
-                  <td style={{ color: 'var(--slate-500)', fontSize: '0.875rem' }}>
-                    {formatDate(t.date_time)}
-                  </td>
-                  <td>
-                    <span className={`badge-glow ${t.status === 'success' ? 'success' : 'failed'}`}>
-                      {t.status === 'success' ? <CheckCircle size={12} /> : <XCircle size={12} />}
-                      {t.status}
-                    </span>
+            </thead>
+            <tbody>
+              {transactions.length === 0 ? (
+                <tr className="premium-row">
+                  <td colSpan="6" style={{ padding: '2rem', textAlign: 'center', color: 'var(--slate-500)' }}>
+                    No transactions found.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                transactions.map((t) => (
+                  <tr key={t.id} className="premium-row">
+                    <td style={{ color: 'var(--slate-500)', fontSize: '0.875rem' }}>{t.trans_id || '-'}</td>
+                    <td style={{ fontWeight: '700', color: 'var(--slate-800)' }}>{t.machin_id}</td>
+                    <td style={{ color: 'var(--slate-600)' }}>{t.project_name || '-'}</td>
+                    <td style={{ fontWeight: '700', color: 'var(--slate-800)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <IndianRupee size={14} /> {t.trans_amt}
+                      </div>
+                    </td>
+                    <td style={{ color: 'var(--slate-500)', fontSize: '0.875rem' }}>
+                      {formatDate(t.date_time)}
+                    </td>
+                    <td>
+                      <span className={`badge-glow ${t.status === 'success' ? 'success' : 'failed'}`}>
+                        {t.status === 'success' ? <CheckCircle size={12} /> : <XCircle size={12} />}
+                        {t.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </PrintTemplate>
       </div>
 
       {/* Pagination Controls */}
