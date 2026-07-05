@@ -140,46 +140,79 @@ const Analytics = () => {
     try {
       const toastId = toast.loading('Generating HD Report PDF...');
 
-      // Helper: fetch Base64 for logos
-      const getBase64FromUrl = async (url) => {
-        try {
-          const res = await axios.get(url, { responseType: 'blob' });
-          const blob = res.data;
-          if (!blob.type.startsWith('image/')) return null;
-          const rawDataUrl = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-          return new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-              if (blob.type === 'image/jpeg' || blob.type === 'image/png') {
-                const ext = blob.type === 'image/jpeg' ? 'JPEG' : 'PNG';
-                resolve({ base64: rawDataUrl, ext, width: img.width, height: img.height });
-                return;
-              }
-              try {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-                resolve({ base64: canvas.toDataURL('image/png', 1.0), ext: 'PNG', width: img.width, height: img.height });
-              } catch (e) { resolve(null); }
-            };
-            img.onerror = () => resolve(null);
-            img.src = rawDataUrl;
-          });
-        } catch (error) { return null; }
+      // Helper function: Multi-fallback guaranteed image loader using Native Fetch (HD Quality Preserved)
+      const getBase64FromUrl = async (url, originalUrl) => {
+        const urlsToTry = [];
+        
+        // 1. Vercel / Vite s3-proxy (Preferred for avoiding CORS)
+        if (originalUrl && originalUrl.includes('amazonaws.com')) {
+           const pathOnly = originalUrl.replace(/https?:\/\/[^\/]+\.amazonaws\.com/, '');
+           urlsToTry.push(window.location.origin + '/s3-proxy' + pathOnly);
+        }
+        
+        // 2. Direct S3 URL
+        if (originalUrl) urlsToTry.push(originalUrl);
+        else urlsToTry.push(url);
+        
+        // 3. Public CORS Proxies (Ultimate Fallbacks)
+        if (originalUrl && originalUrl.startsWith('http')) {
+           urlsToTry.push(`https://api.allorigins.win/raw?url=${encodeURIComponent(originalUrl)}`);
+           urlsToTry.push(`https://corsproxy.io/?${encodeURIComponent(originalUrl)}`);
+        }
+
+        for (const attemptUrl of urlsToTry) {
+          try {
+            // Use native fetch to avoid any Axios global headers or interceptors that S3 might reject
+            const res = await fetch(attemptUrl, { method: 'GET', mode: 'cors' });
+            if (!res.ok) continue;
+            const blob = await res.blob();
+            if (!blob.type.startsWith('image/')) continue; 
+
+            const rawDataUrl = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+
+            return await new Promise((resolve) => {
+              const img = new Image();
+              img.onload = () => {
+                if (blob.type === 'image/jpeg' || blob.type === 'image/png') {
+                  const ext = blob.type === 'image/jpeg' ? 'JPEG' : 'PNG';
+                  resolve({ base64: rawDataUrl, ext, width: img.width, height: img.height });
+                  return;
+                }
+                try {
+                  const canvas = document.createElement('canvas');
+                  canvas.width = img.width;
+                  canvas.height = img.height;
+                  const ctx = canvas.getContext('2d');
+                  ctx.drawImage(img, 0, 0);
+                  resolve({ base64: canvas.toDataURL('image/png', 1.0), ext: 'PNG', width: img.width, height: img.height });
+                } catch (e) { resolve(null); }
+              };
+              img.onerror = () => resolve(null);
+              img.src = rawDataUrl;
+            });
+          } catch (error) {
+            console.warn(`Failed to fetch image from ${attemptUrl}`, error.message);
+          }
+        }
+        return null;
       };
 
       const sbLogoUrl = window.location.origin + `/logo_new.png`;
-      const sbImgObj = await getBase64FromUrl(sbLogoUrl);
+      const sbImgObj = await getBase64FromUrl(sbLogoUrl, sbLogoUrl);
 
-      const leftLogoUrl = headerClientLogo || (window.location.origin + `/logo_left.jpeg`);
-      const leftImgObj = await getBase64FromUrl(leftLogoUrl);
+      let leftImgObj = null;
+      if (headerClientLogo) {
+        leftImgObj = await getBase64FromUrl(headerClientLogo, headerClientLogo);
+      }
+      if (!leftImgObj) {
+        const defaultLeftUrl = window.location.origin + `/logo_left.jpeg`;
+        leftImgObj = await getBase64FromUrl(defaultLeftUrl, defaultLeftUrl);
+      }
 
       // Capture charts as images
       const canvas1 = await html2canvas(chart1, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' });
