@@ -152,6 +152,20 @@ const Transactions = () => {
     const sbLogoUrl = window.location.origin + `/logo_new.png`;
     let sbImgObj = await getBase64FromUrl(sbLogoUrl);
 
+    const leftLogoUrl = window.location.origin + `/logo_left.jpeg`;
+    let leftImgObj = await getBase64FromUrl(leftLogoUrl);
+    if (leftImgObj && leftImgObj.base64) {
+      const leftMaxWidth = 35;
+      const leftMaxHeight = 20;
+      let leftCalcWidth = leftMaxWidth;
+      let leftCalcHeight = (leftImgObj.height * leftMaxWidth) / leftImgObj.width;
+      if (leftCalcHeight > leftMaxHeight) {
+        leftCalcHeight = leftMaxHeight;
+        leftCalcWidth = (leftImgObj.width * leftMaxHeight) / leftImgObj.height;
+      }
+      doc.addImage(leftImgObj.base64, leftImgObj.ext, 14, 8 + (leftMaxHeight - leftCalcHeight) / 2, leftCalcWidth, leftCalcHeight);
+    }
+
     // Draw Top Header
     if (sbImgObj && sbImgObj.base64) {
       const sbMaxWidth = 35;

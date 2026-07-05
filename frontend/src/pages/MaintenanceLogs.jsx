@@ -119,12 +119,28 @@ const MaintenanceLogs = () => {
     
     const sbImg = new Image();
     sbImg.src = "/logo_new.png";
+    const leftImg = new Image();
+    leftImg.src = "/logo_left.jpeg";
 
-    const drawPDF = (sbImgObj) => {
+    const drawPDF = (sbImgObj, leftImgObj) => {
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
       
-      // SmartBuddy Logo (Top Center)
+      // Left Logo (Top Left)
+      if (leftImgObj && leftImgObj.base64) {
+        const leftMaxWidth = 35;
+        const leftMaxHeight = 20;
+        let leftCalcWidth = leftMaxWidth;
+        let leftCalcHeight = (leftImgObj.height * leftMaxWidth) / leftImgObj.width;
+        if (leftCalcHeight > leftMaxHeight) {
+          leftCalcHeight = leftMaxHeight;
+          leftCalcWidth = (leftImgObj.width * leftMaxHeight) / leftImgObj.height;
+        }
+        const leftYOffset = 8 + (leftMaxHeight - leftCalcHeight) / 2;
+        doc.addImage(leftImgObj.base64, leftImgObj.ext, 14, leftYOffset, leftCalcWidth, leftCalcHeight);
+      }
+
+      // SmartBuddy Logo (Top Right)
       if (sbImgObj && sbImgObj.base64) {
         const sbMaxWidth = 35;
         const sbMaxHeight = 20;
@@ -135,7 +151,7 @@ const MaintenanceLogs = () => {
           sbCalcWidth = (sbImgObj.width * sbMaxHeight) / sbImgObj.height;
         }
         const sbYOffset = 8 + (sbMaxHeight - sbCalcHeight) / 2;
-        doc.addImage(sbImgObj.base64, sbImgObj.ext, (pageWidth/2) - (sbCalcWidth/2), sbYOffset, sbCalcWidth, sbCalcHeight);
+        doc.addImage(sbImgObj.base64, sbImgObj.ext, pageWidth - 14 - sbCalcWidth, sbYOffset, sbCalcWidth, sbCalcHeight);
       }
       
       // Title
@@ -220,19 +236,22 @@ const MaintenanceLogs = () => {
       toast.success('HD PDF Report Downloaded');
     };
 
-    sbImg.crossOrigin = "Anonymous";
-    sbImg.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = sbImg.width;
-      canvas.height = sbImg.height;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(sbImg, 0, 0);
-      const dataURL = canvas.toDataURL("image/jpeg", 0.95);
-      drawPDF({ base64: dataURL, width: sbImg.width, height: sbImg.height, ext: 'JPEG' });
-    };
-    sbImg.onerror = () => {
-      drawPDF(null);
-    };
+    const loadImg = (img) => new Promise((resolve) => {
+      img.crossOrigin = "Anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        resolve({ base64: canvas.toDataURL("image/jpeg", 0.95), width: img.width, height: img.height, ext: 'JPEG' });
+      };
+      img.onerror = () => resolve(null);
+    });
+
+    Promise.all([loadImg(sbImg), loadImg(leftImg)]).then(([sbImgObj, leftImgObj]) => {
+      drawPDF(sbImgObj, leftImgObj);
+    });
   };
 
   return (

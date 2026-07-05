@@ -81,7 +81,7 @@ const Layout = () => {
             maxWidth: '180px',
             margin: '0 auto'
           }}>
-            <img src="/logo_new.png" alt="SmartBuddy Logo" style={{ width: '100%', height: 'auto', maxHeight: '50px', objectFit: 'contain' }} />
+            <img src="/logo_left.jpeg" alt="SmartBuddy Logo" style={{ width: '100%', height: 'auto', maxHeight: '50px', objectFit: 'contain' }} />
           </div>
         </div>
         

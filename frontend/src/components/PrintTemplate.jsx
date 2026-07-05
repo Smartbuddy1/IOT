@@ -19,13 +19,7 @@ const PrintTemplate = ({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', width: '100%' }}>
         {/* Left Side: Client Logo */}
         <div style={{ width: '160px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-          {clientLogo ? (
-            <img src={clientLogo} alt="Client Logo" style={{ maxHeight: '65px', maxWidth: '150px', objectFit: 'contain' }} />
-          ) : (
-            <div style={{ border: '1.5px solid #2563eb', padding: '8px 14px', color: '#64748b', fontSize: '11px', fontWeight: 'bold', borderRadius: '4px', textAlign: 'center' }}>
-              Client Logo
-            </div>
-          )}
+          <img src={clientLogo || "/logo_left.jpeg"} alt="Client Logo" style={{ maxHeight: '65px', maxWidth: '150px', objectFit: 'contain' }} />
         </div>
 
         {/* Center: Title & Details exactly matching HD PDF */}

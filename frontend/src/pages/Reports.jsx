@@ -517,12 +517,12 @@ const Reports = () => {
           toast.success("Trying to fetch logo...");
           clientImgObj = await getBase64FromUrl(clientLogoUrl, originalClientLogoUrl);
           if (!clientImgObj) {
-            toast.error("Logo fetch failed");
+            const defaultLeftUrl = window.location.origin + `/logo_left.jpeg`;
+            clientImgObj = await getBase64FromUrl(defaultLeftUrl, defaultLeftUrl);
           }
         } else {
-          if (clientName && clientName !== 'All Clients') {
-            toast.error("Client has no logo saved in Database!");
-          }
+          const defaultLeftUrl = window.location.origin + `/logo_left.jpeg`;
+          clientImgObj = await getBase64FromUrl(defaultLeftUrl, defaultLeftUrl);
         }
 
         // Load SmartBuddy Logo using the robust HD fetcher
