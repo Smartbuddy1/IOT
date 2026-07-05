@@ -45,7 +45,12 @@ const UnassignedMachines = () => {
   }, []);
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === 'client_name') {
+      setFormData({ ...formData, client_name: value, project_name: '' });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleEdit = (machine) => {
@@ -89,6 +94,11 @@ const UnassignedMachines = () => {
       </div>
     );
   }
+
+  // Filter projects based on selected client in modal
+  const filteredProjects = formData.client_name
+    ? projects.filter(p => !p.client_name || p.client_name.trim() === '' || p.client_name.trim().toLowerCase() === formData.client_name.trim().toLowerCase())
+    : projects;
 
   // Pagination & Sorting Logic
   const filteredMachines = machines.filter(m => 
@@ -202,7 +212,7 @@ const UnassignedMachines = () => {
             <label className="form-label">Project Name</label>
             <select name="project_name" value={formData.project_name} onChange={handleInputChange} className="form-input">
               <option value="">-- Select Project --</option>
-              {projects.map(p => <option key={p.id} value={p.project_name}>{p.project_name}</option>)}
+              {filteredProjects.map(p => <option key={p.id} value={p.project_name}>{p.project_name}</option>)}
             </select>
           </div>
 

@@ -105,7 +105,11 @@ const Machines = () => {
       return newErrors;
     });
 
-    setFormData({ ...formData, [name]: value });
+    if (name === 'client_name') {
+      setFormData({ ...formData, client_name: value, project_name: '' });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const isFormValid = () => {
@@ -189,6 +193,11 @@ const Machines = () => {
       </div>
     );
   }
+
+  // Filter projects based on selected client in modal
+  const filteredProjects = formData.client_name
+    ? projects.filter(p => !p.client_name || p.client_name.trim() === '' || p.client_name.trim().toLowerCase() === formData.client_name.trim().toLowerCase())
+    : projects;
 
   // Pagination & Sorting Logic
   const filteredMachines = machines.filter(m => 
@@ -361,7 +370,7 @@ const Machines = () => {
             <label className="form-label">Project Name *</label>
             <select name="project_name" value={formData.project_name} onChange={handleInputChange} className="form-input" required>
               <option value="">-- Select Project --</option>
-              {projects.map(p => <option key={p.id} value={p.project_name}>{p.project_name}</option>)}
+              {filteredProjects.map(p => <option key={p.id} value={p.project_name}>{p.project_name}</option>)}
             </select>
           </div>
           <div className="form-group">
