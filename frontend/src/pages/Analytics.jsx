@@ -107,42 +107,206 @@ const Analytics = () => {
     }
   };
 
+  // Determine Client and Machine details for Header & PDF exactly like Reports.jsx
+  let headerClientName = clientName;
+  let headerToiletId = machineId ? machineId : "All Machines";
+  let headerLocation = "Various Locations";
+  
+  if (machineId) {
+    const selectedMachine = machines.find(m => m.machine_id === machineId);
+    if (selectedMachine) {
+      headerLocation = selectedMachine.inst_address || selectedMachine.address || selectedMachine.city || "Location details not available";
+      if (!headerClientName && selectedMachine.client_name) {
+        headerClientName = selectedMachine.client_name;
+      }
+    }
+  }
+
+  const selectedClientObj = clients.find(c => c.client_name === headerClientName);
+  let headerClientLogo = selectedClientObj && selectedClientObj.client_logo ? selectedClientObj.client_logo : null;
+  if (headerClientLogo && !headerClientLogo.startsWith('http')) {
+    headerClientLogo = window.location.origin + (headerClientLogo.startsWith('/') ? '' : '/') + headerClientLogo;
+  }
+
   const handlePrint = () => window.print();
 
   const handleExportPDF = async () => {
-    const printArea = document.getElementById('analytics-export-area');
-    if (!printArea) {
-      toast.error('Nothing to export');
+    const chart1 = document.getElementById('analytics-chart-1');
+    const chart2 = document.getElementById('analytics-chart-2');
+    if (!chart1 || !chart2) {
+      toast.error('Nothing to export. Please load analytics data first.');
       return;
     }
     try {
-      const toastId = toast.loading('Generating HD PDF...');
-      const canvas = await html2canvas(printArea, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' });
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      
-      const pdf = new jsPDF('portrait', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      let heightLeft = imgHeight;
-      let position = 0;
-      
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
-      
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
+      const toastId = toast.loading('Generating HD Report PDF...');
+
+      // Helper: fetch Base64 for logos
+      const getBase64FromUrl = async (url) => {
+        try {
+          const res = await axios.get(url, { responseType: 'blob' });
+          const blob = res.data;
+          if (!blob.type.startsWith('image/')) return null;
+          const rawDataUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              if (blob.type === 'image/jpeg' || blob.type === 'image/png') {
+                const ext = blob.type === 'image/jpeg' ? 'JPEG' : 'PNG';
+                resolve({ base64: rawDataUrl, ext, width: img.width, height: img.height });
+                return;
+              }
+              try {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                resolve({ base64: canvas.toDataURL('image/png', 1.0), ext: 'PNG', width: img.width, height: img.height });
+              } catch (e) { resolve(null); }
+            };
+            img.onerror = () => resolve(null);
+            img.src = rawDataUrl;
+          });
+        } catch (error) { return null; }
+      };
+
+      const sbLogoUrl = window.location.origin + `/logo_new.png`;
+      const sbImgObj = await getBase64FromUrl(sbLogoUrl);
+
+      const leftLogoUrl = headerClientLogo || (window.location.origin + `/logo_left.jpeg`);
+      const leftImgObj = await getBase64FromUrl(leftLogoUrl);
+
+      // Capture charts as images
+      const canvas1 = await html2canvas(chart1, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' });
+      const imgData1 = canvas1.toDataURL('image/png', 1.0);
+
+      const canvas2 = await html2canvas(chart2, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' });
+      const imgData2 = canvas2.toDataURL('image/png', 1.0);
+
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
+
+      // Draw Top Header (exact match with Reports.jsx / Transactions.jsx)
+      if (leftImgObj && leftImgObj.base64) {
+        const leftMaxWidth = 35;
+        const leftMaxHeight = 20;
+        let leftCalcWidth = leftMaxWidth;
+        let leftCalcHeight = (leftImgObj.height * leftMaxWidth) / leftImgObj.width;
+        if (leftCalcHeight > leftMaxHeight) {
+          leftCalcHeight = leftMaxHeight;
+          leftCalcWidth = (leftImgObj.width * leftMaxHeight) / leftImgObj.height;
+        }
+        doc.addImage(leftImgObj.base64, leftImgObj.ext, 14, 8 + (leftMaxHeight - leftCalcHeight) / 2, leftCalcWidth, leftCalcHeight);
+      } else {
+        doc.setDrawColor(37, 99, 235);
+        doc.rect(14, 10, 35, 20);
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(9);
+        doc.text("Client Logo", 31.5, 21, { align: 'center' });
       }
+
+      if (sbImgObj && sbImgObj.base64) {
+        const sbMaxWidth = 35;
+        const sbMaxHeight = 20;
+        let sbCalcWidth = sbMaxWidth;
+        let sbCalcHeight = (sbImgObj.height * sbMaxWidth) / sbImgObj.width;
+        if (sbCalcHeight > sbMaxHeight) {
+          sbCalcHeight = sbMaxHeight;
+          sbCalcWidth = (sbImgObj.width * sbMaxHeight) / sbImgObj.height;
+        }
+        doc.addImage(sbImgObj.base64, sbImgObj.ext, pageWidth - 14 - sbCalcWidth, 8 + (sbMaxHeight - sbCalcHeight) / 2, sbCalcWidth, sbCalcHeight);
+      }
+
+      const centerX = pageWidth / 2;
+      doc.setTextColor(16, 185, 129); // Hygienic Green
+      doc.setFontSize(13);
+      doc.setFont("helvetica", "bold");
+      doc.text("GRAPHICAL ANALYTICS REPORT", centerX, 15, { align: 'center', maxWidth: 110 });
       
-      pdf.save(`Graphical_Analytics_${new Date().toISOString().split('T')[0]}.pdf`);
+      doc.setTextColor(37, 99, 235); // Blue
+      doc.setFontSize(10);
+      doc.text(`Client Name: ${headerClientName || 'All Clients'}`, centerX, 22, { align: 'center', maxWidth: 110 });
+      
+      doc.setTextColor(100, 100, 100); // Gray
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Toilet ID: ${headerToiletId}`, centerX, 28, { align: 'center', maxWidth: 110 });
+      doc.text(`Location: ${headerLocation}`, centerX, 33, { align: 'center', maxWidth: 110 });
+
+      // Separator Line
+      doc.setDrawColor(37, 99, 235);
+      doc.setLineWidth(0.5);
+      doc.line(14, 38, pageWidth - 14, 38);
+
+      // Draw Charts
+      const contentWidth = pageWidth - 28; // 182mm
+      const chartHeight1 = (canvas1.height * contentWidth) / canvas1.width;
+      const chartHeight2 = (canvas2.height * contentWidth) / canvas2.width;
+
+      let currentY = 42;
+      doc.addImage(imgData1, 'PNG', 14, currentY, contentWidth, chartHeight1);
+      currentY += chartHeight1 + 8;
+
+      // Check if second chart fits before footer/signatures (need space up to ~230)
+      if (currentY + chartHeight2 > pageHeight - 45) {
+        doc.addPage();
+        currentY = 20;
+      }
+      doc.addImage(imgData2, 'PNG', 14, currentY, contentWidth, chartHeight2);
+
+      // Add Watermark, Footer, and Signatures across pages
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        
+        // Watermark
+        try {
+          if (sbImgObj && sbImgObj.base64) {
+            doc.setGState(new doc.GState({opacity: 0.05}));
+            const wmMaxWidth = 110;
+            let wmWidth = wmMaxWidth;
+            let wmHeight = (sbImgObj.height * wmMaxWidth) / sbImgObj.width;
+            doc.addImage(sbImgObj.base64, sbImgObj.ext, (pageWidth/2) - (wmWidth/2), (pageHeight/2) - (wmHeight/2), wmWidth, wmHeight);
+            doc.setGState(new doc.GState({opacity: 1}));
+          }
+        } catch (e) {}
+
+        // Footer Section
+        const sepY = pageHeight - 15;
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.line(14, sepY, pageWidth - 14, sepY);
+
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.setFont("helvetica", "normal");
+        doc.text('AARYA INNOVTECH PVT. LTD. CIN: U29305MH2019PTC327551 | +91 8806796868 | https://aaryainnovtech.com/', 14, sepY + 5);
+        doc.text('Nashik Office: Flat No.4A, Sayali Darshan A-Wing, Makhamalabad Road, Nashik-422003.', 14, sepY + 9);
+        doc.text(`Page ${i} of ${totalPages}`, pageWidth - 14, sepY + 5, { align: 'right' });
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, pageWidth - 14, sepY + 9, { align: 'right' });
+      }
+
+      // Draw Signatures ONLY on the last page
+      doc.setPage(totalPages);
+      const sigY = pageHeight - 25;
+      doc.setFontSize(9);
+      doc.setTextColor(80, 80, 80);
+      doc.setDrawColor(150, 150, 150);
+      doc.setLineWidth(0.2);
+      doc.line(14, sigY, 64, sigY);
+      doc.text('System Administrator', 39, sigY + 5, { align: 'center' });
+      doc.line(pageWidth - 64, sigY, pageWidth - 14, sigY);
+      doc.text('Authorized Signatory', pageWidth - 39, sigY + 5, { align: 'center' });
+
+      doc.save(`Graphical_Analytics_Report_${Date.now()}.pdf`);
       toast.dismiss(toastId);
-      toast.success('HD PDF Downloaded successfully!');
+      toast.success('HD PDF Report Downloaded successfully!');
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast.error('Failed to generate PDF');
@@ -268,7 +432,7 @@ const Analytics = () => {
         <div style={{ textAlign: 'center', padding: '3rem' }}>Loading analytics data...</div>
       ) : data.length > 0 ? (
         <div id="analytics-export-area">
-          <PrintTemplate title="GRAPHICAL ANALYTICS" isTable={false} clientName={clientName}>
+          <PrintTemplate title="GRAPHICAL ANALYTICS" isTable={false} clientName={headerClientName} toiletId={headerToiletId} location={headerLocation} clientLogo={headerClientLogo}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
               
               {/* Revenue Chart */}
