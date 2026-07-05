@@ -65,7 +65,19 @@ const Dashboard = () => {
     return <div className="loading-screen">Loading beautiful dashboard...</div>;
   }
 
-  const finalChartData = stats?.chartData || [];
+  const rawChartData = stats?.chartData || [];
+  const finalChartData = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const dateStr = d.toISOString().split('T')[0];
+    const shortName = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+    
+    const found = rawChartData.find(row => row.dateStr === dateStr || row.name === shortName || (row.name && row.name.replace(/^0/, '') === shortName.replace(/^0/, '')));
+    return {
+      name: shortName,
+      total: found ? Number(found.total || 0) : 0
+    };
+  });
   const finalMachineHealth = stats?.machineHealth || [];
   const finalTopProjects = stats?.topProjectsList || [];
   const finalRecentActivity = stats?.recentTransactions || [];
@@ -253,7 +265,7 @@ const Dashboard = () => {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--text-primary)', fontSize: 13, fontWeight: 600}} dy={8} />
-                    <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--text-secondary)', fontSize: 12}} tickFormatter={(value) => `₹${value}`} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--text-secondary)', fontSize: 12}} tickFormatter={(value) => `₹${value}`} domain={[0, (dataMax) => Math.ceil((Math.max(Number(dataMax) || 0, 10)) * 1.15)]} />
                     <Tooltip 
                       cursor={{fill: 'rgba(59, 130, 246, 0.08)'}}
                       contentStyle={{backgroundColor: 'var(--surface-bg)', color: 'var(--text-primary)', borderRadius: '0.75rem', border: '1px solid var(--border-color)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)', padding: '12px'}}
