@@ -52,14 +52,29 @@ const Transactions = () => {
     setPage(1);
   }, [searchTerm]);
 
+  // Helper to format date cleanly without text clipping
+  const formatDate = (dateVal) => {
+    if (!dateVal) return '-';
+    const d = new Date(dateVal);
+    if (isNaN(d)) return '-';
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    let hours = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    return `${day}/${month}/${year} ${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+  };
+
   const getTableData = () => {
-    const columns = ["Trans ID", "Machine ID", "Project", "Amount", "Date & Time", "Status"];
+    const columns = ["Trans ID", "Machine ID", "Project Name", "Amount", "Date & Time", "Status"];
     const rows = transactions.map(t => [
       t.trans_id ? t.trans_id.toString() : '-',
       t.machin_id ? t.machin_id.toString() : '-',
       t.project_name ? t.project_name.toString() : '-',
       t.trans_amt ? t.trans_amt.toString() : '-',
-      t.date_time ? new Date(t.date_time).toLocaleString() : '-',
+      t.date_time ? formatDate(t.date_time) : '-',
       t.status ? t.status.toString() : '-'
     ]);
     return { columns, rows };
@@ -72,7 +87,7 @@ const Transactions = () => {
       return;
     }
 
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
 
@@ -273,7 +288,7 @@ const Transactions = () => {
                     </div>
                   </td>
                   <td style={{ color: 'var(--slate-500)', fontSize: '0.875rem' }}>
-                    {new Date(t.date_time).toLocaleString()}
+                    {formatDate(t.date_time)}
                   </td>
                   <td>
                     <span className={`badge-glow ${t.status === 'success' ? 'success' : 'failed'}`}>

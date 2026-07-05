@@ -1632,7 +1632,12 @@ button {
 
 /* --- PRINT MEDIA QUERIES --- */
 @media print {
-  .no-print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  .no-print, .sidebar, .navbar, .top-header, .dashboard-header button, .search-container, .auth-container, .pagination-container, button {
     display: none !important;
   }
   
@@ -1640,40 +1645,29 @@ button {
     display: block !important;
   }
 
-  body {
-    background: white;
-    margin: 0;
-    padding: 15mm;
-    color: black;
+  * {
+    overflow: visible !important;
+    max-height: none !important;
   }
 
-  /* Reset layout constraints for printing */
-  .main-content {
-    margin-left: 0 !important;
+  ::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+  }
+
+  body, html, .app-layout, .page-content, .main-content, .table-container, .glass-panel, .card, .reports-container, .page-container {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
     padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
     width: 100% !important;
     max-width: 100% !important;
-  }
-
-  /* Hide sidebar and navbar entirely */
-  .sidebar, .navbar, .top-header {
-    display: none !important;
-  }
-
-  .reports-container, .page-container {
-    padding: 0 !important;
-    box-shadow: none !important;
-    margin: 0 !important;
-  }
-
-  .table-container {
+    height: auto !important;
     overflow: visible !important;
-    box-shadow: none !important;
-  }
-
-  @page {
-    size: A4 portrait;
-    margin: 0;
   }
 
   .print-watermark {
@@ -1687,16 +1681,40 @@ button {
     pointer-events: none;
   }
 
-  /* Force table headers to be green */
+  /* Force table headers and cells to format cleanly without orphan headers */
+  table, .premium-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    margin-top: 1rem !important;
+  }
+
+  tr, .premium-row {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tfoot {
+    display: table-footer-group !important;
+  }
+
   .premium-table th, .print-body-content th {
     background-color: #10b981 !important;
     color: white !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    box-shadow: inset 0 0 0 1000px #10b981 !important; /* Forces color even if background graphics is off */
+    box-shadow: inset 0 0 0 1000px #10b981 !important;
     border: 1px solid #059669 !important;
     padding: 10px !important;
     text-align: center !important;
+    font-size: 11pt !important;
+    white-space: nowrap !important;
   }
 
   .premium-table td, .print-body-content td {
@@ -1704,11 +1722,9 @@ button {
     padding: 8px !important;
     text-align: center !important;
     color: #000 !important;
-  }
-  
-  .premium-table {
-    border-collapse: collapse !important;
-    width: 100% !important;
+    font-size: 10pt !important;
+    word-break: break-word !important;
+    white-space: normal !important;
   }
 
   /* Adjust Recharts for print */

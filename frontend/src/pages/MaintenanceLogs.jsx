@@ -101,7 +101,7 @@ const MaintenanceLogs = () => {
       return;
     }
 
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     
     // Header Data
     const title = 'Maintenance Logs Report';
