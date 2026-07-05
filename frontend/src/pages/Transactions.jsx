@@ -8,7 +8,7 @@ import PrintTemplate from '../components/PrintTemplate';
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
-const logoImage = "/logo_new.jpeg";
+const logoImage = "/logo_new.png";
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
@@ -149,7 +149,7 @@ const Transactions = () => {
       } catch (error) { return null; }
     };
 
-    const sbLogoUrl = window.location.origin + `/logo_new.jpeg`;
+    const sbLogoUrl = window.location.origin + `/logo_new.png`;
     let sbImgObj = await getBase64FromUrl(sbLogoUrl);
 
     // Draw Top Header

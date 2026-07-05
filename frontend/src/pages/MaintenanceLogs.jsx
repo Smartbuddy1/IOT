@@ -118,7 +118,7 @@ const MaintenanceLogs = () => {
     }
     
     const sbImg = new Image();
-    sbImg.src = "/logo_new.jpeg";
+    sbImg.src = "/logo_new.png";
 
     const drawPDF = (sbImgObj) => {
       const pageWidth = doc.internal.pageSize.width;

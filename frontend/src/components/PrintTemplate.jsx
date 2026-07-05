@@ -52,7 +52,7 @@ const PrintTemplate = ({
 
         {/* Right Side: SmartBuddy Modern HD Logo */}
         <div style={{ width: '160px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-          <img src="/logo_new.jpeg" alt="SmartBuddy Logo" style={{ maxHeight: '65px', maxWidth: '150px', objectFit: 'contain' }} />
+          <img src="/logo_new.png" alt="SmartBuddy Logo" style={{ maxHeight: '65px', maxWidth: '150px', objectFit: 'contain' }} />
         </div>
       </div>
       <div style={{ borderBottom: '2.5px solid #1d4ed8' }}></div>
@@ -85,7 +85,7 @@ const PrintTemplate = ({
 
   return (
     <div className="print-template-wrapper" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
-      <img className="print-only" src="/logo_new.jpeg" alt="Watermark" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '420px', opacity: 0.04, zIndex: -1, pointerEvents: 'none' }} />
+      <img className="print-only" src="/logo_new.png" alt="Watermark" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '420px', opacity: 0.04, zIndex: -1, pointerEvents: 'none' }} />
       
       {isTable ? (
         <table className="print-layout-table" style={{ width: '100%', borderCollapse: 'collapse', border: 'none' }}>
