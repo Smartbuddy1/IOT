@@ -81,41 +81,13 @@ const PrintTemplate = ({
     <div className="print-template-wrapper" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
       <img className="print-only" src="/logo_new.png" alt="Watermark" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '420px', opacity: 0.04, zIndex: -1, pointerEvents: 'none' }} />
       
-      {isTable ? (
-        <table className="print-layout-table" style={{ width: '100%', borderCollapse: 'collapse', border: 'none' }}>
-          <thead className="print-only">
-            <tr>
-              <td style={{ border: 'none', padding: 0 }}>
-                <Header />
-              </td>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={{ border: 'none', padding: 0 }}>
-                <div className="print-body-content">
-                  {children}
-                </div>
-              </td>
-            </tr>
-          </tbody>
-          <tfoot className="print-only">
-            <tr>
-              <td style={{ border: 'none', padding: 0 }}>
-                <Footer />
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      ) : (
-        <div style={{ width: '100%' }}>
-          <div className="print-only"><Header /></div>
-          <div className="print-body-content">
-            {children}
-          </div>
-          <div className="print-only"><Footer /></div>
+      <div style={{ width: '100%' }}>
+        <div className="print-only"><Header /></div>
+        <div className="print-body-content" style={{ marginTop: '10px' }}>
+          {children}
         </div>
-      )}
+        <div className="print-only" style={{ marginTop: '30px', pageBreakInside: 'avoid', breakInside: 'avoid' }}><Footer /></div>
+      </div>
     </div>
   );
 };
