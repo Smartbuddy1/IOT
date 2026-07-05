@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Printer, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import axios from 'axios';
 import PrintTemplate from '../components/PrintTemplate';
 
@@ -106,14 +109,57 @@ const Analytics = () => {
 
   const handlePrint = () => window.print();
 
+  const handleExportPDF = async () => {
+    const printArea = document.getElementById('analytics-export-area');
+    if (!printArea) {
+      toast.error('Nothing to export');
+      return;
+    }
+    try {
+      const toastId = toast.loading('Generating HD PDF...');
+      const canvas = await html2canvas(printArea, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' });
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      
+      const pdf = new jsPDF('portrait', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+      
+      pdf.save(`Graphical_Analytics_${new Date().toISOString().split('T')[0]}.pdf`);
+      toast.dismiss(toastId);
+      toast.success('HD PDF Downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF');
+    }
+  };
+
   return (
     <div className="reports-container" style={{ padding: '2rem' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }} className="no-print">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }} className="no-print">
         <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>Graphical Analytics</h1>
-        <div>
-          <button onClick={handlePrint} className="btn btn-primary" style={{ marginRight: '1rem', padding: '0.5rem 1.5rem', borderRadius: '8px' }}>
-            🖨️ Print / PDF
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button onClick={handlePrint} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--surface-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '20px', padding: '0.5rem 1.25rem', fontWeight: '600' }}>
+            <Printer size={18} /> Print
+          </button>
+          <button onClick={handleExportPDF} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#8b5cf6', borderColor: '#8b5cf6', borderRadius: '20px', padding: '0.5rem 1.25rem', fontWeight: '600', color: '#ffffff' }}>
+            <Download size={18} /> Download PDF
           </button>
         </div>
       </div>
@@ -221,48 +267,50 @@ const Analytics = () => {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '3rem' }}>Loading analytics data...</div>
       ) : data.length > 0 ? (
-        <PrintTemplate title="GRAPHICAL ANALYTICS" isTable={false}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
-            
-            {/* Revenue Chart */}
-            <div className="glass-panel" style={{ borderRadius: '12px', padding: '2rem', pageBreakInside: 'avoid' }}>
-              <h3 style={{ textAlign: 'center', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '2rem' }}>💰 Yearly Transaction Revenue (₹)</h3>
-              <div style={{ width: '100%', height: 400 }}>
-                <ResponsiveContainer>
-                  <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis dataKey="month" stroke="#64748b" />
-                    <YAxis stroke="#64748b" />
-                    <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
-                    <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                    <Bar dataKey="coinAmount" name="Coin Amount (₹)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="upiAmount" name="UPI Amount (₹)" fill="#10b981" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+        <div id="analytics-export-area">
+          <PrintTemplate title="GRAPHICAL ANALYTICS" isTable={false} clientName={clientName}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+              
+              {/* Revenue Chart */}
+              <div className="glass-panel" style={{ borderRadius: '12px', padding: '2rem', pageBreakInside: 'avoid' }}>
+                <h3 style={{ textAlign: 'center', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '2rem' }}>💰 Yearly Transaction Revenue (₹)</h3>
+                <div style={{ width: '100%', height: 400 }}>
+                  <ResponsiveContainer>
+                    <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                      <XAxis dataKey="month" stroke="#64748b" />
+                      <YAxis stroke="#64748b" />
+                      <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
+                      <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                      <Bar dataKey="coinAmount" name="Coin Amount (₹)" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="upiAmount" name="UPI Amount (₹)" fill="#10b981" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-            </div>
 
-            {/* Usage Chart */}
-            <div className="glass-panel" style={{ borderRadius: '12px', padding: '2rem', pageBreakInside: 'avoid' }}>
-              <h3 style={{ textAlign: 'center', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '2rem' }}>⚙️ Yearly Usage Count</h3>
-              <div style={{ width: '100%', height: 400 }}>
-                <ResponsiveContainer>
-                  <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis dataKey="month" stroke="#64748b" />
-                    <YAxis stroke="#64748b" />
-                    <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
-                    <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                    <Bar dataKey="coinCount" name="Coin Usage" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="upiCount" name="UPI Usage" fill="#10b981" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="freeCount" name="Free Usage" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+              {/* Usage Chart */}
+              <div className="glass-panel" style={{ borderRadius: '12px', padding: '2rem', pageBreakInside: 'avoid' }}>
+                <h3 style={{ textAlign: 'center', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '2rem' }}>⚙️ Yearly Usage Count</h3>
+                <div style={{ width: '100%', height: 400 }}>
+                  <ResponsiveContainer>
+                    <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                      <XAxis dataKey="month" stroke="#64748b" />
+                      <YAxis stroke="#64748b" />
+                      <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
+                      <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                      <Bar dataKey="coinCount" name="Coin Usage" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="upiCount" name="UPI Usage" fill="#10b981" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="freeCount" name="Free Usage" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-            </div>
 
-          </div>
-        </PrintTemplate>
+            </div>
+          </PrintTemplate>
+        </div>
       ) : (
         <div style={{ textAlign: 'center', padding: '3rem', backgroundColor: '#fff', borderRadius: '8px' }}>
           Please select a Client to view the analytics.
