@@ -107,12 +107,22 @@ export const createRazorpayOrder = async (req, res) => {
     // Block payment if machine is not in a ready/active/idle state (Whitelist approach)
     if (status === 'ready' || status === 'active' || status === 'idle' || status === 'online') {
       // Machine is safe, allow order creation
-    } else if (status === 'busy') {
-      return res.status(400).json({ success: false, message: '❌ Machine is busy, try after some time.' });
-    } else if (status === 'maintenance' || status === 'in maintenance' || status === 'under maintenance') {
-      return res.status(400).json({ success: false, message: '⚠️ Machine is in maintenance. Payment cannot be processed.' });
     } else {
-      return res.status(400).json({ success: false, message: '⚠️ Machine is offline or unavailable. Payment disabled.' });
+      let reasonMsg = '⚠️ Machine is offline or unavailable. Payment disabled.';
+      let reasonCode = 'offline_attempt';
+      if (status === 'busy') {
+        reasonMsg = '❌ Machine is busy, try after some time.';
+        reasonCode = 'busy_attempt';
+      } else if (status === 'maintenance' || status === 'in maintenance' || status === 'under maintenance') {
+        reasonMsg = '⚠️ Machine is in maintenance. Payment cannot be processed.';
+        reasonCode = 'maintenance_attempt';
+      }
+      // Log failed transaction attempt in database so it shows on Dashboard and Transactions table
+      await pool.query(
+        `INSERT INTO trans (machin_id, trans_amt, pay_id, trans_id, mobile, status, date_time) VALUES (?, ?, ?, ?, ?, 'failed', NOW())`,
+        [machine_id, amount || 5, reasonCode, `failed_${Date.now()}`, '9999999999']
+      );
+      return res.status(400).json({ success: false, message: reasonMsg });
     }
 
     // 2. Create Razorpay order
@@ -166,22 +176,24 @@ export const saveTransaction = async (req, res) => {
   }
 
   try {
-    // 1. STRICT CHECK: Verify machine status before saving transaction or triggering door
-    const [machines] = await pool.query('SELECT status FROM machines WHERE machine_id = ? LIMIT 1', [machine_id]);
-    if (machines.length === 0) {
-      return res.status(404).json({ success: false, message: 'Machine not found' });
+    // 1. STRICT CHECK: If transaction is SUCCESS, verify machine status before triggering door
+    if (status === 'success') {
+      const [machines] = await pool.query('SELECT status FROM machines WHERE machine_id = ? LIMIT 1', [machine_id]);
+      if (machines.length === 0) {
+        return res.status(404).json({ success: false, message: 'Machine not found' });
+      }
+
+      const currentStatus = machines[0].status?.toLowerCase()?.trim();
+      if (currentStatus === 'busy') {
+        return res.status(400).json({ success: false, message: '❌ Machine is currently busy. Cannot trigger door.' });
+      } else if (currentStatus === 'maintenance' || currentStatus === 'in maintenance' || currentStatus === 'under maintenance') {
+        return res.status(400).json({ success: false, message: '⚠️ Machine is in maintenance. Cannot trigger door.' });
+      } else if (currentStatus !== 'ready' && currentStatus !== 'active' && currentStatus !== 'idle' && currentStatus !== 'online') {
+        return res.status(400).json({ success: false, message: '⚠️ Machine is offline or unavailable. Cannot trigger door.' });
+      }
     }
 
-    const currentStatus = machines[0].status?.toLowerCase()?.trim();
-    if (currentStatus === 'busy') {
-      return res.status(400).json({ success: false, message: '❌ Machine is currently busy. Cannot trigger door.' });
-    } else if (currentStatus === 'maintenance' || currentStatus === 'in maintenance' || currentStatus === 'under maintenance') {
-      return res.status(400).json({ success: false, message: '⚠️ Machine is in maintenance. Cannot trigger door.' });
-    } else if (currentStatus !== 'ready' && currentStatus !== 'active' && currentStatus !== 'idle' && currentStatus !== 'online') {
-      return res.status(400).json({ success: false, message: '⚠️ Machine is offline or unavailable. Cannot trigger door.' });
-    }
-
-    // 2. Insert into database
+    // 2. Insert into database (always save both success and failed transactions!)
     await pool.query(
       `INSERT INTO trans (machin_id, trans_amt, pay_id, trans_id, mobile, status, date_time) 
        VALUES (?, ?, ?, ?, ?, ?, NOW())`,

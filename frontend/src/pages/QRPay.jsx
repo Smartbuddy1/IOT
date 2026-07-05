@@ -46,11 +46,20 @@ const QRPay = () => {
             setMachine(fetchedMachine);
           } else if (status === 'busy') {
             setError('❌ Machine is busy, try after some time.');
+            axios.post(`${import.meta.env.VITE_API_BASE_URL}/transactions/save`, {
+              machine_id: machineId, amount: fetchedMachine.uses_amt || 5, pay_id: 'scan_busy', order_id: `scan_${Date.now()}`, status: 'failed'
+            }).catch(() => {});
           } else if (status === 'maintenance' || status === 'in maintenance' || status === 'under maintenance') {
             setError('⚠️ Machine is in maintenance. Payment cannot be processed.');
+            axios.post(`${import.meta.env.VITE_API_BASE_URL}/transactions/save`, {
+              machine_id: machineId, amount: fetchedMachine.uses_amt || 5, pay_id: 'scan_maintenance', order_id: `scan_${Date.now()}`, status: 'failed'
+            }).catch(() => {});
           } else {
             // Blocks 'failed', 'offline', and ANY unknown status!
             setError('⚠️ Machine is offline or unavailable. Payment disabled.');
+            axios.post(`${import.meta.env.VITE_API_BASE_URL}/transactions/save`, {
+              machine_id: machineId, amount: fetchedMachine.uses_amt || 5, pay_id: 'scan_offline', order_id: `scan_${Date.now()}`, status: 'failed'
+            }).catch(() => {});
           }
         } else {
           setError('Machine not found in our records.');
@@ -109,10 +118,23 @@ const QRPay = () => {
               // Optional: Redirect to a success page
             } else {
               setError("Payment verification failed on server.");
+              axios.post(`${import.meta.env.VITE_API_BASE_URL}/transactions/save`, {
+                machine_id: machineId, amount: machine.uses_amt, pay_id: response.razorpay_payment_id || 'verify_failed', order_id: order_id, status: 'failed'
+              }).catch(() => {});
             }
           } catch (err) {
             console.error("Verification error", err);
             setError("Failed to verify payment with server.");
+            axios.post(`${import.meta.env.VITE_API_BASE_URL}/transactions/save`, {
+              machine_id: machineId, amount: machine.uses_amt, pay_id: 'verify_error', order_id: order_id, status: 'failed'
+            }).catch(() => {});
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            axios.post(`${import.meta.env.VITE_API_BASE_URL}/transactions/save`, {
+              machine_id: machineId, amount: machine.uses_amt, pay_id: 'payment_cancelled', order_id: order_id, status: 'failed'
+            }).catch(() => {});
           }
         },
         prefill: {
@@ -128,6 +150,13 @@ const QRPay = () => {
       const rzp1 = new window.Razorpay(options);
       rzp1.on('payment.failed', function (response){
         setError("Payment was failed or cancelled. Please try again.");
+        axios.post(`${import.meta.env.VITE_API_BASE_URL}/transactions/save`, {
+          machine_id: machineId,
+          amount: machine.uses_amt || 5,
+          pay_id: response.error?.metadata?.payment_id || 'payment_failed',
+          order_id: response.error?.metadata?.order_id || order_id,
+          status: 'failed'
+        }).catch(() => {});
       });
       rzp1.open();
       
