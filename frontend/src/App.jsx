@@ -63,6 +63,10 @@ function App() {
           <Route path="/refund-policy" element={<RefundPolicy />} />
           <Route path="/contact-us" element={<ContactUs />} />
           
+          {/* Standalone Public Test Form (Without Login) */}
+          <Route path="/test-form" element={<TestForm />} />
+          <Route path="/hardware-test" element={<TestForm />} />
+          
           {/* Protected Routes */}
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={
@@ -84,7 +88,7 @@ function App() {
             <Route path="maintenance-logs" element={<ProtectedRoute allowedRoles={['Admin', 'Maintenance_Head']}><MaintenanceLogs /></ProtectedRoute>} />
             <Route path="tickets" element={<ProtectedRoute allowedRoles={['Admin', 'Maintenance_Head', 'Field_Tech']}><MaintenanceTickets /></ProtectedRoute>} />
             <Route path="field-tech" element={<ProtectedRoute allowedRoles={['Field_Tech']}><FieldTechView /></ProtectedRoute>} />
-            <Route path="test-form" element={<ProtectedRoute allowedRoles={['Field_Tech']}><TestForm /></ProtectedRoute>} />
+            <Route path="test-form" element={<TestForm />} />
           </Route>
         </Routes>
       </AuthProvider>

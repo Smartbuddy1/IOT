@@ -17,6 +17,25 @@ export const authenticateToken = (req, res, next) => {
   }
 };
 
+export const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    req.user = { id: 0, role: 'Guest', name: 'Field Tech (Direct Link)' };
+    return next();
+  }
+
+  try {
+    const verified = jwt.verify(token, process.env.JWT_SECRET || 'smartbuddy_super_secret_jwt_key_2026');
+    req.user = verified;
+    next();
+  } catch (error) {
+    req.user = { id: 0, role: 'Guest', name: 'Field Tech (Direct Link)' };
+    next();
+  }
+};
+
 export const requireRole = (allowedRoles) => {
   return (req, res, next) => {
     if (!req.user || !allowedRoles.includes(req.user.role)) {

@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, optionalAuth } from '../middleware/auth.js';
 import * as maintenanceController from '../controllers/maintenanceController.js';
 import { uploadWorklogPhotos } from '../middleware/upload.js';
 
@@ -11,8 +11,8 @@ router.get('/allocations', authenticateToken, maintenanceController.getAllocatio
 
 // Field Tech routes
 router.get('/my-machines', authenticateToken, maintenanceController.getMyMachines);
-router.post('/submit-log', authenticateToken, uploadWorklogPhotos.fields([{ name: 'before_photo', maxCount: 1 }, { name: 'after_photo', maxCount: 1 }]), maintenanceController.submitLog);
-router.post('/test-hardware', authenticateToken, maintenanceController.testHardware);
+router.post('/submit-log', optionalAuth, uploadWorklogPhotos.fields([{ name: 'before_photo', maxCount: 1 }, { name: 'after_photo', maxCount: 1 }]), maintenanceController.submitLog);
+router.post('/test-hardware', optionalAuth, maintenanceController.testHardware);
 
 // Logs (Visible to Admin, Maintenance_Head, and Field_Tech themselves)
 router.get('/logs', authenticateToken, maintenanceController.getAllLogs);

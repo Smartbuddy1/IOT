@@ -234,10 +234,10 @@ export const getAllLogs = async (req, res) => {
         l.log_id, l.machine_id, l.tech_id, l.reported_issue, l.root_cause, l.action_taken, 
         l.gps_lat, l.gps_lng, l.pcb_condition, l.voltage_reading, l.relays_checked, 
         l.sensors_checked, l.status, l.created_at,
-        u.name as tech_name, m.client_name, m.project_name
+        COALESCE(u.name, 'Field Tech (Direct Link)') as tech_name, COALESCE(m.client_name, 'Unassigned') as client_name, m.project_name
       FROM maintenance_logs l
-      JOIN tblusers u ON l.tech_id = u.id
-      JOIN machines m ON l.machine_id = m.machine_id
+      LEFT JOIN tblusers u ON l.tech_id = u.id
+      LEFT JOIN machines m ON l.machine_id = m.machine_id
       WHERE 1=1
     `;
     let params = [];
