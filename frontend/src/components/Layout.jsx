@@ -44,7 +44,7 @@ const Layout = () => {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Client', 'Maintenance_Head'] },
-    { name: 'User Management', href: '/users', icon: Users, roles: ['Admin', 'Field_Tech', 'Maintenance_Head'] },
+    { name: user?.role === 'Field_Tech' ? 'Clients' : 'User Management', href: '/users', icon: Users, roles: ['Admin', 'Field_Tech', 'Maintenance_Head'] },
     { name: 'Projects', href: '/projects', icon: Folder, roles: ['Admin', 'Client', 'Field_Tech'] },
     { name: 'Machines', href: '/machines', icon: Monitor, roles: ['Admin', 'Client', 'Field_Tech'] },
     { name: 'My Tickets', href: '/field-tech', icon: ClipboardList, roles: ['Field_Tech'] },

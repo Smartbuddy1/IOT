@@ -18,9 +18,9 @@ const UserManagement = () => {
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--slate-800)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Users color="var(--primary-color)" /> User Management
+            <Users color="var(--primary-color)" /> {user?.role === 'Field_Tech' ? 'Clients' : 'User Management'}
           </h1>
-          <p style={{ color: 'var(--slate-500)', marginTop: '0.25rem' }}>Manage all system users, clients, and operations staff.</p>
+          <p style={{ color: 'var(--slate-500)', marginTop: '0.25rem' }}>{user?.role === 'Field_Tech' ? 'View client contact details, locations, and government authorities.' : 'Manage all system users, clients, and operations staff.'}</p>
         </div>
       </div>
 
