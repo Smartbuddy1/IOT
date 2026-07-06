@@ -160,6 +160,13 @@ export const initializeMqtt = () => {
           }).catch(() => {});
         }
 
+        // ALWAYS record heartbeat timestamp in device_live_status whenever ANY MQTT message arrives from this machine!
+        // This prevents the 90-second heartbeat monitor from marking live SIM machines as inactive when sending comma-separated messages.
+        pool.query(
+          `INSERT INTO device_live_status (machine_id, last_updated) VALUES (?, NOW()) ON DUPLICATE KEY UPDATE last_updated = NOW()`,
+          [machineId]
+        ).catch(() => {});
+
         // OPTIMIZATION: Update DB immediately when status changes, without delay or heavy throttling
         const now = Date.now();
         if (reportedStatus) {
