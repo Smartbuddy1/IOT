@@ -57,6 +57,10 @@ export const createClient = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Client Name, Phone, Password, and Logo are compulsory' });
   }
 
+  if (password.length < 8) {
+    return res.status(400).json({ success: false, message: 'Security Alert: Password must be at least 8 characters long for enterprise security!' });
+  }
+
   try {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -79,6 +83,9 @@ export const createClient = async (req, res) => {
     });
   } catch (error) {
     console.error('Create client error:', error);
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ success: false, message: 'A client with this phone number or email already exists!' });
+    }
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
@@ -105,6 +112,9 @@ export const updateClient = async (req, res) => {
     let finalPassword = password;
     // If password exists and is NOT already a bcrypt hash, hash it
     if (password && !password.startsWith('$2')) {
+      if (password.length < 8) {
+        return res.status(400).json({ success: false, message: 'Security Alert: Password must be at least 8 characters long for enterprise security!' });
+      }
       const salt = await bcrypt.genSalt(10);
       finalPassword = await bcrypt.hash(password, salt);
     }
@@ -121,9 +131,9 @@ export const updateClient = async (req, res) => {
         contact_person = ?, contact_mobile = ?, password = ?, contact_email = ?, client_logo = ? 
       WHERE id = ?`,
       [
-        client_name, client_phone, client_address, client_website, 
-        client_state, clinet_district, client_city, client_type, 
-        contact_person, contact_mobile, finalPassword, contact_email, client_logo, 
+        client_name, client_phone, client_address || '', client_website || '', 
+        client_state || '', clinet_district || '', client_city || '', client_type || '', 
+        contact_person || '', contact_mobile || '', finalPassword, contact_email || '', client_logo, 
         id
       ]
     );
@@ -131,6 +141,9 @@ export const updateClient = async (req, res) => {
     res.json({ success: true, message: 'Client updated successfully!' });
   } catch (error) {
     console.error('Update client error:', error);
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ success: false, message: 'A client with this phone number or email already exists!' });
+    }
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };

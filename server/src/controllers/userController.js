@@ -1,4 +1,5 @@
 import pool from '../config/db.js';
+import bcrypt from 'bcrypt';
 
 export const getUsers = async (req, res) => {
   try {
@@ -17,10 +18,15 @@ export const createUser = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Name, Mobile, Password, and Role are required' });
   }
 
+  if (password.length < 8) {
+    return res.status(400).json({ success: false, message: 'Security Alert: Password must be at least 8 characters long for enterprise security!' });
+  }
+
   try {
+    const hashedPassword = await bcrypt.hash(password, 10);
     const [result] = await pool.query(
       'INSERT INTO tblusers (name, email, mobile, password, role, status, is_logged_in, assigned_state, assigned_client, assigned_project) VALUES (?, ?, ?, ?, ?, 1, 0, ?, ?, ?)',
-      [name, email || '', mobile, password, role, assigned_state || null, assigned_client || null, assigned_project || null]
+      [name, email || '', mobile, hashedPassword, role, assigned_state || null, assigned_client || null, assigned_project || null]
     );
 
     res.json({
@@ -30,6 +36,9 @@ export const createUser = async (req, res) => {
     });
   } catch (error) {
     console.error('Create user error:', error);
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ success: false, message: 'A user with this mobile number or email already exists!' });
+    }
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
@@ -43,8 +52,12 @@ export const updateUser = async (req, res) => {
     let params = [name, email, mobile, role, status, assigned_state || null, assigned_client || null, assigned_project || null];
 
     if (password) {
+      if (password.length < 8) {
+        return res.status(400).json({ success: false, message: 'Security Alert: Password must be at least 8 characters long for enterprise security!' });
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
       query += ', password = ?';
-      params.push(password);
+      params.push(hashedPassword);
     }
 
     query += ' WHERE id = ?';
@@ -54,6 +67,9 @@ export const updateUser = async (req, res) => {
     res.json({ success: true, message: 'Staff user updated successfully!' });
   } catch (error) {
     console.error('Update user error:', error);
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ success: false, message: 'A user with this mobile number or email already exists!' });
+    }
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };
