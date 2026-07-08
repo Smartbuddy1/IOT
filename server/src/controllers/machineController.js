@@ -8,10 +8,12 @@ export const getMachines = async (req, res) => {
     let query = 'SELECT * FROM machines';
     let params = [];
 
+    const userRole = (role || '').toString().trim().toLowerCase();
+
     let assignedProject = req.user.assigned_project;
     let assignedClient = req.user.assigned_client;
     
-    if (role === 'Field_Tech' && (!assignedProject || !assignedClient)) {
+    if (userRole === 'field_tech' && (!assignedProject || !assignedClient)) {
       const [[tech]] = await pool.query('SELECT assigned_project, assigned_client FROM tblusers WHERE id = ?', [req.user.id]);
       if (tech) {
         assignedProject = tech.assigned_project || assignedProject;
@@ -19,10 +21,10 @@ export const getMachines = async (req, res) => {
       }
     }
 
-    if (role === 'Client') {
+    if (userRole === 'client') {
       query += ' WHERE client_name = ?';
       params.push(name);
-    } else if (role === 'Field_Tech') {
+    } else if (userRole === 'field_tech') {
       if (assignedProject) {
         query += ' WHERE project_name = ?';
         params.push(assignedProject);
@@ -32,7 +34,7 @@ export const getMachines = async (req, res) => {
       } else {
         query += ' WHERE 1=0';
       }
-    } else if (role === 'Maintenance_Head' && req.user.assigned_state) {
+    } else if (userRole === 'maintenance_head' && req.user.assigned_state) {
       query += ' WHERE state = ?';
       params.push(req.user.assigned_state);
     }

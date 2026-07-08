@@ -19,7 +19,11 @@ const Dashboard = () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/dashboard/stats`, {
           params: { _t: Date.now() },
-          headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+          headers: { 
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Cache-Control': 'no-cache', 
+            'Pragma': 'no-cache' 
+          }
         });
         setStats(response.data.stats);
 
@@ -49,11 +53,19 @@ const Dashboard = () => {
         const [liveRes, statsRes] = await Promise.all([
           axios.get(`${import.meta.env.VITE_API_BASE_URL}/iot/live-status`, {
             params: { _t: Date.now() },
-            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+            headers: { 
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Cache-Control': 'no-cache', 
+              'Pragma': 'no-cache' 
+            }
           }),
           axios.get(`${import.meta.env.VITE_API_BASE_URL}/dashboard/stats`, {
             params: { _t: Date.now() },
-            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+            headers: { 
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Cache-Control': 'no-cache', 
+              'Pragma': 'no-cache' 
+            }
           })
         ]);
         if (liveRes.data.success) {

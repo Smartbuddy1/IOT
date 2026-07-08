@@ -8,7 +8,9 @@ export const getClients = async (req, res) => {
     let assignedClient = req.user.assigned_client;
     let assignedState = req.user.assigned_state;
 
-    if (req.user.role === 'Field_Tech' && !assignedClient) {
+    const userRole = (req.user.role || '').toString().trim().toLowerCase();
+
+    if (userRole === 'field_tech' && !assignedClient) {
       const [[tech]] = await pool.query('SELECT assigned_client, assigned_state FROM tblusers WHERE id = ?', [req.user.id]);
       if (tech) {
         assignedClient = tech.assigned_client;
@@ -16,7 +18,7 @@ export const getClients = async (req, res) => {
       }
     }
 
-    if (req.user.role === 'Field_Tech') {
+    if (userRole === 'field_tech') {
       if (assignedClient) {
         query += ' WHERE client_name = ?';
         params.push(assignedClient);
@@ -26,9 +28,12 @@ export const getClients = async (req, res) => {
       } else {
         query += ' WHERE 1=0'; // Show no clients if unassigned
       }
-    } else if (req.user.role === 'Maintenance_Head' && req.user.assigned_state) {
+    } else if (userRole === 'maintenance_head' && req.user.assigned_state) {
       query += ' WHERE client_state = ?';
       params.push(req.user.assigned_state);
+    } else if (userRole === 'client') {
+      query += ' WHERE id = ? OR client_name = ?';
+      params.push(req.user.id, req.user.name || '');
     }
     
     query += ' ORDER BY id DESC';

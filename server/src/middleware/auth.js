@@ -38,7 +38,15 @@ export const optionalAuth = (req, res, next) => {
 
 export const requireRole = (allowedRoles) => {
   return (req, res, next) => {
-    if (!req.user || !allowedRoles.includes(req.user.role)) {
+    if (!req.user || !req.user.role) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: Access restricted'
+      });
+    }
+    const userRole = req.user.role.toString().trim().toLowerCase();
+    const isAllowed = allowedRoles.some(role => role.toString().trim().toLowerCase() === userRole);
+    if (!isAllowed) {
       return res.status(403).json({
         success: false,
         message: `Forbidden: Access restricted to roles: [${allowedRoles.join(', ')}]`

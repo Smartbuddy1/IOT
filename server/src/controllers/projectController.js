@@ -14,26 +14,28 @@ export const getProjects = async (req, res) => {
     `;
     let params = [];
 
+    const userRole = (role || '').toString().trim().toLowerCase();
+
     let assignedProject = req.user.assigned_project;
-    if (role === 'Field_Tech' && !assignedProject) {
+    if (userRole === 'field_tech' && !assignedProject) {
       const [[tech]] = await pool.query('SELECT assigned_project FROM tblusers WHERE id = ?', [req.user.id]);
       if (tech) {
         assignedProject = tech.assigned_project;
       }
     }
 
-    if (role === 'Client') {
+    if (userRole === 'client') {
       // Find projects where client_name matches OR where the project is assigned to a machine owned by the client
       query += ' WHERE p.client_name = ? OR p.project_name IN (SELECT DISTINCT project_name FROM machines WHERE client_name = ? AND project_name IS NOT NULL)';
       params.push(name, name);
-    } else if (role === 'Field_Tech') {
+    } else if (userRole === 'field_tech') {
       if (assignedProject) {
         query += ' WHERE p.project_name = ?';
         params.push(assignedProject);
       } else {
         query += ' WHERE 1=0';
       }
-    } else if (role === 'Maintenance_Head' && req.user.assigned_state) {
+    } else if (userRole === 'maintenance_head' && req.user.assigned_state) {
       query += ' WHERE p.state = ?';
       params.push(req.user.assigned_state);
     }
