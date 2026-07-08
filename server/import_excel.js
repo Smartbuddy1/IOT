@@ -43,7 +43,7 @@ function getStateFromLoc(locationStr) {
 
 import fs from 'fs';
 
-function findExcelFile() {
+async function findExcelFile() {
   const searchDirs = [
     __dirname,
     path.join(__dirname, '..'),
@@ -61,12 +61,23 @@ function findExcelFile() {
       }
     } catch (e) {}
   }
-  throw new Error('Could not find any .xlsx file in ' + searchDirs.join(', '));
+
+  console.log('🌐 Local Excel file not found. Downloading E2T Excel file directly from GitHub repository...');
+  const url = 'https://raw.githubusercontent.com/Smartbuddy1/IOT/main/E2T%20Sale%2002AUG24%20(1).xlsx';
+  const targetPath = path.join(__dirname, 'E2T Sale 02AUG24 (1).xlsx');
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to download Excel from GitHub: ${response.statusText}`);
+  }
+  const buffer = await response.arrayBuffer();
+  fs.writeFileSync(targetPath, Buffer.from(buffer));
+  console.log('✅ Successfully downloaded Excel sheet to:', targetPath);
+  return targetPath;
 }
 
 async function run() {
   console.log('🚀 Starting import...');
-  const excelPath = findExcelFile();
+  const excelPath = await findExcelFile();
   console.log('📂 Reading Excel file from:', excelPath);
   const wb = xlsx.readFile(excelPath);
   const rawData = xlsx.utils.sheet_to_json(wb.Sheets['E2T']);
