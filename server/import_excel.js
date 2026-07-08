@@ -41,9 +41,30 @@ function getStateFromLoc(locationStr) {
   return 'Maharashtra';
 }
 
+import fs from 'fs';
+
+function findExcelFile() {
+  const candidates = [
+    path.join(__dirname, '../E2T Sale 02AUG24 (1).xlsx'),
+    path.join(__dirname, '../E2T Sale 02 AUG24 (1).xlsx'),
+    path.join(__dirname, 'E2T Sale 02AUG24 (1).xlsx'),
+    path.join(__dirname, 'E2T Sale 02 AUG24 (1).xlsx')
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  // Search parent directory for any xlsx starting with E2T
+  const parentFiles = fs.readdirSync(path.join(__dirname, '..'));
+  const found = parentFiles.find(f => f.startsWith('E2T') && f.endsWith('.xlsx'));
+  if (found) return path.join(__dirname, '..', found);
+  throw new Error('Could not find E2T Excel file in parent or current directory.');
+}
+
 async function run() {
   console.log('🚀 Starting import...');
-  const wb = xlsx.readFile(path.join(__dirname, '../E2T Sale 02AUG24 (1).xlsx'));
+  const excelPath = findExcelFile();
+  console.log('📂 Reading Excel file from:', excelPath);
+  const wb = xlsx.readFile(excelPath);
   const rawData = xlsx.utils.sheet_to_json(wb.Sheets['E2T']);
 
   let lastClient = 'E2T Municipal Client';
