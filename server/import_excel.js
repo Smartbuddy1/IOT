@@ -44,20 +44,24 @@ function getStateFromLoc(locationStr) {
 import fs from 'fs';
 
 function findExcelFile() {
-  const candidates = [
-    path.join(__dirname, '../E2T Sale 02AUG24 (1).xlsx'),
-    path.join(__dirname, '../E2T Sale 02 AUG24 (1).xlsx'),
-    path.join(__dirname, 'E2T Sale 02AUG24 (1).xlsx'),
-    path.join(__dirname, 'E2T Sale 02 AUG24 (1).xlsx')
+  const searchDirs = [
+    __dirname,
+    path.join(__dirname, '..'),
+    process.cwd(),
+    path.join(process.cwd(), '..')
   ];
-  for (const c of candidates) {
-    if (fs.existsSync(c)) return c;
+
+  for (const dir of searchDirs) {
+    try {
+      if (!fs.existsSync(dir)) continue;
+      const files = fs.readdirSync(dir);
+      const xlsxFile = files.find(f => f.toLowerCase().endsWith('.xlsx') && !f.startsWith('~'));
+      if (xlsxFile) {
+        return path.join(dir, xlsxFile);
+      }
+    } catch (e) {}
   }
-  // Search parent directory for any xlsx starting with E2T
-  const parentFiles = fs.readdirSync(path.join(__dirname, '..'));
-  const found = parentFiles.find(f => f.startsWith('E2T') && f.endsWith('.xlsx'));
-  if (found) return path.join(__dirname, '..', found);
-  throw new Error('Could not find E2T Excel file in parent or current directory.');
+  throw new Error('Could not find any .xlsx file in ' + searchDirs.join(', '));
 }
 
 async function run() {
