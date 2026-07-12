@@ -10,13 +10,28 @@ const runRDSImport = async () => {
   try {
     console.log('Connecting to AWS RDS Database using server/.env credentials...');
     
-    // Path to ec2_safe_import_e2t.sql (located in workspace root)
-    const sqlPath = path.resolve(__dirname, '../ec2_safe_import_e2t.sql');
-    if (!fs.existsSync(sqlPath)) {
-      console.error(`❌ SQL file not found at: ${sqlPath}`);
+    // Search multiple candidate locations for ec2_safe_import_e2t.sql
+    const candidatePaths = [
+      path.resolve(__dirname, '../ec2_safe_import_e2t.sql'),
+      path.resolve(__dirname, 'ec2_safe_import_e2t.sql'),
+      path.resolve(process.cwd(), 'ec2_safe_import_e2t.sql'),
+      path.resolve(process.cwd(), '../ec2_safe_import_e2t.sql')
+    ];
+
+    let sqlPath = null;
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        sqlPath = p;
+        break;
+      }
+    }
+
+    if (!sqlPath) {
+      console.error(`❌ SQL file not found in candidate paths:`, candidatePaths);
       process.exit(1);
     }
 
+    console.log(`Found SQL file at: ${sqlPath}`);
     const sqlContent = fs.readFileSync(sqlPath, 'utf-8');
     
     // Split queries by semicolon followed by newline
