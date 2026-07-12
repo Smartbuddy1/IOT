@@ -136,7 +136,61 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* IOT LIVE MONITOR ROW REMOVED AS REQUESTED */}
+      {/* LIVE PCB DETECTION BANNER */}
+      {Number(stats?.unassignedMachines || 0) > 0 && user?.role === 'Admin' && (
+        <div 
+          onClick={() => navigate('/unassigned-machines')}
+          className="glass-panel hover-float"
+          style={{
+            padding: '1.25rem 1.5rem',
+            marginBottom: '1.5rem',
+            borderRadius: '1rem',
+            background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(234, 88, 12, 0.25) 100%)',
+            border: '1.5px solid rgba(249, 115, 22, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: 'pointer',
+            boxShadow: '0 8px 20px -4px rgba(249, 115, 22, 0.25)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
+            <div style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '12px',
+              backgroundColor: '#f97316',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              flexShrink: 0
+            }}>
+              <Tag size={24} />
+            </div>
+            <div>
+              <h4 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
+                ⚡ NEW TOILET ENTRY CREATED ({stats?.unassignedMachines} Unassigned PCB Detected)
+              </h4>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
+                SIM card inserted & connected to network. Click here to assign this new toilet PCB to a Client & Project.
+              </p>
+            </div>
+          </div>
+          <span style={{
+            padding: '0.6rem 1.2rem',
+            borderRadius: '0.75rem',
+            backgroundColor: '#f97316',
+            color: 'white',
+            fontWeight: '700',
+            fontSize: '0.9rem',
+            flexShrink: 0
+          }}>
+            Assign Now →
+          </span>
+        </div>
+      )}
+
       {/* ROW 1: General Stats */}
       <div className="stats-grid" style={{ marginBottom: '1.5rem' }}>
         {user?.role === 'Admin' && (

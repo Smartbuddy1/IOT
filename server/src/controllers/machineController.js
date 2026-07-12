@@ -5,8 +5,12 @@ export const getMachines = async (req, res) => {
   const { role, name } = req.user;
 
   try {
-    let query = 'SELECT * FROM machines';
+    let query = 'SELECT * FROM machines WHERE 1=1';
     let params = [];
+
+    if (req.query?.include_unassigned !== 'true') {
+      query += " AND client_name IS NOT NULL AND TRIM(client_name) != '' AND TRIM(client_name) != 'Unassigned'";
+    }
 
     const userRole = (role || '').toString().trim().toLowerCase();
 
