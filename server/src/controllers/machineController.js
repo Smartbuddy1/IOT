@@ -237,10 +237,10 @@ export const updateMachine = async (req, res) => {
         valWallTime
       ].join(',');
 
-      // Publish to all standard MQTT topics the PCB firmware might be subscribed to
+      console.log(`Publishing settings for machine ${machine_id}...`);
+
+      // Publish directly to 'smartbuddy' (Single topic only to prevent SIM module hang)
       publishMessage('smartbuddy', payloadString);
-      publishMessage(machine_id, payloadString);
-      publishMessage(`smartbuddy/${machine_id}`, payloadString);
     }
 
     res.json({ success: true, message: 'Machine updated successfully!' });
