@@ -39,6 +39,22 @@ const QRPay = () => {
         const fetchedMachine = response.data.machine;
         
         if (fetchedMachine) {
+          const isUpiDisabled = 
+            fetchedMachine.upi === 'No' || 
+            fetchedMachine.upi === 'no' ||
+            (fetchedMachine.mode && fetchedMachine.mode.toLowerCase().trim() === 'coin' && fetchedMachine.upi !== 'Yes') ||
+            (fetchedMachine.coin === 'Yes' && (fetchedMachine.upi === 'No' || fetchedMachine.upi === 'no'));
+
+          if (isUpiDisabled) {
+            setError('🪙 This machine is set to Coin Mode Only. Online UPI payment is disabled.');
+            return;
+          }
+
+          if (fetchedMachine.free === 'Yes' || (fetchedMachine.mode && fetchedMachine.mode.toLowerCase().trim() === 'free')) {
+            setError('🆓 This machine is Free to use (Button Operated). No online payment required.');
+            return;
+          }
+
           const status = fetchedMachine.status?.toLowerCase()?.trim();
           
           if (status === 'ready' || status === 'active' || status === 'idle' || status === 'online') {

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, Users, Folder, Monitor, LogOut, FileText, Sun, Moon, Settings, User, Phone, Shield, Menu, Activity, PieChart, Tag, ClipboardList, Radio } from 'lucide-react';
+import Footer from './Footer';
 
 const Layout = () => {
   const { user, logout } = useAuth();
@@ -251,8 +252,11 @@ const Layout = () => {
             </div>
           </div>
         </header>
-        <div className="page-content">
-          <Outlet />
+        <div className="page-content" style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)' }}>
+          <div style={{ flex: '1 0 auto' }}>
+            <Outlet />
+          </div>
+          <Footer />
         </div>
       </main>
     </div>

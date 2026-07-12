@@ -83,14 +83,23 @@ export const createMachine = async (req, res) => {
   const floorTime = floor_time ? parseInt(floor_time) : 5;
   const wallTime = wall_time ? parseInt(wall_time) : null;
 
+  const valFree = (free === 'Yes') ? 'Yes' : 'No';
+  const valCoin = (valFree === 'Yes') ? 'No' : ((coin === 'Yes') ? 'Yes' : 'No');
+  const valUpi = (valFree === 'Yes') ? 'No' : ((upi === 'Yes') ? 'Yes' : 'No');
+  let modeVal = 'Coin';
+  if (valFree === 'Yes') modeVal = 'Free';
+  else if (valCoin === 'Yes' && valUpi === 'Yes') modeVal = 'Coin+UPI';
+  else if (valCoin === 'Yes' && valUpi === 'No') modeVal = 'Coin';
+  else if (valCoin === 'No' && valUpi === 'Yes') modeVal = 'UPI';
+
   try {
     const [result] = await pool.query(
-      `INSERT INTO machines (machine_id, client_name, state, district, city, address, inst_address, project_name, po_date, dispatch_date, installation_date, status, wall_clean, seats, flush_time, floor_time, wall_time, uses_amt, free, coin, upi, smart_card, digital_token, gps_lat, gps_lng, toilet_type) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO machines (machine_id, client_name, state, district, city, address, inst_address, project_name, po_date, dispatch_date, installation_date, status, wall_clean, seats, flush_time, floor_time, wall_time, uses_amt, free, coin, upi, smart_card, digital_token, mode, gps_lat, gps_lng, toilet_type) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         machine_id, client_name || null, state || '', district || '', city || '', address || '', inst_address || null, project_name || null, 
         poDate, dispatchDate, installationDate, status || 'ready', wall_clean || 'En', seatsNum, 
-        flushTime, floorTime, wallTime, usesAmt, free || 'No', coin || 'Yes', upi || 'Yes', smart_card || 'No', digital_token || 'No',
+        flushTime, floorTime, wallTime, usesAmt, valFree, valCoin, valUpi, smart_card || 'No', digital_token || 'No', modeVal,
         gps_lat || null, gps_lng || null, toilet_type || 'Unisex'
       ]
     );
@@ -117,9 +126,9 @@ export const updateMachine = async (req, res) => {
   } = req.body;
 
   // Convert empty strings to NULL for dates
-  const poDate = po_date ? po_date : null;
-  const dispatchDate = dispatch_date ? dispatch_date : null;
-  const installationDate = installation_date ? installation_date : null;
+  const poDate = po_date || null;
+  const dispatchDate = dispatch_date || null;
+  const installationDate = installation_date || null;
 
   // Convert ints
   const usesAmt = (free === 'Yes') ? 0 : ((uses_amt !== undefined && uses_amt !== null && uses_amt !== '') ? parseInt(uses_amt) : 5);
@@ -127,6 +136,15 @@ export const updateMachine = async (req, res) => {
   const flushTime = flush_time ? parseInt(flush_time) : 5;
   const floorTime = floor_time ? parseInt(floor_time) : 5;
   const wallTime = wall_time ? parseInt(wall_time) : null;
+
+  const valFree = (free === 'Yes') ? 'Yes' : 'No';
+  const valCoin = (valFree === 'Yes') ? 'No' : ((coin === 'Yes') ? 'Yes' : 'No');
+  const valUpi = (valFree === 'Yes') ? 'No' : ((upi === 'Yes') ? 'Yes' : 'No');
+  let modeVal = 'Coin';
+  if (valFree === 'Yes') modeVal = 'Free';
+  else if (valCoin === 'Yes' && valUpi === 'Yes') modeVal = 'Coin+UPI';
+  else if (valCoin === 'Yes' && valUpi === 'No') modeVal = 'Coin';
+  else if (valCoin === 'No' && valUpi === 'Yes') modeVal = 'UPI';
 
   try {
     // 1. Fetch current status & settings for logging and MQTT check
@@ -141,13 +159,13 @@ export const updateMachine = async (req, res) => {
       `UPDATE machines SET 
         machine_id = ?, client_name = ?, state = ?, district = ?, city = ?, address = ?, inst_address = ?, project_name = ?, 
         po_date = ?, dispatch_date = ?, installation_date = ?, status = ?, wall_clean = ?, seats = ?, flush_time = ?, 
-        floor_time = ?, wall_time = ?, uses_amt = ?, free = ?, coin = ?, upi = ?, smart_card = ?, digital_token = ?,
+        floor_time = ?, wall_time = ?, uses_amt = ?, free = ?, coin = ?, upi = ?, smart_card = ?, digital_token = ?, mode = ?,
         gps_lat = ?, gps_lng = ?, toilet_type = ? 
        WHERE id = ?`,
       [
         machine_id, client_name || null, state || '', district || '', city || '', address || '', inst_address || null, project_name || null,
         poDate, dispatchDate, installationDate, status || 'ready', wall_clean || 'En', seatsNum, flushTime,
-        floorTime, wallTime, usesAmt, free || 'No', coin || 'Yes', upi || 'Yes', smart_card || 'No', digital_token || 'No', 
+        floorTime, wallTime, usesAmt, valFree, valCoin, valUpi, smart_card || 'No', digital_token || 'No', modeVal,
         gps_lat || null, gps_lng || null, toilet_type || 'Unisex', id
       ]
     );
