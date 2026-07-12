@@ -40,10 +40,9 @@ const QRPay = () => {
         
         if (fetchedMachine) {
           const isUpiDisabled = 
-            fetchedMachine.upi === 'No' || 
-            fetchedMachine.upi === 'no' ||
-            (fetchedMachine.mode && fetchedMachine.mode.toLowerCase().trim() === 'coin' && fetchedMachine.upi !== 'Yes') ||
-            (fetchedMachine.coin === 'Yes' && (fetchedMachine.upi === 'No' || fetchedMachine.upi === 'no'));
+            String(fetchedMachine.upi).toLowerCase().trim() === 'no' || 
+            String(fetchedMachine.mode).toLowerCase().trim() === 'coin' ||
+            (String(fetchedMachine.coin).toLowerCase().trim() === 'yes' && String(fetchedMachine.upi).toLowerCase().trim() !== 'yes');
 
           if (isUpiDisabled) {
             setError('🪙 This machine is set to Coin Mode Only. Online UPI payment is disabled.');

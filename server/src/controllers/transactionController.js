@@ -107,10 +107,9 @@ export const createRazorpayOrder = async (req, res) => {
 
     // Check if machine is set to Coin Mode Only or Free Mode where UPI is disabled
     const isUpiDisabled = 
-      m.upi === 'No' || 
-      m.upi === 'no' ||
-      (m.mode && m.mode.toLowerCase().trim() === 'coin' && m.upi !== 'Yes') ||
-      (m.coin === 'Yes' && (m.upi === 'No' || m.upi === 'no'));
+      String(m.upi).toLowerCase().trim() === 'no' || 
+      String(m.mode).toLowerCase().trim() === 'coin' ||
+      (String(m.coin).toLowerCase().trim() === 'yes' && String(m.upi).toLowerCase().trim() !== 'yes');
 
     if (isUpiDisabled) {
       await pool.query(
