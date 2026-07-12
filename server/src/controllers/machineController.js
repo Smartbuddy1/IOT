@@ -26,20 +26,20 @@ export const getMachines = async (req, res) => {
     }
 
     if (userRole === 'client') {
-      query += ' WHERE client_name = ?';
+      query += ' AND client_name = ?';
       params.push(name);
     } else if (userRole === 'field_tech') {
       if (assignedProject) {
-        query += ' WHERE project_name = ?';
+        query += ' AND project_name = ?';
         params.push(assignedProject);
       } else if (assignedClient) {
-        query += ' WHERE client_name = ?';
+        query += ' AND client_name = ?';
         params.push(assignedClient);
       } else {
-        query += ' WHERE 1=0';
+        query += ' AND 1=0';
       }
     } else if (userRole === 'maintenance_head' && req.user.assigned_state) {
-      query += ' WHERE state = ?';
+      query += ' AND state = ?';
       params.push(req.user.assigned_state);
     }
 
