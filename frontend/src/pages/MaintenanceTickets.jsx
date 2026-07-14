@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import SkeletonTable from '../components/SkeletonTable';
 import Modal from '../components/Modal';
-import { Search, Filter, Ticket, AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
+import { Search, Filter, Ticket, AlertCircle, Clock, CheckCircle2, Camera, ImageIcon, Settings, Cpu, CheckCircle, MapPin, Zap } from 'lucide-react';
 
 const MaintenanceTickets = () => {
   const [tickets, setTickets] = useState([]);
@@ -13,8 +13,23 @@ const MaintenanceTickets = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [viewLogsModal, setViewLogsModal] = useState(false);
+  const [showWorklogModal, setShowWorklogModal] = useState(false);
   const [currentLogs, setCurrentLogs] = useState([]);
   const [selectedTicket, setSelectedTicket] = useState(null);
+  
+  const [worklogFormData, setWorklogFormData] = useState({
+    reported_issue: '',
+    root_cause: '',
+    action_taken: '',
+    before_photo: '',
+    after_photo: '',
+    gps_lat: '18.5204',
+    gps_lng: '73.8567',
+    pcb_condition: 'Good',
+    voltage_reading: '',
+    relays_checked: false,
+    sensors_checked: false
+  });
   
   const [formData, setFormData] = useState({
     machine_id: '',
@@ -120,6 +135,67 @@ const MaintenanceTickets = () => {
       }
     } catch (error) {
       toast.error('Failed to fetch worklogs');
+    }
+  };
+
+  const openWorklogModal = (ticket) => {
+    setSelectedTicket(ticket);
+    setWorklogFormData({
+      reported_issue: ticket.title || ticket.reported_issue || '',
+      root_cause: '',
+      action_taken: '',
+      before_photo: '',
+      after_photo: '',
+      gps_lat: '18.5204',
+      gps_lng: '73.8567',
+      pcb_condition: 'Good',
+      voltage_reading: '',
+      relays_checked: false,
+      sensors_checked: false
+    });
+    setShowWorklogModal(true);
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setWorklogFormData(prev => ({ ...prev, gps_lat: position.coords.latitude, gps_lng: position.coords.longitude }));
+        },
+        () => {},
+        { timeout: 5000, enableHighAccuracy: false }
+      );
+    }
+  };
+
+  const handleWorklogSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      toast.loading('Submitting maintenance log...', { id: 'submit-log' });
+      const payload = new FormData();
+      Object.keys(worklogFormData).forEach(key => {
+        if (key === 'before_photo' || key === 'after_photo') {
+          if (worklogFormData[key] instanceof File) {
+            payload.append(key, worklogFormData[key]);
+          }
+        } else {
+          payload.append(key, worklogFormData[key]);
+        }
+      });
+      payload.append('machine_id', selectedTicket?.machine_id || 'GENERAL-MCH');
+      payload.append('ticket_id', selectedTicket?.ticket_id || '');
+
+      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/maintenance/submit-log`, payload, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      if (res.data.success) {
+        toast.success(res.data.message || 'Worklog submitted successfully!', { id: 'submit-log' });
+        setShowWorklogModal(false);
+        fetchTickets();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to submit log', { id: 'submit-log' });
     }
   };
 
@@ -250,7 +326,14 @@ const MaintenanceTickets = () => {
                   <td>{ticket.assigned_tech_name || 'Unassigned'}</td>
                   <td>{new Date(ticket.created_at).toLocaleString()}</td>
                   <td>
-                    <button className="btn" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', backgroundColor: 'var(--slate-100)', color: 'var(--text-primary)' }} onClick={() => viewWorklogs(ticket)}>View Logs</button>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <button className="btn" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', backgroundColor: 'var(--slate-100)', color: 'var(--text-primary)' }} onClick={() => viewWorklogs(ticket)}>View Logs</button>
+                      {ticket.status !== 'Closed' && (
+                        <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }} onClick={() => openWorklogModal(ticket)}>
+                          <Settings size={14} /> + Add Worklog
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               )) : (
@@ -326,6 +409,121 @@ const MaintenanceTickets = () => {
               </div>
             )}
           </div>
+        </Modal>
+      )}
+
+      {showWorklogModal && selectedTicket && (
+        <Modal isOpen={showWorklogModal} onClose={() => setShowWorklogModal(false)} title={`Add Worklog: ${selectedTicket.ticket_id} - ${selectedTicket.title}`}>
+          <form onSubmit={handleWorklogSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '0.5rem' }}>
+            
+            <div style={{ backgroundColor: '#ecfdf5', padding: '1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#065f46', border: '1px solid #a7f3d0' }}>
+              <MapPin size={24} />
+              <div>
+                <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>Location Verified</div>
+                <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>{worklogFormData.gps_lat}, {worklogFormData.gps_lng}</div>
+              </div>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                <Settings size={20} color="var(--primary-color)" /> General Diagnostics
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Reported Issue <span style={{color:'var(--danger-color)'}}>*</span></label>
+                  <input type="text" className="form-input" required value={worklogFormData.reported_issue} onChange={e => setWorklogFormData({...worklogFormData, reported_issue: e.target.value})} placeholder="e.g. Door was jammed" />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Root Cause Analysis <span style={{color:'var(--danger-color)'}}>*</span></label>
+                  <input type="text" className="form-input" required value={worklogFormData.root_cause} onChange={e => setWorklogFormData({...worklogFormData, root_cause: e.target.value})} placeholder="e.g. 12V Relay short circuit" />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Action Taken <span style={{color:'var(--danger-color)'}}>*</span></label>
+                  <input type="text" className="form-input" required value={worklogFormData.action_taken} onChange={e => setWorklogFormData({...worklogFormData, action_taken: e.target.value})} placeholder="e.g. Replaced relay and tested" />
+                </div>
+              </div>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+              <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                <Cpu size={20} color="var(--primary-color)" /> PCB & Hardware Checks
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
+                
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">PCB Condition</label>
+                  <select className="form-input" value={worklogFormData.pcb_condition} onChange={e => setWorklogFormData({...worklogFormData, pcb_condition: e.target.value})}>
+                    <option value="Good">Good</option>
+                    <option value="Moisture Detected">Moisture Detected</option>
+                    <option value="Burnt Components">Burnt Components</option>
+                    <option value="Needs Replacement">Needs Replacement</option>
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Zap size={14} /> Voltage Reading</label>
+                  <input type="text" className="form-input" value={worklogFormData.voltage_reading} onChange={e => setWorklogFormData({...worklogFormData, voltage_reading: e.target.value})} placeholder="e.g. 12.4V" />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem', background: 'var(--surface-bg)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <input type="checkbox" id="relays_m" checked={worklogFormData.relays_checked} onChange={e => setWorklogFormData({...worklogFormData, relays_checked: e.target.checked})} style={{ width: '20px', height: '20px', accentColor: 'var(--primary-color)' }} />
+                  <label htmlFor="relays_m" style={{ fontSize: '0.95rem', fontWeight: '500', color: 'var(--text-primary)', cursor: 'pointer', flexGrow: 1 }}>Relays Tested OK</label>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem', background: 'var(--surface-bg)', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <input type="checkbox" id="sensors_m" checked={worklogFormData.sensors_checked} onChange={e => setWorklogFormData({...worklogFormData, sensors_checked: e.target.checked})} style={{ width: '20px', height: '20px', accentColor: 'var(--primary-color)' }} />
+                  <label htmlFor="sensors_m" style={{ fontSize: '0.95rem', fontWeight: '500', color: 'var(--text-primary)', cursor: 'pointer', flexGrow: 1 }}>Sensors Checked</label>
+                </div>
+
+              </div>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                <Camera size={20} color="var(--primary-color)" /> Visual Evidence
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Before Photo</label>
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                    <div style={{ position: 'relative', flex: 1 }}>
+                      <input type="file" id="before_photo_cam_m" accept="image/*" capture="environment" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} onChange={e => setWorklogFormData({...worklogFormData, before_photo: e.target.files[0]})} />
+                      <label htmlFor="before_photo_cam_m" className={`btn ${worklogFormData.before_photo ? 'btn-primary' : 'btn-secondary'}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.75rem', fontWeight: '500', height: '48px', transition: 'all 0.2s' }}>
+                        <Camera size={20} /> {worklogFormData.before_photo ? 'Added' : 'Camera'}
+                      </label>
+                    </div>
+                    <div style={{ position: 'relative', flex: 1 }}>
+                      <input type="file" id="before_photo_gal_m" accept="image/*" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} onChange={e => setWorklogFormData({...worklogFormData, before_photo: e.target.files[0]})} />
+                      <label htmlFor="before_photo_gal_m" className={`btn ${worklogFormData.before_photo ? 'btn-primary' : 'btn-secondary'}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.75rem', fontWeight: '500', height: '48px', transition: 'all 0.2s' }}>
+                        <ImageIcon size={20} /> {worklogFormData.before_photo ? 'Added' : 'Files'}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">After Photo</label>
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                    <div style={{ position: 'relative', flex: 1 }}>
+                      <input type="file" id="after_photo_cam_m" accept="image/*" capture="environment" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} onChange={e => setWorklogFormData({...worklogFormData, after_photo: e.target.files[0]})} />
+                      <label htmlFor="after_photo_cam_m" className={`btn ${worklogFormData.after_photo ? 'btn-primary' : 'btn-secondary'}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.75rem', fontWeight: '500', height: '48px', transition: 'all 0.2s' }}>
+                        <Camera size={20} /> {worklogFormData.after_photo ? 'Added' : 'Camera'}
+                      </label>
+                    </div>
+                    <div style={{ position: 'relative', flex: 1 }}>
+                      <input type="file" id="after_photo_gal_m" accept="image/*" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} onChange={e => setWorklogFormData({...worklogFormData, after_photo: e.target.files[0]})} />
+                      <label htmlFor="after_photo_gal_m" className={`btn ${worklogFormData.after_photo ? 'btn-primary' : 'btn-secondary'}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.75rem', fontWeight: '500', height: '48px', transition: 'all 0.2s' }}>
+                        <ImageIcon size={20} /> {worklogFormData.after_photo ? 'Added' : 'Files'}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem', height: '48px', fontSize: '1.05rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
+              <CheckCircle size={20} /> Submit Verified Log
+            </button>
+          </form>
         </Modal>
       )}
     </div>

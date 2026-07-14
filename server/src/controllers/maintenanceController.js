@@ -120,7 +120,7 @@ export const submitLog = async (req, res) => {
     const reported_issue = req.body.reported_issue || 'Routine inspection & check';
     const root_cause = req.body.root_cause || 'General wear & inspection';
     const action_taken = req.body.action_taken || 'Inspected and verified hardware operation';
-    const { pcb_condition, voltage_reading, relays_checked, sensors_checked, gps_lat, gps_lng } = req.body;
+    const { pcb_condition, voltage_reading, gps_lat, gps_lng } = req.body;
     const tech_id = req.user ? req.user.id : null;
 
     // Get photo URLs from uploaded files if they exist, else from body (for legacy support)
@@ -129,43 +129,54 @@ export const submitLog = async (req, res) => {
 
     if (req.files) {
       if (req.files.before_photo && req.files.before_photo[0]) {
-        before_photo = req.files.before_photo[0].location || req.files.before_photo[0].path; // S3 gives .location, local gives .path
+        const file = req.files.before_photo[0];
+        before_photo = file.location || (file.filename ? `/uploads/worklogs/${file.filename}` : file.path);
       }
       if (req.files.after_photo && req.files.after_photo[0]) {
-        after_photo = req.files.after_photo[0].location || req.files.after_photo[0].path;
+        const file = req.files.after_photo[0];
+        after_photo = file.location || (file.filename ? `/uploads/worklogs/${file.filename}` : file.path);
       }
     }
 
-    // 1. Fetch machine location if configured
+    // 1. Fetch machine location if configured (do not block if not found so logs can always submit)
     const [machines] = await pool.query('SELECT gps_lat, gps_lng FROM machines WHERE machine_id = ? LIMIT 1', [machine_id]);
-    if (machines.length === 0) {
-      return res.status(404).json({ success: false, message: 'Machine not found' });
-    }
-
-    const machine = machines[0];
-    if (machine.gps_lat && machine.gps_lng && parseFloat(machine.gps_lat) !== 0 && parseFloat(machine.gps_lng) !== 0 && gps_lat && gps_lng) {
-      const distance = getDistance(
-        parseFloat(gps_lat), parseFloat(gps_lng), 
-        parseFloat(machine.gps_lat), parseFloat(machine.gps_lng)
-      );
-      if (distance > 2000) {
-        console.log(`⚠️ Worklog submitted with distance note (${Math.round(distance)}m) for machine ${machine_id}`);
+    if (machines.length > 0) {
+      const machine = machines[0];
+      if (machine.gps_lat && machine.gps_lng && parseFloat(machine.gps_lat) !== 0 && parseFloat(machine.gps_lng) !== 0 && gps_lat && gps_lng) {
+        const distance = getDistance(
+          parseFloat(gps_lat), parseFloat(gps_lng), 
+          parseFloat(machine.gps_lat), parseFloat(machine.gps_lng)
+        );
+        if (distance > 2000) {
+          console.log(`⚠️ Worklog submitted with distance note (${Math.round(distance)}m) for machine ${machine_id}`);
+        }
       }
     }
+
+    const relaysCheckedVal = (req.body.relays_checked === 'true' || req.body.relays_checked === true || req.body.relays_checked === '1' || req.body.relays_checked === 1) ? 1 : 0;
+    const sensorsCheckedVal = (req.body.sensors_checked === 'true' || req.body.sensors_checked === true || req.body.sensors_checked === '1' || req.body.sensors_checked === 1) ? 1 : 0;
+    const ticketId = (req.body.ticket_id && req.body.ticket_id.trim() !== '' && req.body.ticket_id !== 'undefined' && req.body.ticket_id !== 'null') ? req.body.ticket_id.trim() : null;
 
     await pool.query(`
       INSERT INTO maintenance_logs 
       (machine_id, tech_id, reported_issue, root_cause, action_taken, before_photo, after_photo, gps_lat, gps_lng, pcb_condition, voltage_reading, relays_checked, sensors_checked, status, ticket_id)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Fixed', ?)
-    `, [machine_id, tech_id, reported_issue, root_cause, action_taken, before_photo, after_photo, gps_lat, gps_lng, pcb_condition || null, voltage_reading || null, relays_checked ? 1 : 0, sensors_checked ? 1 : 0, req.body.ticket_id || null]);
+    `, [machine_id, tech_id, reported_issue, root_cause, action_taken, before_photo, after_photo, gps_lat, gps_lng, pcb_condition || null, voltage_reading || null, relaysCheckedVal, sensorsCheckedVal, ticketId]);
 
-    // Update machine status back to active
-    await pool.query('UPDATE machines SET status = ? WHERE machine_id = ?', ['active', machine_id]);
+    // Update machine status back to active if machine exists
+    if (machine_id && machine_id !== 'GENERAL-MCH') {
+      await pool.query('UPDATE machines SET status = ? WHERE machine_id = ?', ['active', machine_id]);
+    }
+
+    // If ticket_id is provided, update the ticket status to Resolved and set resolved_at
+    if (ticketId) {
+      await pool.query('UPDATE maintenance_tickets SET status = ?, resolved_at = CURRENT_TIMESTAMP WHERE ticket_id = ?', ['Resolved', ticketId]);
+    }
 
     res.json({ success: true, message: 'Maintenance log submitted and verified successfully!' });
   } catch (error) {
     console.error('Submit log error:', error);
-    res.status(500).json({ success: false, message: 'Internal Server Error' });
+    res.status(500).json({ success: false, message: error.message || 'Internal Server Error' });
   }
 };
 
