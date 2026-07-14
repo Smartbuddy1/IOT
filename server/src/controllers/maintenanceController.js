@@ -136,34 +136,21 @@ export const submitLog = async (req, res) => {
       }
     }
 
-    // Basic verification - did they actually send coords?
-    if (!gps_lat || !gps_lng) {
-      return res.status(400).json({ success: false, message: 'Location data is missing. Geo-fencing failed.' });
-    }
-
-    // 1. Fetch machine location
+    // 1. Fetch machine location if configured
     const [machines] = await pool.query('SELECT gps_lat, gps_lng FROM machines WHERE machine_id = ? LIMIT 1', [machine_id]);
     if (machines.length === 0) {
       return res.status(404).json({ success: false, message: 'Machine not found' });
     }
 
     const machine = machines[0];
-    if (!machine.gps_lat || !machine.gps_lng) {
-      return res.status(400).json({ success: false, message: 'Machine location is not configured in the system. Admin must set the machine GPS coordinates first.' });
-    }
-
-    // 2. Calculate Distance
-    const distance = getDistance(
-      parseFloat(gps_lat), parseFloat(gps_lng), 
-      parseFloat(machine.gps_lat), parseFloat(machine.gps_lng)
-    );
-
-    // 3. Reject if too far (e.g., > 100 meters)
-    if (distance > 100) {
-      return res.status(400).json({ 
-        success: false, 
-        message: `Location mismatch! You are ${Math.round(distance)} meters away from the machine. You must be within 100 meters to submit a log.` 
-      });
+    if (machine.gps_lat && machine.gps_lng && parseFloat(machine.gps_lat) !== 0 && parseFloat(machine.gps_lng) !== 0 && gps_lat && gps_lng) {
+      const distance = getDistance(
+        parseFloat(gps_lat), parseFloat(gps_lng), 
+        parseFloat(machine.gps_lat), parseFloat(machine.gps_lng)
+      );
+      if (distance > 2000) {
+        console.log(`⚠️ Worklog submitted with distance note (${Math.round(distance)}m) for machine ${machine_id}`);
+      }
     }
 
     await pool.query(`

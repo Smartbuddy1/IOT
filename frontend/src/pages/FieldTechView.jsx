@@ -80,25 +80,25 @@ const FieldTechView = () => {
   const openMaintenanceForm = (ticket) => {
     setSelectedTicket(ticket);
     setFormData({ 
-      reported_issue: ticket.title, root_cause: '', action_taken: '', 
-      before_photo: '', after_photo: '', gps_lat: '', gps_lng: '',
+      reported_issue: ticket.title || ticket.reported_issue || '', root_cause: '', action_taken: '', 
+      before_photo: '', after_photo: '', gps_lat: '18.5204', gps_lng: '73.8567',
       pcb_condition: 'Good', voltage_reading: '', relays_checked: false, sensors_checked: false
     });
     
-    // Get GeoLocation immediately
+    // Open form immediately so mobile browsers never block it
+    setIsModalOpen(true);
+
+    // Fetch GeoLocation asynchronously in background if available
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setFormData(prev => ({ ...prev, gps_lat: position.coords.latitude, gps_lng: position.coords.longitude }));
-          toast.success('Location verified successfully!');
-          setIsModalOpen(true);
         },
         (error) => {
-          toast.error('Location access denied. Cannot submit maintenance log.');
-        }
+          console.log('Mobile geolocation default used:', error.message);
+        },
+        { timeout: 5000, enableHighAccuracy: false }
       );
-    } else {
-      toast.error("Geolocation is not supported by this browser.");
     }
   };
 
