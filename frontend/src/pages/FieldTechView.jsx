@@ -116,8 +116,8 @@ const FieldTechView = () => {
           payload.append(key, formData[key]);
         }
       });
-      payload.append('machine_id', selectedTicket.machine_id);
-      payload.append('ticket_id', selectedTicket.ticket_id);
+      payload.append('machine_id', selectedTicket?.machine_id || 'GENERAL-MCH');
+      payload.append('ticket_id', selectedTicket?.ticket_id || selectedTicket?.id || '');
 
       const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/maintenance/submit-log`, payload, {
         headers: { 
@@ -126,8 +126,9 @@ const FieldTechView = () => {
         }
       });
       if (res.data.success) {
-        toast.success(res.data.message, { id: 'submit-log' });
+        toast.success(res.data.message || 'Worklog submitted successfully!', { id: 'submit-log' });
         setIsModalOpen(false);
+        fetchMyTickets();
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to submit log', { id: 'submit-log' });

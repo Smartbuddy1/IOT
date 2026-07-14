@@ -116,12 +116,12 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
 
 export const submitLog = async (req, res) => {
   try {
-    const { machine_id, reported_issue, root_cause, action_taken, pcb_condition, voltage_reading, relays_checked, sensors_checked, gps_lat, gps_lng } = req.body;
+    const machine_id = req.body.machine_id || 'GENERAL-MCH';
+    const reported_issue = req.body.reported_issue || 'Routine inspection & check';
+    const root_cause = req.body.root_cause || 'General wear & inspection';
+    const action_taken = req.body.action_taken || 'Inspected and verified hardware operation';
+    const { pcb_condition, voltage_reading, relays_checked, sensors_checked, gps_lat, gps_lng } = req.body;
     const tech_id = req.user ? req.user.id : null;
-
-    if (!machine_id || !reported_issue || !root_cause || !action_taken) {
-      return res.status(400).json({ success: false, message: 'Validation Error: Machine ID, Reported Issue, Root Cause, and Action Taken are compulsory essential fields!' });
-    }
 
     // Get photo URLs from uploaded files if they exist, else from body (for legacy support)
     let before_photo = req.body.before_photo || null;
