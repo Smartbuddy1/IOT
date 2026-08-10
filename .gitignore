@@ -29,3 +29,7 @@ server/uploads/
 # React Build Output
 frontend/dist/
 frontend/build/
+
+# QA and Docs
+/docs/
+/qa-automation/

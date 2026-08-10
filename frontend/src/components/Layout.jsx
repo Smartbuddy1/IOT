@@ -57,6 +57,7 @@ const Layout = () => {
     { name: 'Analytics', href: '/analytics', icon: PieChart, roles: ['Admin', 'Client'] },
     { name: 'All Tickets', href: '/tickets', icon: ClipboardList, roles: ['Admin', 'Maintenance_Head'] },
     { name: 'Maintenance Logs', href: '/maintenance-logs', icon: FileText, roles: ['Admin', 'Maintenance_Head'] },
+    { name: 'Diagnostics', href: '/diagnostics', icon: Settings, roles: ['Admin'] },
   ];
 
   return (

@@ -21,6 +21,7 @@ import locationRoutes from './routes/locationRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import iotRoutes from './routes/iotRoutes.js';
 import maintenanceRoutes from './routes/maintenanceRoutes.js';
+import diagnosticsRoutes from './routes/diagnostics.js';
 import { initializeMqtt } from './services/mqttService.js';
 import { startHeartbeatMonitor } from './services/heartbeatService.js';
 import { sanitizePayload } from './middlewares/sanitize.js';
@@ -145,6 +146,7 @@ app.use('/api/locations', locationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/iot', iotRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
+app.use('/api/diagnostics', diagnosticsRoutes);
 
 // Initialize background MQTT service
 try {

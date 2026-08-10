@@ -23,6 +23,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import RefundPolicy from './pages/RefundPolicy';
 import ContactUs from './pages/ContactUs';
 import Layout from './components/Layout';
+import Diagnostics from './pages/Diagnostics';
 import { useAuth } from './context/AuthContext';
 
 const RoleBasedRedirect = () => {
@@ -89,6 +90,7 @@ function App() {
             <Route path="tickets" element={<ProtectedRoute allowedRoles={['Admin', 'Maintenance_Head', 'Field_Tech']}><MaintenanceTickets /></ProtectedRoute>} />
             <Route path="field-tech" element={<ProtectedRoute allowedRoles={['Field_Tech']}><FieldTechView /></ProtectedRoute>} />
             <Route path="test-form" element={<TestForm />} />
+            <Route path="diagnostics" element={<ProtectedRoute allowedRoles={['Admin']}><Diagnostics /></ProtectedRoute>} />
           </Route>
         </Routes>
       </AuthProvider>
