@@ -14,7 +14,8 @@ const Diagnostics = () => {
 
     const handleVerify = async (e) => {
         e.preventDefault();
-        if (!machineId.trim()) return;
+        const cleanId = machineId.trim();
+        if (!cleanId) return;
 
         setLoading(true);
         setError('');
@@ -23,12 +24,12 @@ const Diagnostics = () => {
 
         try {
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005/api';
-            const response = await axios.get(`${apiUrl}/diagnostics/machine/${machineId}/status`, {
+            const response = await axios.get(`${apiUrl}/diagnostics/machine/${cleanId}/status`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
             setStatus(response.data.status);
             setMachineDetails(response.data.machineDetails);
-            setVerifiedId(machineId);
+            setVerifiedId(cleanId);
         } catch (err) {
             if (err.response?.status === 403) {
                 setError(err.response.data.error || 'Access Denied.');

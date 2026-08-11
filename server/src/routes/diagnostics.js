@@ -20,9 +20,9 @@ router.get('/machine/:id/status', async (req, res) => {
             SELECT m.status, m.client_name, m.city, c.client_logo 
             FROM machines m 
             LEFT JOIN clients c ON m.client_name = c.client_name 
-            WHERE m.machine_id = ?
+            WHERE TRIM(m.machine_id) = TRIM(?)
         `;
-        const [rows] = await db.query(query, [id]);
+        const [rows] = await db.query(query, [id.trim()]);
         
         if (rows.length === 0) {
             return res.status(404).json({ error: 'Machine not found.' });
