@@ -48,20 +48,6 @@ router.get('/machine/:id/status', async (req, res) => {
     } catch (error) {
         console.error('Error fetching machine status:', error);
         
-        // MOCK FALLBACK: If DB is down or machine is M-1002, allow access for testing UI
-        if (id === 'M-1002' || id === 'M-002') {
-            console.log('Using mock fallback for testing because DB query failed or specific ID used.');
-            return res.json({ 
-                message: 'Access granted (Mock).', 
-                status: 'Maintenance Mode',
-                machineDetails: {
-                    client_name: 'Mock Client',
-                    city: 'Mock City',
-                    client_logo: null
-                }
-            });
-        }
-        
         res.status(500).json({ error: 'Internal server error.' });
     }
 });
