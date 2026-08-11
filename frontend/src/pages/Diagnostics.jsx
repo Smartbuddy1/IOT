@@ -23,7 +23,7 @@ const Diagnostics = () => {
         setVerifiedId(null);
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005/api';
+            const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api';
             const response = await axios.get(`${apiUrl}/diagnostics/machine/${cleanId}/status`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });

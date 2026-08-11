@@ -19,7 +19,7 @@ const IODashboard = ({ machineId, status, machineDetails }) => {
     useEffect(() => {
         const fetchIOList = async () => {
             try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005/api';
+                const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api';
                 const response = await axios.get(`${apiUrl}/diagnostics/io-list`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
                 });
@@ -71,7 +71,7 @@ const IODashboard = ({ machineId, status, machineDetails }) => {
         setToggling(prev => ({ ...prev, [ioName]: true }));
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005/api';
+            const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api';
             await axios.post(`${apiUrl}/diagnostics/machine/${machineId}/command`, {
                 states: newIoStates
             }, {
