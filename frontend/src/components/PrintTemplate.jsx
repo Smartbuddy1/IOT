@@ -67,7 +67,7 @@ const PrintTemplate = ({
       </div>
       <div style={{ borderTop: '1.5px solid #cbd5e1', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', fontSize: '8.5pt', color: '#475569', lineHeight: '1.5' }}>
         <div style={{ textAlign: 'left', flex: 1, paddingRight: '15px' }}>
-          <div style={{ fontWeight: '700', color: '#1e293b' }}>AARYA INNOVTECH PVT. LTD. &nbsp;|&nbsp; CIN: U29305MH2019PTC327551 &nbsp;|&nbsp; Ph: +91 8806796868</div>
+          <div style={{ fontWeight: '700', color: '#1e293b' }}>AARYA INNOVTECH PVT. LTD. &nbsp;|&nbsp; CIN: U29305MH2019PTC327551 &nbsp;|&nbsp; Ph: +91 9359604384</div>
           <div style={{ color: '#64748b' }}>Nashik Office: Flat No. 4A, Sayali Darshan A-Wing, Makhamalabad Road, Nashik-422003.</div>
         </div>
         <div style={{ textAlign: 'right', fontWeight: '600', color: '#475569', whiteSpace: 'nowrap' }}>
