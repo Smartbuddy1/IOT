@@ -39,21 +39,6 @@ const IODashboard = ({ machineId, status, machineDetails }) => {
 
         fetchIOList();
 
-        const interval = setInterval(() => {
-            setIoStates(prev => {
-                const newStates = { ...prev };
-                ioList.forEach(item => {
-                    if (item.type === 'Digital Input') {
-                        if (Math.random() < 0.05) {
-                            newStates[item.name] = !newStates[item.name];
-                        }
-                    }
-                });
-                return newStates;
-            });
-        }, 3000);
-
-        return () => clearInterval(interval);
     }, [ioList.length]);
 
     const handleRemarkChange = (ioName, value) => {
