@@ -33,8 +33,10 @@ const RoleBasedRedirect = () => {
 };
 
 function App() {
+  const basePath = import.meta.env.VITE_BASE_PATH || '/';
+  
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basePath}>
       <AuthProvider>
         <Toaster 
           position="top-right" 

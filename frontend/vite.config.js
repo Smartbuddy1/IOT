@@ -1,9 +1,12 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 
-export default defineConfig({
-  plugins: [react(), basicSsl()],
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd());
+  return {
+    base: env.VITE_BASE_PATH || '/',
+    plugins: [react(), basicSsl()],
   server: {
     port: 5175,
     host: true, // Listen on all local IPs
@@ -22,5 +25,5 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/s3-proxy/, '')
       }
     }
-  },
+  };
 });
