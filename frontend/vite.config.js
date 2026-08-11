@@ -25,5 +25,6 @@ export default defineConfig(({ mode }) => {
         rewrite: (path) => path.replace(/^\/s3-proxy/, '')
       }
     }
+  }
   };
 });
