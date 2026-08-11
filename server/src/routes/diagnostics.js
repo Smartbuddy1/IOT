@@ -74,16 +74,21 @@ router.get('/io-list', (req, res) => {
 // Send real MQTT command
 router.post('/machine/:id/command', async (req, res) => {
     const { id } = req.params;
-    const { ioName, state } = req.body;
+    const { states } = req.body;
     
     try {
-        const topic = `machines/${id}/cmd`;
-        // Create a payload that the hardware can understand
-        const payload = JSON.stringify({ 
-            command: "toggle_io", 
-            component: ioName, 
-            state: state ? "ON" : "OFF" 
-        });
+        const topic = 'smartbuddy';
+        
+        // Format: MachineID,OUTPUT_SET,DOORLOCK,EXTRA_OUT,COIN-ACCEPTOR_ON_OFF,VALVE_FLUSH,VALVE-WALL,VALVE-FLOOR,VALVE-EXTRA
+        const out1 = states['Door Lock'] ? '1' : '0';
+        const out2 = states['Extra Out (Light/Fan)'] ? '1' : '0';
+        const out3 = states['Coin Acceptor On/Off'] ? '1' : '0';
+        const out4 = states['Valve Flush'] ? '1' : '0';
+        const out5 = states['Valve Wall'] ? '1' : '0';
+        const out6 = states['Valve Floor'] ? '1' : '0';
+        const out7 = states['Valve Extra'] ? '1' : '0';
+        
+        const payload = `${id.trim()},OUTPUT_SET,${out1},${out2},${out3},${out4},${out5},${out6},${out7}`;
         
         const success = publishMessage(topic, payload);
         

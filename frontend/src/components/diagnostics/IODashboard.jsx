@@ -19,7 +19,7 @@ const IODashboard = ({ machineId, status, machineDetails }) => {
     useEffect(() => {
         const fetchIOList = async () => {
             try {
-                const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api';
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005/api';
                 const response = await axios.get(`${apiUrl}/diagnostics/io-list`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
                 });
@@ -66,14 +66,14 @@ const IODashboard = ({ machineId, status, machineDetails }) => {
 
     const handleToggle = async (ioName, newState) => {
         const oldState = ioStates[ioName];
-        setIoStates(prev => ({ ...prev, [ioName]: newState }));
+        const newIoStates = { ...ioStates, [ioName]: newState };
+        setIoStates(newIoStates);
         setToggling(prev => ({ ...prev, [ioName]: true }));
 
         try {
-            const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api';
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5005/api';
             await axios.post(`${apiUrl}/diagnostics/machine/${machineId}/command`, {
-                ioName,
-                state: newState
+                states: newIoStates
             }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
