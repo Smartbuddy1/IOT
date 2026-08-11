@@ -74,7 +74,7 @@ router.get('/io-list', (req, res) => {
 // Send real MQTT command
 router.post('/machine/:id/command', async (req, res) => {
     const { id } = req.params;
-    const { states } = req.body;
+    const { states = {} } = req.body;
     
     try {
         const topic = 'smartbuddy';
