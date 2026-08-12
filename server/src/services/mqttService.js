@@ -18,7 +18,19 @@ setInterval(() => {
       delete activeMachineCache[key];
     }
   }
+  for (const key in liveIOCache) {
+    if (now - liveIOCache[key].timestamp > 24 * 60 * 60 * 1000) {
+      delete liveIOCache[key];
+    }
+  }
 }, 6 * 60 * 60 * 1000);
+
+// Cache for Live IO Diagnostics
+export const liveIOCache = {};
+
+export const getLiveIOState = (machineId) => {
+  return liveIOCache[machineId]?.states || null;
+};
 
 export const initializeMqtt = () => {
   const brokerUrl = process.env.MQTT_BROKER_URL || 'mqtt://127.0.0.1:1883';
@@ -97,6 +109,41 @@ export const initializeMqtt = () => {
           if (parts.length > 0) {
             machineId = parts[0].trim(); // First part is usually the Machine ID
             
+            // Handle IO_STAT payload
+            if (parts.length > 1 && parts[1].trim() === 'IO_STAT') {
+              if (parts.length >= 22) {
+                liveIOCache[machineId] = {
+                  timestamp: Date.now(),
+                  states: {
+                    // Inputs
+                    'Coin Push Button': parts[2] === '1',
+                    'Flush Push Button': parts[3] === '1',
+                    'RFID Push Button': parts[4] === '1', // PB-RFID
+                    'Emergency Push Button': parts[5] === '1', // PB-EXTRA
+                    'Door Limit Switch': parts[6] === '1', // LIMIT-SWITCH
+                    'Water Level Sensor': parts[7] === '1', // WLL-IN
+                    'Coin Acceptor': parts[8] === '1', // EXT-IN1
+                    'Extra Input 2': parts[9] === '1', // EXT-IN2
+                    'PIR Sensor': parts[10] === '1', // PIR
+                    
+                    // Outputs
+                    'Door Lock': parts[11] === '1',
+                    'Buzzer': parts[12] === '1',
+                    'Coin Acceptor Control': parts[13] === '1',
+                    'Flush Valve': parts[14] === '1',
+                    'Sprinkler Valve': parts[15] === '1',
+                    'Floor Valve': parts[16] === '1',
+                    'Motor (0.5 HP)': parts[17] === '1',
+                    'Red Indicator': parts[18] === '1',
+                    'Green Indicator': parts[19] === '1',
+                    'Fan': parts[20] === '1',
+                    'Round Light': parts[21] === '1',
+                  }
+                };
+              }
+              return; // IO_STAT doesn't contain status keywords, we can skip further comma-separated parsing
+            }
+
             // Scan all parts of the comma-separated string for status and water level keywords
             for (let i = 1; i < parts.length; i++) {
               const s = parts[i].trim().toLowerCase();

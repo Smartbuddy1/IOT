@@ -38,8 +38,54 @@ const IODashboard = ({ machineId, status, machineDetails }) => {
         };
 
         fetchIOList();
-
     }, [ioList.length]);
+
+    useEffect(() => {
+        let intervalId;
+        const fetchLiveIO = async () => {
+            try {
+                const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api';
+                const response = await axios.get(`${apiUrl}/diagnostics/machine/${machineId}/live-io`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (response.data.success && response.data.states) {
+                    setIoStates(prev => {
+                        const newStates = { ...prev };
+                        let hasChanges = false;
+                        let autoEvalUpdates = {};
+
+                        for (const key in response.data.states) {
+                            // Don't overwrite state if we are currently waiting for a manual toggle response
+                            if (!toggling[key] && newStates[key] !== response.data.states[key]) {
+                                newStates[key] = response.data.states[key];
+                                hasChanges = true;
+                                
+                                // Auto-Evaluate: If state changed (e.g. sensor triggered or relay clicked), it's working!
+                                setTestResults(prevResults => {
+                                    if (!prevResults[key] || prevResults[key] === 'Not Tested') {
+                                        return { ...prevResults, [key]: 'Working OK' };
+                                    }
+                                    return prevResults;
+                                });
+                            }
+                        }
+                        return hasChanges ? newStates : prev;
+                    });
+                }
+            } catch (error) {
+                // Silently ignore polling errors
+            }
+        };
+
+        if (machineId && !loading) {
+            fetchLiveIO(); // Fetch immediately once
+            intervalId = setInterval(fetchLiveIO, 2000);
+        }
+
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [machineId, loading, toggling]);
 
     const handleRemarkChange = (ioName, value) => {
         setRemarks(prev => ({ ...prev, [ioName]: value }));
@@ -288,6 +334,25 @@ const IODashboard = ({ machineId, status, machineDetails }) => {
     };
 
     const generatePDFReport = async () => {
+        toast.loading("Saving and Generating Report...", { id: 'pdfGen' });
+        
+        // 1. Save Report to Database
+        try {
+            const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005/api';
+            await axios.post(`${apiUrl}/diagnostics/machine/${machineId}/save-report`, {
+                testResults,
+                remarks,
+                techName: user?.name || 'System Admin'
+            }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            toast.success("Report Saved to DB", { id: 'pdfGen' });
+        } catch (error) {
+            toast.error("Failed to save report to DB", { id: 'pdfGen' });
+            return; // Stop if saving fails
+        }
+
+        // 2. Generate PDF
         toast.loading("Generating HD PDF...", { id: 'pdfGen' });
         let clientImgObj = null;
         
@@ -383,7 +448,7 @@ const IODashboard = ({ machineId, status, machineDetails }) => {
 
                 <div className="dash-actions">
                     <button onClick={generatePDFReport} className="btn-pdf-export">
-                        <FileText size={18} /> Download Report
+                        <FileText size={18} /> Save & Download Report
                     </button>
                 </div>
             </div>
