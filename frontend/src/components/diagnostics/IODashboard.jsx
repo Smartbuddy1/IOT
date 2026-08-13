@@ -342,7 +342,7 @@ const IODashboard = ({ machineId, status, machineDetails }) => {
             await axios.post(`${apiUrl}/diagnostics/machine/${machineId}/save-report`, {
                 testResults,
                 remarks,
-                techName: user?.name || 'System Admin'
+                techId: user?.id || 1
             }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });

@@ -23,7 +23,7 @@ router.get('/machine/:id/live-io', (req, res) => {
 // Save Maintenance Report
 router.post('/machine/:id/save-report', async (req, res) => {
     const { id } = req.params;
-    const { testResults, remarks, techName } = req.body;
+    const { testResults, remarks, techId } = req.body;
     
     try {
         // Evaluate PCB condition based on test results
@@ -35,9 +35,9 @@ router.post('/machine/:id/save-report', async (req, res) => {
         
         await db.query(
             `INSERT INTO maintenance_logs 
-            (machine_id, tech_name, reported_issue, action_taken, pcb_condition, status, created_at) 
-            VALUES (?, ?, ?, ?, ?, 'resolved', NOW())`,
-            [id, techName || 'System Admin', reportedIssue, actionTaken, pcbCondition]
+            (machine_id, tech_id, reported_issue, action_taken, pcb_condition, status, created_at) 
+            VALUES (?, ?, ?, ?, ?, 'Fixed', NOW())`,
+            [id, techId || 1, reportedIssue, actionTaken, pcbCondition]
         );
         
         res.json({ success: true, message: 'Report saved to Maintenance Logs successfully' });
