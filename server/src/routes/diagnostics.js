@@ -68,10 +68,8 @@ router.get('/machine/:id/status', async (req, res) => {
         
         const machineData = rows[0];
         
-        // We will grant access even if not in maintenance mode, so the admin can test it.
-        // In a strict production environment, we would block this.
-        if (machineData.status !== 'Maintenance Mode') {
-            console.warn(`Admin accessed diagnostics for machine ${id} which is in status: ${machineData.status}`);
+        if (!machineData.status || machineData.status.toLowerCase() !== 'maintenance') {
+            return res.status(403).json({ error: 'This machine is not in Maintenance Mode. Please switch it to Maintenance Mode from Settings to access Diagnostics.' });
         }
         
         res.json({ 
