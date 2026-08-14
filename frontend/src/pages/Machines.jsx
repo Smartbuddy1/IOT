@@ -278,15 +278,15 @@ const Machines = () => {
                   <td style={{ fontWeight: '700', color: 'var(--slate-800)' }}>{machine.machine_id}</td>
                   <td>
                     <span className={`badge-glow ${
-                      machine.status === 'active' ? 'active' : 
-                      machine.status === 'ready' ? 'active' : 
-                      machine.status === 'maintenance' ? 'maintenance' : 
-                      machine.status === 'busy' ? 'maintenance' : 'failed'
+                      machine.status === 'active' || machine.status === 'ready' ? 'active' : 
+                      machine.status === 'maintenance' || machine.status === 'busy' ? 'maintenance' : 
+                      machine.status === 'water_low' ? 'badge-warning' : 'failed'
                     }`}>
                       {machine.status === 'active' ? 'Active' : 
                        machine.status === 'ready' ? 'Ready' : 
                        machine.status === 'maintenance' ? 'Maintenance' : 
                        machine.status === 'busy' ? 'Busy' : 
+                       machine.status === 'water_low' ? 'Water Low' : 
                        machine.status === 'offline' || machine.status === 'inactive' || machine.status === 'failed' ? 'Inactive' : 'Inactive'}
                     </span>
                   </td>
