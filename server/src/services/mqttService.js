@@ -116,18 +116,18 @@ export const initializeMqtt = () => {
                   timestamp: Date.now(),
                   states: {
                     // Inputs
-                    'Coin Push Button': parts[2] === '1',
-                    'Flush Push Button': parts[3] === '1',
+                    'PB Coin': parts[2] === '1',
+                    'PB Flush': parts[3] === '1',
                     'RFID Push Button': parts[4] === '1', // PB-RFID
-                    'Emergency Push Button': parts[5] === '1', // PB-EXTRA
+                    'Emergency Internal Push Button': parts[5] === '1', // PB-EXTRA
                     'Door Limit Switch': parts[6] === '1', // LIMIT-SWITCH
                     'Water Level Sensor': parts[7] === '1', // WLL-IN
                     'Coin Acceptor': parts[8] === '1', // EXT-IN1
-                    'Extra Input 2': parts[9] === '1', // EXT-IN2
+                    'Emergency External Push Button': parts[9] === '1', // EXT-IN2
                     'PIR Sensor': parts[10] === '1', // PIR
                     
                     // Outputs
-                    'Door Lock': parts[11] === '1',
+                    'Strike Lock': parts[11] === '1',
                     'Buzzer': parts[12] === '1',
                     'Coin Acceptor Control': parts[13] === '1',
                     'Flush Valve': parts[14] === '1',
@@ -136,8 +136,8 @@ export const initializeMqtt = () => {
                     'Motor (0.5 HP)': parts[17] === '1',
                     'Red Indicator': parts[18] === '1',
                     'Green Indicator': parts[19] === '1',
-                    'Fan': parts[20] === '1',
-                    'Round Light': parts[21] === '1',
+                    'Exhaust Fan': parts[20] === '1',
+                    'Electronic Lighting Module': parts[21] === '1'
                   }
                 };
               }
