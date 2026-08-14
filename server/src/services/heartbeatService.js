@@ -12,11 +12,11 @@ export const startHeartbeatMonitor = () => {
       const [offlineMachines] = await pool.query(`
         SELECT m.machine_id 
         FROM machines m
-        LEFT JOIN device_live_status d ON m.machine_id = d.machine_id
         WHERE m.status NOT IN ('inactive', 'offline')
         AND (
-          d.last_updated IS NULL 
-          OR d.last_updated < NOW() - INTERVAL 90 SECOND
+          NOT EXISTS (SELECT 1 FROM device_live_status d WHERE d.machine_id = m.machine_id)
+          OR 
+          (SELECT MAX(last_updated) FROM device_live_status d WHERE d.machine_id = m.machine_id) < NOW() - INTERVAL 90 SECOND
         )
       `);
 

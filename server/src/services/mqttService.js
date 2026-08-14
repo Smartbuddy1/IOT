@@ -208,11 +208,14 @@ export const initializeMqtt = () => {
         }
 
         // ALWAYS record heartbeat timestamp in device_live_status whenever ANY MQTT message arrives from this machine!
-        // This prevents the 90-second heartbeat monitor from marking live SIM machines as inactive when sending comma-separated messages.
         pool.query(
-          `INSERT INTO device_live_status (machine_id, last_updated) VALUES (?, NOW()) ON DUPLICATE KEY UPDATE last_updated = NOW()`,
+          `UPDATE device_live_status SET last_updated = NOW() WHERE machine_id = ?`,
           [machineId]
-        ).catch(() => {});
+        ).then(([result]) => {
+          if (result && result.affectedRows === 0) {
+            pool.query(`INSERT INTO device_live_status (machine_id, last_updated) VALUES (?, NOW())`, [machineId]).catch(() => {});
+          }
+        }).catch(() => {});
 
         // OPTIMIZATION: Update DB immediately when status changes, without delay or heavy throttling
         const now = Date.now();
@@ -221,15 +224,23 @@ export const initializeMqtt = () => {
           if (reportedStatus === 'water_low') {
             pool.query("UPDATE machines SET status = 'water_low' WHERE machine_id = ?", [machineId]).catch(e => { console.error('DB Error:', e.message); });
             pool.query(
-              `INSERT INTO device_live_status (machine_id, water_level, last_updated) VALUES (?, 'LOW', NOW()) ON DUPLICATE KEY UPDATE water_level = 'LOW', last_updated = NOW()`,
+              `UPDATE device_live_status SET water_level = 'LOW', last_updated = NOW() WHERE machine_id = ?`,
               [machineId]
-            ).catch(e => { console.error('DB Error:', e.message); });
+            ).then(([result]) => {
+              if (result && result.affectedRows === 0) {
+                pool.query(`INSERT INTO device_live_status (machine_id, water_level, last_updated) VALUES (?, 'LOW', NOW())`, [machineId]).catch(()=>{});
+              }
+            }).catch(e => { console.error('DB Error:', e.message); });
           } else if (reportedStatus === 'water_normal') {
             pool.query("UPDATE machines SET status = 'ready' WHERE machine_id = ?", [machineId]).catch(e => { console.error('DB Error:', e.message); });
             pool.query(
-              `INSERT INTO device_live_status (machine_id, water_level, last_updated) VALUES (?, 'NORMAL', NOW()) ON DUPLICATE KEY UPDATE water_level = 'NORMAL', last_updated = NOW()`,
+              `UPDATE device_live_status SET water_level = 'NORMAL', last_updated = NOW() WHERE machine_id = ?`,
               [machineId]
-            ).catch(e => { console.error('DB Error:', e.message); });
+            ).then(([result]) => {
+              if (result && result.affectedRows === 0) {
+                pool.query(`INSERT INTO device_live_status (machine_id, water_level, last_updated) VALUES (?, 'NORMAL', NOW())`, [machineId]).catch(()=>{});
+              }
+            }).catch(e => { console.error('DB Error:', e.message); });
           } else {
             // For regular heartbeats (ready/busy/maintenance), do NOT overwrite if machine is currently in water_low alert!
             pool.query(
@@ -257,26 +268,35 @@ export const initializeMqtt = () => {
           const pb_flush = payload.pb_flush || payload.flush || '0';
 
           pool.query(
-            `INSERT INTO device_live_status 
-            (machine_id, water_level, pir_sensor, door_lock, pb_coin, pb_flush, last_updated) 
-            VALUES (?, ?, ?, ?, ?, ?, NOW()) 
-            ON DUPLICATE KEY UPDATE 
-            water_level = VALUES(water_level), 
-            pir_sensor = VALUES(pir_sensor), 
-            door_lock = VALUES(door_lock), 
-            pb_coin = VALUES(pb_coin), 
-            pb_flush = VALUES(pb_flush), 
-            last_updated = NOW()`,
-            [machineId, water_level, pir_sensor, door_lock, pb_coin, pb_flush]
-          ).catch(e => { console.error('DB Error:', e.message); });
+            `UPDATE device_live_status SET 
+            water_level = ?, 
+            pir_sensor = ?, 
+            door_lock = ?, 
+            pb_coin = ?, 
+            pb_flush = ?, 
+            last_updated = NOW() 
+            WHERE machine_id = ?`,
+            [water_level, pir_sensor, door_lock, pb_coin, pb_flush, machineId]
+          ).then(([result]) => {
+            if (result && result.affectedRows === 0) {
+              pool.query(
+                `INSERT INTO device_live_status 
+                (machine_id, water_level, pir_sensor, door_lock, pb_coin, pb_flush, last_updated) 
+                VALUES (?, ?, ?, ?, ?, ?, NOW())`,
+                [machineId, water_level, pir_sensor, door_lock, pb_coin, pb_flush]
+              ).catch(()=>{});
+            }
+          }).catch(e => { console.error('DB Error:', e.message); });
         } else {
           // Just update Heartbeat
           pool.query(
-            `INSERT INTO device_live_status (machine_id, last_updated) 
-             VALUES (?, NOW()) 
-             ON DUPLICATE KEY UPDATE last_updated = NOW()`,
+             `UPDATE device_live_status SET last_updated = NOW() WHERE machine_id = ?`,
             [machineId]
-          ).catch(e => { console.error('DB Error:', e.message); });
+          ).then(([result]) => {
+            if (result && result.affectedRows === 0) {
+              pool.query(`INSERT INTO device_live_status (machine_id, last_updated) VALUES (?, NOW())`, [machineId]).catch(()=>{});
+            }
+          }).catch(e => { console.error('DB Error:', e.message); });
         }
       }
     } catch (err) {
