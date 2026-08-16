@@ -190,6 +190,7 @@ export const updateMachine = async (req, res) => {
       await pool.query('UPDATE maintenance_logs SET machine_id = ? WHERE machine_id = ?', [machine_id, old.machine_id]);
       await pool.query('UPDATE maintenance_tickets SET machine_id = ? WHERE machine_id = ?', [machine_id, old.machine_id]);
       await pool.query('UPDATE tech_allocations SET machine_id = ? WHERE machine_id = ?', [machine_id, old.machine_id]);
+      await pool.query('UPDATE trans SET machin_id = ? WHERE machin_id = ?', [machine_id, old.machine_id]);
       
       // Also send the SET_MACHINE_ID command to the PCB so it knows its new identity
       publishMessage('smartbuddy', `${old.machine_id},SET_MACHINE_ID:${machine_id}`);
@@ -403,6 +404,7 @@ export const changeHardwareId = async (req, res) => {
       await pool.query('UPDATE maintenance_logs SET machine_id = ? WHERE machine_id = ?', [new_machine_id, old_machine_id]);
       await pool.query('UPDATE maintenance_tickets SET machine_id = ? WHERE machine_id = ?', [new_machine_id, old_machine_id]);
       await pool.query('UPDATE tech_allocations SET machine_id = ? WHERE machine_id = ?', [new_machine_id, old_machine_id]);
+      await pool.query('UPDATE trans SET machin_id = ? WHERE machin_id = ?', [new_machine_id, old_machine_id]);
     }
 
     res.json({ success: true, message: `Hardware ID updated to ${new_machine_id}` });
