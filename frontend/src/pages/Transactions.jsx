@@ -305,7 +305,7 @@ const Transactions = () => {
           className="search-input" 
           placeholder="Search by Machine ID, Client, or Project..." 
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
         />
       </div>
 

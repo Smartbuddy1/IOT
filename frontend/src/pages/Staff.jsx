@@ -210,7 +210,7 @@ const Staff = ({ isTab = false }) => {
               type="text"
               placeholder="Search staff by name, mobile or role..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 3rem', borderRadius: '0.5rem', border: '1px solid #e2e8f0', outline: 'none' }}
             />
           </div>

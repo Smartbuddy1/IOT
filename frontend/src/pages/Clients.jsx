@@ -267,7 +267,7 @@ const Clients = ({ isTab = false }) => {
           className="search-input" 
           placeholder="Search clients by Name, Email, or City..." 
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.95rem' }}
         />
       </div>
