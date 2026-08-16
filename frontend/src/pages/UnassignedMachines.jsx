@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, ArrowUpDown, Edit } from 'lucide-react';
+import { Search, ArrowUpDown, Edit, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import SkeletonTable from '../components/SkeletonTable';
@@ -23,6 +23,12 @@ const UnassignedMachines = () => {
     machine_id: '', client_name: '', project_name: '', status: 'ready', uses_amt: '5', toilet_type: 'Unisex'
   });
   const [formLoading, setFormLoading] = useState(false);
+
+  // ID Change Modal State
+  const [isIdModalOpen, setIsIdModalOpen] = useState(false);
+  const [selectedMachineForIdChange, setSelectedMachineForIdChange] = useState(null);
+  const [newHardwareId, setNewHardwareId] = useState('');
+  const [idChangeLoading, setIdChangeLoading] = useState(false);
 
   const { user } = useAuth();
 
@@ -64,6 +70,34 @@ const UnassignedMachines = () => {
     });
     setEditingId(machine.id);
     setIsModalOpen(true);
+  };
+
+  const handleOpenIdChange = (machine) => {
+    setSelectedMachineForIdChange(machine);
+    setNewHardwareId('');
+    setIsIdModalOpen(true);
+  };
+
+  const handleChangeHardwareId = async (e) => {
+    e.preventDefault();
+    if (!newHardwareId.trim()) {
+      toast.error("Please enter a new Hardware ID");
+      return;
+    }
+    setIdChangeLoading(true);
+    try {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/machines/${selectedMachineForIdChange.id}/change-hardware-id`, {
+        new_machine_id: newHardwareId.trim()
+      });
+      toast.success(`Hardware ID successfully changed to ${newHardwareId.trim()}`);
+      setIsIdModalOpen(false);
+      fetchUnassignedMachines();
+    } catch (error) {
+      console.error("Failed to change hardware ID", error);
+      toast.error(error.response?.data?.message || "Error changing hardware ID");
+    } finally {
+      setIdChangeLoading(false);
+    }
   };
 
   const handleAssignMachine = async (e) => {
@@ -171,11 +205,22 @@ const UnassignedMachines = () => {
                   <td style={{ fontWeight: '700', color: 'var(--slate-800)' }}>₹ {machine.uses_amt || '0'}</td>
                   <td>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      {user.role === 'Admin' && (
-                        <button className="btn btn-secondary" style={{ padding: '0.4rem', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => handleEdit(machine)} title="Assign to Client">
-                          <Edit size={16} /> Assign
-                        </button>
-                      )}
+                      <button 
+                        onClick={() => handleEdit(machine)} 
+                        className="btn btn-secondary" 
+                        style={{ padding: '0.4rem', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        title="Assign Machine"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleOpenIdChange(machine)} 
+                        className="btn btn-secondary"
+                        style={{ padding: '0.4rem', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        title="Change Hardware ID"
+                      >
+                        <Tag size={16} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -225,15 +270,37 @@ const UnassignedMachines = () => {
             </select>
           </div>
 
-          <div className="full-width" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-            <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={formLoading || !formData.client_name}>
-              {formLoading ? 'Saving...' : 'Assign Client'}
-            </button>
+          <div className="full-width">
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={formLoading}>
+                {formLoading ? 'Assigning...' : 'Assign Machine'}
+              </button>
+            </div>
           </div>
         </form>
       </Modal>
 
+      <Modal isOpen={isIdModalOpen} onClose={() => setIsIdModalOpen(false)} title="Change PCB Hardware ID">
+        <form onSubmit={handleChangeHardwareId} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="form-group">
+            <label className="form-label">Current ID</label>
+            <input type="text" className="form-input" value={selectedMachineForIdChange?.machine_id || ''} disabled style={{ backgroundColor: 'var(--slate-100)', cursor: 'not-allowed' }} />
+            <small style={{ color: 'var(--slate-500)', marginTop: '4px', display: 'block' }}>This is the ID currently stored in the database.</small>
+          </div>
+          <div className="form-group">
+            <label className="form-label">New PCB ID *</label>
+            <input type="text" className="form-input" value={newHardwareId} onChange={(e) => setNewHardwareId(e.target.value)} required placeholder="e.g. SBE2T105" />
+            <small style={{ color: 'var(--slate-500)', marginTop: '4px', display: 'block' }}>A 'SET_MACHINE_ID' command will be sent to the old ID to configure the PCB, and the database will be updated.</small>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+            <button type="button" className="btn btn-secondary" onClick={() => setIsIdModalOpen(false)}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={idChangeLoading}>
+              {idChangeLoading ? 'Sending Command...' : 'Send Command & Update'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

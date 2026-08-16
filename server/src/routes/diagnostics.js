@@ -12,9 +12,9 @@ router.use(authenticateToken, requireRole(['Admin', 'Superadmin']));
 // Get live IO status
 router.get('/machine/:id/live-io', (req, res) => {
     const { id } = req.params;
-    const states = getLiveIOState(id.trim());
-    if (states) {
-        res.json({ success: true, states });
+    const cacheData = getLiveIOState(id.trim());
+    if (cacheData && cacheData.states) {
+        res.json({ success: true, states: cacheData.states, coinsReceived: cacheData.coinsReceived || 0 });
     } else {
         res.json({ success: false, message: 'No live status available' });
     }

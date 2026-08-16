@@ -1,5 +1,5 @@
 import pool from '../config/db.js';
-import { publishMessage } from '../services/mqttService.js';
+import { publishMessage, mqttEmitter } from '../services/mqttService.js';
 
 export const getMachines = async (req, res) => {
   const { role, name } = req.user;
@@ -158,6 +158,14 @@ export const updateMachine = async (req, res) => {
     }
     const old = oldRows[0];
 
+    // Ensure new machine_id is unique if it changed
+    if (machine_id && machine_id !== old.machine_id) {
+      const [existing] = await pool.query('SELECT id FROM machines WHERE machine_id = ? LIMIT 1', [machine_id]);
+      if (existing.length > 0) {
+        return res.status(400).json({ success: false, message: 'This Machine ID is already in use by another machine.' });
+      }
+    }
+
     // 2. Perform database update
     await pool.query(
       `UPDATE machines SET 
@@ -173,6 +181,19 @@ export const updateMachine = async (req, res) => {
         gps_lat || null, gps_lng || null, toilet_type || 'Unisex', id
       ]
     );
+
+    // Cascade update to other tables to maintain data integrity if machine_id was changed
+    if (old.machine_id && old.machine_id !== machine_id) {
+      await pool.query('UPDATE datatest SET machine_id = ? WHERE machine_id = ?', [machine_id, old.machine_id]);
+      await pool.query('UPDATE device_live_status SET machine_id = ? WHERE machine_id = ?', [machine_id, old.machine_id]);
+      await pool.query('UPDATE machine_logs SET machine_id = ? WHERE machine_id = ?', [machine_id, old.machine_id]);
+      await pool.query('UPDATE maintenance_logs SET machine_id = ? WHERE machine_id = ?', [machine_id, old.machine_id]);
+      await pool.query('UPDATE maintenance_tickets SET machine_id = ? WHERE machine_id = ?', [machine_id, old.machine_id]);
+      await pool.query('UPDATE tech_allocations SET machine_id = ? WHERE machine_id = ?', [machine_id, old.machine_id]);
+      
+      // Also send the SET_MACHINE_ID command to the PCB so it knows its new identity
+      publishMessage('smartbuddy', `${old.machine_id},SET_MACHINE_ID:${machine_id}`);
+    }
 
     // 3. Status logging on change
     if (old.status !== status) {
@@ -286,6 +307,107 @@ export const getUnassignedMachines = async (req, res) => {
     res.json({ success: true, data: machines, machines: machines });
   } catch (error) {
     console.error('Fetch unassigned machines error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+export const requestMachineStatus = async (req, res) => {
+  const { id } = req.params; // id is the machine_id (string)
+
+  try {
+    // Publish the status? command
+    const published = publishMessage('smartbuddy', `${id},status?`);
+    
+    if (!published) {
+      return res.status(503).json({ success: false, message: 'MQTT Broker not connected. Cannot send command to PCB.' });
+    }
+
+    // Publish GET_PARAMETERS slightly after to avoid serial buffer overflow on PCB
+    setTimeout(() => {
+      publishMessage('smartbuddy', `${id},GET_PARAMETERS`);
+    }, 200);
+
+    const messages = [];
+
+    // Setup listener to wait for response
+    const listener = (data) => {
+      // Check if message is from this machine (it starts with machine ID)
+      if (data.message.startsWith(`${id},`)) {
+        messages.push(data.message);
+        // If we received 2 messages (one for status?, one for GET_PARAMETERS), resolve early
+        if (messages.length >= 2) {
+          clearTimeout(timeoutId);
+          mqttEmitter.off('message', listener);
+          res.json({ success: true, message: messages.join('\n') });
+        }
+      }
+    };
+
+    mqttEmitter.on('message', listener);
+
+    // Timeout after 4 seconds to collect responses
+    const timeoutId = setTimeout(() => {
+      mqttEmitter.off('message', listener);
+      if (messages.length > 0) {
+        res.json({ success: true, message: messages.join('\n') });
+      } else {
+        res.status(504).json({ success: false, message: 'Machine not responding' });
+      }
+    }, 4000);
+
+  } catch (error) {
+    console.error('Request status error:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+export const changeHardwareId = async (req, res) => {
+  const { id } = req.params; // this is the DB primary key id OR old machine_id? Wait, routes pass DB id or machine_id?
+  // Let's use the DB ID to find it, then update.
+  const { new_machine_id } = req.body;
+
+  try {
+    const [rows] = await pool.query('SELECT machine_id FROM machines WHERE id = ? LIMIT 1', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Machine not found in DB.' });
+    }
+    
+    const old_machine_id = rows[0].machine_id;
+
+    // Ensure new machine_id is unique
+    if (new_machine_id !== old_machine_id) {
+      const [existing] = await pool.query('SELECT id FROM machines WHERE machine_id = ? LIMIT 1', [new_machine_id]);
+      if (existing.length > 0) {
+        return res.status(400).json({ success: false, message: 'This Machine ID is already in use by another machine.' });
+      }
+    }
+
+    // Send MQTT command first
+    const published = publishMessage('smartbuddy', `${old_machine_id},SET_MACHINE_ID:${new_machine_id}`);
+    
+    // Even if MQTT fails (offline), we might still want to update the DB if requested, but let's warn.
+    // Actually, it's better to update the DB so they are in sync when it comes online? 
+    // No, if MQTT is down, the PCB won't get the new ID!
+    if (!published) {
+      return res.status(503).json({ success: false, message: 'MQTT Broker not connected. Cannot change ID on PCB.' });
+    }
+
+    // Update DB
+    await pool.query('UPDATE machines SET machine_id = ? WHERE id = ?', [new_machine_id, id]);
+
+    // Cascade update to other tables to maintain data integrity
+    if (old_machine_id && old_machine_id !== new_machine_id) {
+      await pool.query('UPDATE datatest SET machine_id = ? WHERE machine_id = ?', [new_machine_id, old_machine_id]);
+      await pool.query('UPDATE device_live_status SET machine_id = ? WHERE machine_id = ?', [new_machine_id, old_machine_id]);
+      await pool.query('UPDATE machine_logs SET machine_id = ? WHERE machine_id = ?', [new_machine_id, old_machine_id]);
+      await pool.query('UPDATE maintenance_logs SET machine_id = ? WHERE machine_id = ?', [new_machine_id, old_machine_id]);
+      await pool.query('UPDATE maintenance_tickets SET machine_id = ? WHERE machine_id = ?', [new_machine_id, old_machine_id]);
+      await pool.query('UPDATE tech_allocations SET machine_id = ? WHERE machine_id = ?', [new_machine_id, old_machine_id]);
+    }
+
+    res.json({ success: true, message: `Hardware ID updated to ${new_machine_id}` });
+  } catch (error) {
+    console.error('Change hardware ID error:', error);
     res.status(500).json({ success: false, message: 'Internal Server Error' });
   }
 };

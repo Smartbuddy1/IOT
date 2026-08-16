@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit, Trash2, X, Search, ArrowUpDown, Eye, QrCode } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Search, ArrowUpDown, Eye, QrCode, Info, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
@@ -14,6 +14,7 @@ const Machines = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewMachine, setViewMachine] = useState(null);
   const [qrMachine, setQrMachine] = useState(null);
+  const [statusRequesting, setStatusRequesting] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,6 +28,12 @@ const Machines = () => {
   });
   const [formLoading, setFormLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  
+  // ID Change Modal State
+  const [isIdModalOpen, setIsIdModalOpen] = useState(false);
+  const [selectedMachineForIdChange, setSelectedMachineForIdChange] = useState(null);
+  const [newHardwareId, setNewHardwareId] = useState('');
+  const [idChangeLoading, setIdChangeLoading] = useState(false);
   
   // Dropdown states
   const [clients, setClients] = useState([]);
@@ -159,6 +166,51 @@ const Machines = () => {
     } catch (error) {
       console.error("Failed to delete machine", error);
       toast.error("Error deleting machine");
+    }
+  };
+
+  const handleRequestStatus = async (machine_id) => {
+    setStatusRequesting(machine_id);
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/machines/${machine_id}/request-status`);
+      if (response.data.success) {
+        alert(`smartbuddy.co.in says\n✅ Machine Response:\n${response.data.message}`);
+      } else {
+        toast.error(response.data.message || "Failed to get machine response");
+      }
+    } catch (error) {
+      console.error("Failed to request machine status", error);
+      toast.error(error.response?.data?.message || "Machine not responding or timeout");
+    } finally {
+      setStatusRequesting(null);
+    }
+  };
+
+  const handleOpenIdChange = (machine) => {
+    setSelectedMachineForIdChange(machine);
+    setNewHardwareId('');
+    setIsIdModalOpen(true);
+  };
+
+  const handleChangeHardwareId = async (e) => {
+    e.preventDefault();
+    if (!newHardwareId.trim()) {
+      toast.error("Please enter a new Hardware ID");
+      return;
+    }
+    setIdChangeLoading(true);
+    try {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/machines/${selectedMachineForIdChange.id}/change-hardware-id`, {
+        new_machine_id: newHardwareId.trim()
+      });
+      toast.success(`Hardware ID successfully changed to ${newHardwareId.trim()}`);
+      setIsIdModalOpen(false);
+      fetchMachines();
+    } catch (error) {
+      console.error("Failed to change hardware ID", error);
+      toast.error(error.response?.data?.message || "Error changing hardware ID");
+    } finally {
+      setIdChangeLoading(false);
     }
   };
 
@@ -325,6 +377,23 @@ const Machines = () => {
                           </button>
                         </>
                       )}
+                      <button 
+                        className="btn btn-primary" 
+                        style={{ padding: '0.4rem', backgroundColor: '#10b981', border: 'none', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: statusRequesting === machine.machine_id ? 0.5 : 1 }} 
+                        onClick={() => handleRequestStatus(machine.machine_id)} 
+                        title="Request Status"
+                        disabled={statusRequesting === machine.machine_id}
+                      >
+                        <Info size={16} color="white" />
+                      </button>
+                      <button 
+                        onClick={() => handleOpenIdChange(machine)} 
+                        className="btn btn-secondary"
+                        style={{ padding: '0.4rem', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        title="Change Hardware ID"
+                      >
+                        <Tag size={16} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -551,6 +620,27 @@ const Machines = () => {
             <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={formLoading || !isFormValid()}>
               {formLoading ? 'Saving...' : 'Save Machine'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal isOpen={isIdModalOpen} onClose={() => setIsIdModalOpen(false)} title="Change PCB Hardware ID">
+        <form onSubmit={handleChangeHardwareId} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="form-group">
+            <label className="form-label">Current ID</label>
+            <input type="text" className="form-input" value={selectedMachineForIdChange?.machine_id || ''} disabled style={{ backgroundColor: 'var(--slate-100)', cursor: 'not-allowed' }} />
+            <small style={{ color: 'var(--slate-500)', marginTop: '4px', display: 'block' }}>This is the ID currently stored in the database.</small>
+          </div>
+          <div className="form-group">
+            <label className="form-label">New PCB ID *</label>
+            <input type="text" className="form-input" value={newHardwareId} onChange={(e) => setNewHardwareId(e.target.value)} required placeholder="e.g. SBE2T105" />
+            <small style={{ color: 'var(--slate-500)', marginTop: '4px', display: 'block' }}>A 'SET_MACHINE_ID' command will be sent to the old ID to configure the PCB, and the database will be updated.</small>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+            <button type="button" className="btn btn-secondary" onClick={() => setIsIdModalOpen(false)}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={idChangeLoading}>
+              {idChangeLoading ? 'Sending Command...' : 'Send Command & Update'}
             </button>
           </div>
         </form>

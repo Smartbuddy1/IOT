@@ -15,6 +15,7 @@ const IODashboard = ({ machineId, status, machineDetails }) => {
     const [testResults, setTestResults] = useState({});
     const [loading, setLoading] = useState(true);
     const [toggling, setToggling] = useState({});
+    const [coinsReceived, setCoinsReceived] = useState(0);
 
     useEffect(() => {
         const fetchIOList = async () => {
@@ -71,6 +72,10 @@ const IODashboard = ({ machineId, status, machineDetails }) => {
                         }
                         return hasChanges ? newStates : prev;
                     });
+                    
+                    if (response.data.coinsReceived !== undefined) {
+                        setCoinsReceived(response.data.coinsReceived);
+                    }
                 }
             } catch (error) {
                 // Silently ignore polling errors
@@ -440,6 +445,7 @@ const IODashboard = ({ machineId, status, machineDetails }) => {
                                     onTestResultChange={handleTestResultChange}
                                     loading={toggling[item.name]}
                                     onToggle={handleToggle}
+                                    coinsReceived={item.name === 'Coin Acceptor Control' ? coinsReceived : undefined}
                                 />
                             ))}
                         </div>

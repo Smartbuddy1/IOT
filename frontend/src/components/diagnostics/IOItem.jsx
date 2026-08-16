@@ -1,7 +1,7 @@
 import React from 'react';
 import { Power, Circle, Settings2, MessageSquare } from 'lucide-react';
 
-const IOItem = ({ item, status, onToggle, loading, remark, onRemarkChange, testResult, onTestResultChange }) => {
+const IOItem = ({ item, status, onToggle, loading, remark, onRemarkChange, testResult, onTestResultChange, coinsReceived }) => {
     const isInput = item.type === 'Digital Input';
     const isOn = status === true;
 
@@ -21,7 +21,14 @@ const IOItem = ({ item, status, onToggle, loading, remark, onRemarkChange, testR
                         {isInput ? <Settings2 size={24} /> : <Power size={24} />}
                     </div>
                     <div>
-                        <h3 className="io-name">{item.name}</h3>
+                        <h3 className="io-name" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {item.name}
+                            {coinsReceived !== undefined && coinsReceived > 0 && (
+                                <span style={{ backgroundColor: '#10b981', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                                    ₹{coinsReceived} Received
+                                </span>
+                            )}
+                        </h3>
                         <p className="io-desc">{item.description}</p>
                     </div>
                 </div>

@@ -1,6 +1,9 @@
 import mqtt from 'mqtt';
 import pool from '../config/db.js';
 import dotenv from 'dotenv';
+import { EventEmitter } from 'events';
+
+export const mqttEmitter = new EventEmitter();
 
 dotenv.config();
 
@@ -29,7 +32,7 @@ setInterval(() => {
 export const liveIOCache = {};
 
 export const getLiveIOState = (machineId) => {
-  return liveIOCache[machineId]?.states || null;
+  return liveIOCache[machineId] || null;
 };
 
 export const initializeMqtt = () => {
@@ -75,6 +78,8 @@ export const initializeMqtt = () => {
     console.log(`📩 MQTT Message: [${topic}] -> ${msgStr}`);
 
     try {
+      mqttEmitter.emit('message', { topic, message: msgStr });
+
       // 1. Save all logs to mqtt_messages table (Fire and forget, don't await to avoid blocking)
       pool.query(
         'INSERT INTO mqtt_messages (topic, message) VALUES (?, ?)',
@@ -142,6 +147,18 @@ export const initializeMqtt = () => {
                 };
               }
               return; // IO_STAT doesn't contain status keywords, we can skip further comma-separated parsing
+            }
+            
+            // Handle COIN_RECV payload
+            if (parts.length >= 3 && parts[1].trim() === 'COIN_RECV') {
+              const coinValue = parseInt(parts[2].trim(), 10) || 0;
+              if (!liveIOCache[machineId]) {
+                liveIOCache[machineId] = { timestamp: Date.now(), states: {}, coinsReceived: 0 };
+              }
+              // Accumulate coins received during this diagnostic session
+              liveIOCache[machineId].coinsReceived = (liveIOCache[machineId].coinsReceived || 0) + coinValue;
+              liveIOCache[machineId].timestamp = Date.now();
+              return; // Skip further parsing
             }
 
             // Scan all parts of the comma-separated string for status and water level keywords
