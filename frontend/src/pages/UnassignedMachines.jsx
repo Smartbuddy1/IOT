@@ -205,22 +205,26 @@ const UnassignedMachines = () => {
                   <td style={{ fontWeight: '700', color: 'var(--slate-800)' }}>₹ {machine.uses_amt || '0'}</td>
                   <td>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button 
-                        onClick={() => handleEdit(machine)} 
-                        className="btn btn-secondary" 
-                        style={{ padding: '0.4rem', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        title="Assign Machine"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button 
-                        onClick={() => handleOpenIdChange(machine)} 
-                        className="btn btn-secondary"
-                        style={{ padding: '0.4rem', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        title="Change Hardware ID"
-                      >
-                        <Tag size={16} />
-                      </button>
+                      {user.role === 'Admin' && (
+                        <>
+                          <button 
+                            onClick={() => handleEdit(machine)} 
+                            className="btn btn-secondary" 
+                            style={{ padding: '0.4rem', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            title="Assign Machine"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleOpenIdChange(machine)} 
+                            className="btn btn-secondary"
+                            style={{ padding: '0.4rem', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            title="Change Hardware ID"
+                          >
+                            <Tag size={16} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

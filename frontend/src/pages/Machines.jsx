@@ -375,25 +375,25 @@ const Machines = () => {
                           <button className="btn btn-danger" style={{ padding: '0.4rem', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 6px rgba(239,68,68,0.2)' }} onClick={() => handleDelete(machine.id)} title="Delete">
                             <Trash2 size={16} color="white" />
                           </button>
+                          <button 
+                            className="btn btn-primary" 
+                            style={{ padding: '0.4rem', backgroundColor: '#10b981', border: 'none', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: statusRequesting === machine.machine_id ? 0.5 : 1 }} 
+                            onClick={() => handleRequestStatus(machine.machine_id)} 
+                            title="Request Status"
+                            disabled={statusRequesting === machine.machine_id}
+                          >
+                            <Info size={16} color="white" />
+                          </button>
+                          <button 
+                            onClick={() => handleOpenIdChange(machine)} 
+                            className="btn btn-secondary"
+                            style={{ padding: '0.4rem', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            title="Change Hardware ID"
+                          >
+                            <Tag size={16} />
+                          </button>
                         </>
                       )}
-                      <button 
-                        className="btn btn-primary" 
-                        style={{ padding: '0.4rem', backgroundColor: '#10b981', border: 'none', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: statusRequesting === machine.machine_id ? 0.5 : 1 }} 
-                        onClick={() => handleRequestStatus(machine.machine_id)} 
-                        title="Request Status"
-                        disabled={statusRequesting === machine.machine_id}
-                      >
-                        <Info size={16} color="white" />
-                      </button>
-                      <button 
-                        onClick={() => handleOpenIdChange(machine)} 
-                        className="btn btn-secondary"
-                        style={{ padding: '0.4rem', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        title="Change Hardware ID"
-                      >
-                        <Tag size={16} />
-                      </button>
                     </div>
                   </td>
                 </tr>
