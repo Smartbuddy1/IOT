@@ -207,6 +207,11 @@ export const initializeMqtt = () => {
 
       // 3. Update the live machine status in the 'machines' table
       if (machineId) {
+        // Ignore NEW_ID confirmation messages to prevent false warnings
+        if (machineId.startsWith('NEW_ID:')) {
+          return;
+        }
+
         // Validation: Machine ID must only contain letters, numbers, hyphens, or underscores
         const isValidId = /^[a-zA-Z0-9_-]+$/.test(machineId);
         if (!isValidId) {
