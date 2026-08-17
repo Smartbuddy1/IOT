@@ -248,7 +248,6 @@ export const updateMachine = async (req, res) => {
       // Format A: Legacy format (Exactly what worked in the morning)
       const payloadString = [
         machine_id,
-        "SET_PARAMETERS",
         hardwareStatus,
         modeStr,
         usesAmt,
