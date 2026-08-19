@@ -102,7 +102,7 @@ router.post('/machine/:id/command', async (req, res) => {
         const topic = 'smartbuddy';
         
         // Format: MachineID,OUTPUT_SET,DOORLOCK,EXTRA_OUT,COIN-ACCEPTOR_ON_OFF,VALVE_FLUSH,VALVE-WALL,VALVE-FLOOR,VALVE-EXTRA,LAMP-BUSY,LAMP-VACANT,FAN,LAMP-SQUARE
-        const out1 = states['Door Lock'] ? '1' : '0'; // DOORLOCK
+        const out1 = states['Strike Lock'] ? '1' : '0'; // DOORLOCK
         const out2 = states['Buzzer'] ? '1' : '0'; // EXTRA_OUT (Assuming buzzer might be extra out, or we keep it as it was)
         const out3 = states['Coin Acceptor Control'] ? '1' : '0'; // COIN-ACCEPTOR_ON_OFF
         const out4 = states['Flush Valve'] ? '1' : '0'; // VALVE_FLUSH
@@ -111,8 +111,8 @@ router.post('/machine/:id/command', async (req, res) => {
         const out7 = states['Motor (0.5 HP)'] ? '1' : '0'; // VALVE-EXTRA
         const out8 = states['Red Indicator'] ? '1' : '0'; // LAMP-BUSY
         const out9 = states['Green Indicator'] ? '1' : '0'; // LAMP-VACANT
-        const out10 = states['Fan'] ? '1' : '0'; // FAN
-        const out11 = states['Round Light'] ? '1' : '0'; // LAMP-SQUARE
+        const out10 = states['Exhaust Fan'] ? '1' : '0'; // FAN
+        const out11 = states['Electronic Lighting Module'] ? '1' : '0'; // LAMP-SQUARE
         
         const payload = `${id.trim()},OUTPUT_SET,${out1},${out2},${out3},${out4},${out5},${out6},${out7},${out8},${out9},${out10},${out11}`;
         

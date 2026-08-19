@@ -616,14 +616,14 @@ const Reports = () => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem', alignItems: 'flex-end' }}>
             {user?.role !== 'Client' ? (
               <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Project Name</label>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Client Name</label>
                 <select 
                   className="form-input" 
                   style={{ width: '100%', height: '42px' }}
                   value={clientName} 
                   onChange={(e) => setClientName(e.target.value)}
                 >
-                  <option value="">All Project</option>
+                  <option value="">All Clients</option>
                   {clientsOptions.map((c, i) => (
                     <option key={i} value={c.client_name}>{c.client_name}</option>
                   ))}
@@ -631,8 +631,8 @@ const Reports = () => {
               </div>
             ) : (
               <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Project Name</label>
-                <input type="text" className="form-input" value={user.name || 'Your Project'} disabled style={{ opacity: 0.7, height: '42px' }} />
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Client Name</label>
+                <input type="text" className="form-input" value={user.name || 'Your Client'} disabled style={{ opacity: 0.7, height: '42px' }} />
               </div>
             )}
 

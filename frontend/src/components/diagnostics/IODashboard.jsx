@@ -61,13 +61,7 @@ const IODashboard = ({ machineId, status, machineDetails }) => {
                                 newStates[key] = response.data.states[key];
                                 hasChanges = true;
                                 
-                                // Auto-Evaluate: If state changed (e.g. sensor triggered or relay clicked), it's working!
-                                setTestResults(prevResults => {
-                                    if (!prevResults[key] || prevResults[key] === 'Not Tested') {
-                                        return { ...prevResults, [key]: 'Working OK' };
-                                    }
-                                    return prevResults;
-                                });
+                                // Auto-Evaluate is removed as requested by user.
                             }
                         }
                         return hasChanges ? newStates : prev;
